@@ -90,6 +90,39 @@ void calculate_and_switch_rom_bank(int address, u8 value) {
 void mem_init(const char *rom_file_path) {
 	strcpy(current_rom_file_path, rom_file_path);
 	
+	mem_write(0xff10, 0x80);
+	mem_write(0xff11, 0xbf);
+	mem_write(0xff12, 0xf3);
+	mem_write(0xff14, 0xbf);
+	mem_write(0xff16, 0x3f);
+	mem_write(0xff17, 0x00);
+	mem_write(0xff19, 0xbf);
+	mem_write(0xff1a, 0x7f);
+	mem_write(0xff1b, 0xff);
+	mem_write(0xff1c, 0x9f);
+	mem_write(0xff1e, 0xbf);
+	mem_write(0xff00, 0xff);
+	for (int i = 0xff10; i <= 0xff26; i++) mem_write(i, 0x00); // zero audio
+	mem_write(0xff20, 0xff);
+	mem_write(0xff21, 0x00);
+	mem_write(0xff22, 0x00);
+	mem_write(0xff23, 0xbf);
+	mem_write(0xff24, 0x77);
+	mem_write(0xff25, 0xf3);
+	mem_write(0xff26, 0xf1); // NOTE: This is different for Game Boy Color etc.
+	mem_write(LCD_CONTROL_ADDRESS, 0x91);
+	mem_write(LCD_STATUS_ADDRESS, 0x85);
+	mem_write(0xff42, 0x00);
+	mem_write(0xff43, 0x00);
+	mem_write(0xff45, 0x00);
+	mem_write(0xff47, 0xfc);
+	mem_write(0xff48, 0xff);
+	mem_write(0xff49, 0xff);
+	mem_write(0xff4a, 0x00);
+	mem_write(0xff4b, 0x00);
+	mem_write(IF_ADDRESS, 0xe1); // TODO: Might be acceptable for this to be 0xe0
+	mem_write(IE_ADDRESS, 0x00);
+	
 	const int single_bank_size = 1024 * 16; // 16kB
 	const int bank_0_destination = 0x0000;
 	
