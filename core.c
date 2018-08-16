@@ -35,10 +35,6 @@ u16 make_u16(u8 least_sig, u8 most_sig) {
 }
 
 void init_registers() {
-	printf("\nInitialising register values\n");
-	
-	// TODO: Move this into mem_init()?
-	
 	registers.af = 0x01b0; // NOTE: This is different for Game Boy Pocket, Color etc.
 	registers.bc = 0x0013;
 	registers.de = 0x00d8;
@@ -155,7 +151,7 @@ void robingb_init(const char *rom_file_path) {
 	init_timer();
 }
 
-// TODO: emulator_pump() should execute until either LY increments (and that line has been drawn, if we do it that way) or (clockfreq / 60) cycles have passed. Whichever comes first.
+// TODO: robingb_update() should execute until LY increments.
 int robingb_update(RobinGB_Input *input) {
 	
 	mem_remove_all_logs();
