@@ -126,7 +126,7 @@ void execute_instruction_OR(u8 right_hand_value, const char *asm_name, u16 pc_in
 	finish_instruction(asm_name, pc_increment, num_cycles);
 }
 
-void execute_instruction_ADD_u8(u8 to_add, const char *asm_name, u16 pc_increment, int num_cycles) {
+void execute_instruction_ADD_A_u8(u8 to_add, const char *asm_name, u16 pc_increment, u8 num_cycles) {
 	if (addition_produces_u8_half_carry(registers.a, to_add)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -137,6 +137,20 @@ void execute_instruction_ADD_u8(u8 to_add, const char *asm_name, u16 pc_incremen
 	
 	if (registers.a == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
+	
+	registers.f &= ~FLAG_N;
+	
+	finish_instruction(asm_name, pc_increment, num_cycles);
+}
+
+void execute_instruction_ADD_HL_u16(u16 to_add, const char *asm_name, u16 pc_increment, u8 num_cycles) {
+	if (addition_produces_u16_half_carry(registers.hl, to_add)) registers.f |= FLAG_H;
+	else registers.f &= ~FLAG_H;
+	
+	if (addition_produces_u16_full_carry(registers.hl, to_add)) registers.f |= FLAG_C;
+	else registers.f &= ~FLAG_C;
+	
+	registers.hl += to_add;
 	
 	registers.f &= ~FLAG_N;
 	
@@ -185,19 +199,7 @@ void execute_opcode(u8 opcode, u8 *num_cycles_out, char *asm_log_out) {
 			finish_instruction("RLCA", 1, 4);
 		} break;
 		case 0x08: mem_write_u16(mem_read_u16(registers.pc+1), registers.sp); finish_instruction("LD (xx),SP", 3, 20); break;
-		case 0x09: {
-			if (addition_produces_u16_half_carry(registers.hl, registers.bc)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
-			
-			if (addition_produces_u16_full_carry(registers.hl, registers.bc)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.hl += registers.bc;
-			
-			registers.f &= ~FLAG_N;
-			
-			finish_instruction("ADD HL,BC", 1, 8);
-		} break;
+		case 0x09: execute_instruction_ADD_HL_u16(registers.bc, "ADD HL,BC", 1, 8); break;
 		case 0x0a: registers.a = mem_read(registers.bc); finish_instruction("LD A,(BC)", 1, 8); break;
 		case 0x0b: registers.bc--; finish_instruction("DEC BC", 1, 8); break;
 		case 0x0c: execute_instruction_INC_u8(&registers.c, "INC C", 4); break;
@@ -238,19 +240,7 @@ void execute_opcode(u8 opcode, u8 *num_cycles_out, char *asm_log_out) {
 			finish_instruction("RLA", 1, 4);
 		} break;
 		case 0x18: finish_instruction("JR %i(d)", 2 + (s8)mem_read(registers.pc+1), 12); break;
-		case 0x19: {
-			if (addition_produces_u16_half_carry(registers.hl, registers.de)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
-			
-			if (addition_produces_u16_full_carry(registers.hl, registers.de)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.hl += registers.de;
-			
-			registers.f &= ~FLAG_N;
-			
-			finish_instruction("ADD HL,DE", 1, 8);
-		} break;
+		case 0x19: execute_instruction_ADD_HL_u16(registers.de, "ADD HL,DE", 1, 8); break;
 		case 0x1a: registers.a = mem_read(registers.de); finish_instruction("LD A,(DE)", 1, 8); break;
 		case 0x1b: registers.de--; finish_instruction("DEC DE", 1, 8); break;
 		case 0x1c: execute_instruction_INC_u8(&registers.e, "INC E", 4); break;
@@ -311,19 +301,7 @@ void execute_opcode(u8 opcode, u8 *num_cycles_out, char *asm_log_out) {
 			if (registers.f & FLAG_Z) finish_instruction("JR Z,s", 2 + (s8)byte_0, 12);
 			else finish_instruction("JR Z,s", 2, 8);
 		} break;
-		case 0x29: {
-			if (addition_produces_u16_half_carry(registers.hl, registers.hl)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
-			
-			if (addition_produces_u16_full_carry(registers.hl, registers.hl)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.hl += registers.hl;
-			
-			registers.f &= ~FLAG_N;
-			
-			finish_instruction("ADD HL,HL", 1, 8);
-		} break;
+		case 0x29: execute_instruction_ADD_HL_u16(registers.hl, "ADD HL,HL", 1, 8); break;
 		case 0x2a: registers.a = mem_read(registers.hl++); finish_instruction("LD A,(HL+)", 1, 8); break;
 		case 0x2b: registers.hl--; finish_instruction("DEC HL", 1, 8); break;
 		case 0x2c: execute_instruction_INC_u8(&registers.l, "INC L", 4); break;
@@ -365,19 +343,7 @@ void execute_opcode(u8 opcode, u8 *num_cycles_out, char *asm_log_out) {
 			if (registers.f & FLAG_C) finish_instruction("JR C,s", 2 + (s8)byte_0, 12);
 			else finish_instruction("JR C,s", 2, 8);
 		} break;
-		case 0x39: {
-			if (addition_produces_u16_half_carry(registers.hl, registers.sp)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
-			
-			if (addition_produces_u16_full_carry(registers.hl, registers.sp)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.hl += registers.sp;
-			
-			registers.f &= ~FLAG_N;
-			
-			finish_instruction("ADD HL,SP", 1, 8);
-		} break;
+		case 0x39: execute_instruction_ADD_HL_u16(registers.sp, "ADD HL,SP", 1, 8); break;
 		case 0x3a: registers.a = mem_read(registers.hl--); finish_instruction("LD A,(HL-)", 1, 8); break;
 		case 0x3b: registers.sp--; finish_instruction("DEC SP", 1, 8); break;
 		case 0x3c: execute_instruction_INC_u8(&registers.a, "INC A", 4); break;
@@ -461,14 +427,14 @@ void execute_opcode(u8 opcode, u8 *num_cycles_out, char *asm_log_out) {
 		case 0x7d: registers.a = registers.l; finish_instruction("LD A,L", 1, 4); break;
 		case 0x7e: registers.a = mem_read(registers.hl); finish_instruction("LD A,(HL)", 1, 8); break;
 		case 0x7f: registers.a = registers.a; finish_instruction("LD A,A", 1, 4); break;
-		case 0x80: execute_instruction_ADD_u8(registers.b, "ADD A,B", 1, 4); break;
-		case 0x81: execute_instruction_ADD_u8(registers.c, "ADD A,C", 1, 4); break;
-		case 0x82: execute_instruction_ADD_u8(registers.d, "ADD A,D", 1, 4); break;
-		case 0x83: execute_instruction_ADD_u8(registers.e, "ADD A,E", 1, 4); break;
-		case 0x84: execute_instruction_ADD_u8(registers.h, "ADD A,H", 1, 4); break;
-		case 0x85: execute_instruction_ADD_u8(registers.l, "ADD A,L", 1, 4); break;
-		case 0x86: execute_instruction_ADD_u8(mem_read(registers.hl), "ADD A,(HL)", 1, 8); break;
-		case 0x87: execute_instruction_ADD_u8(registers.a, "ADD A,A", 1, 4); break;
+		case 0x80: execute_instruction_ADD_A_u8(registers.b, "ADD A,B", 1, 4); break;
+		case 0x81: execute_instruction_ADD_A_u8(registers.c, "ADD A,C", 1, 4); break;
+		case 0x82: execute_instruction_ADD_A_u8(registers.d, "ADD A,D", 1, 4); break;
+		case 0x83: execute_instruction_ADD_A_u8(registers.e, "ADD A,E", 1, 4); break;
+		case 0x84: execute_instruction_ADD_A_u8(registers.h, "ADD A,H", 1, 4); break;
+		case 0x85: execute_instruction_ADD_A_u8(registers.l, "ADD A,L", 1, 4); break;
+		case 0x86: execute_instruction_ADD_A_u8(mem_read(registers.hl), "ADD A,(HL)", 1, 8); break;
+		case 0x87: execute_instruction_ADD_A_u8(registers.a, "ADD A,A", 1, 4); break;
 		case 0x88: execute_instruction_ADC(registers.b, "ADC A,B", 1, 4); break;
 		case 0x89: execute_instruction_ADC(registers.c, "ADC A,C", 1, 4); break;
 		case 0x8a: execute_instruction_ADC(registers.d, "ADC A,D", 1, 4); break;
@@ -733,7 +699,7 @@ void execute_opcode(u8 opcode, u8 *num_cycles_out, char *asm_log_out) {
 			stack_push(registers.bc);
 			finish_instruction("PUSH BC", 1, 16);
 		} break;
-		case 0xc6: execute_instruction_ADD_u8(mem_read(registers.pc+1), "ADD A,x", 2, 8); break;
+		case 0xc6: execute_instruction_ADD_A_u8(mem_read(registers.pc+1), "ADD A,x", 2, 8); break;
 		case 0xc8: {
 			if (registers.f & FLAG_Z) {
 				registers.pc = stack_pop();
