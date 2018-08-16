@@ -127,6 +127,9 @@ void execute_cb_opcode() {
 		case 0x19: execute_instruction_RR(&registers.c, "RR C", 8); break;
 		case 0x1a: execute_instruction_RR(&registers.d, "RR D", 8); break;
 		case 0x1b: execute_instruction_RR(&registers.e, "RR E", 8); break;
+		case 0x1c: execute_instruction_RR(&registers.h, "RR H", 8); break;
+		case 0x1d: execute_instruction_RR(&registers.l, "RR L", 8); break;
+		case 0x1f: execute_instruction_RR(&registers.a, "RR A", 8); break;
 		case 0x20: execute_instruction_SLA(&registers.b, "SLA B"); break;
 		case 0x21: execute_instruction_SLA(&registers.c, "SLA C"); break;
 		case 0x22: execute_instruction_SLA(&registers.d, "SLA D"); break;
@@ -147,6 +150,11 @@ void execute_cb_opcode() {
 		} break;
 		case 0x37: execute_instruction_SWAP(&registers.a, "SWAP A", 8); break;
 		case 0x38: execute_instruction_SRL(&registers.b, "SRL B"); break;
+		case 0x39: execute_instruction_SRL(&registers.c, "SRL C"); break;
+		case 0x3a: execute_instruction_SRL(&registers.d, "SRL D"); break;
+		case 0x3b: execute_instruction_SRL(&registers.e, "SRL E"); break;
+		case 0x3c: execute_instruction_SRL(&registers.h, "SRL H"); break;
+		case 0x3d: execute_instruction_SRL(&registers.l, "SRL L"); break;
 		case 0x3f: execute_instruction_SRL(&registers.a, "SRL A"); break;
 		case 0x40: execute_instruction_BIT(0, registers.b, "BIT 0,B", 8); break;
 		case 0x41: execute_instruction_BIT(0, registers.c, "BIT 0,C", 8); break;

@@ -1,6 +1,5 @@
 #include "internal.h"
 
-// TODO: 16bit ADD func
 // TODO: 8bit ADC func
 // TODO: 8bit CP func
 
@@ -779,6 +778,7 @@ void execute_opcode(u8 opcode, u8 *num_cycles_out, char *asm_log_out) {
 				finish_instruction("JP C,xx", 0, 16);
 			} else finish_instruction("JP C,xx", 3, 12);
 		} break;
+		case 0xde: execute_instruction_SBC(mem_read(registers.pc+1), "SBC A,x", 2, 8); break;
 		case 0xe0: {
 			u8 byte_0 = mem_read(registers.pc+1);
 			mem_write(0xff00 + byte_0, registers.a);
