@@ -216,11 +216,6 @@ void write_next_sample() {
 }
 
 void update_audio(int num_cycles) {
-	static int total_unhandled_cycles = 0;
-	total_unhandled_cycles += num_cycles;
-	
-	f32 cycles_per_sample = CPU_CLOCK_FREQ / (f32)ROBINGB_AUDIO_SAMPLE_RATE;
-	
 	for (int i = 0; i < RING_SIZE; i++) {
 		if (ring_write_index != ring_read_index) write_next_sample();
 		else break;
