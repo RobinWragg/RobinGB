@@ -6,7 +6,7 @@
 // - Writing to DIV every instruction, for example, will make the APU produce the same frequency with the same volume even if sweep and fade out are enabled.
 // - Writing to DIV doesn't affect the frequency itself. The waveform generation is driven by another timer.
 
-#define RING_SIZE (8192) // TODO: set this low to improve latency
+#define RING_SIZE (2048) // TODO: set this low to improve latency
 #define CHAN3_WAVE_PATTERN_LENGTH (32)
 
 struct {
@@ -221,9 +221,9 @@ void update_audio(int num_cycles) {
 	
 	f32 cycles_per_sample = CPU_CLOCK_FREQ / (f32)ROBINGB_AUDIO_SAMPLE_RATE;
 	
-	while (total_unhandled_cycles > cycles_per_sample) {
-		total_unhandled_cycles -= cycles_per_sample;
-		write_next_sample();
+	for (int i = 0; i < RING_SIZE; i++) {
+		if (ring_write_index != ring_read_index) write_next_sample();
+		else break;
 	}
 }
 
