@@ -125,7 +125,13 @@ void zero_unused_f_register_bits() {
 	registers.f &= 0xf0;
 }
 
-void robingb_init(const char *rom_file_path) {
+void (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]) = 0;
+
+void robingb_init(const char *rom_file_path, void (*read_file_func_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])) {
+	
+	robingb_read_file = read_file_func_ptr;
+	assert(robingb_read_file);
+	
 	mem_init(rom_file_path);
 	
 	printf("Name: ");

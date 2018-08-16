@@ -80,6 +80,8 @@ typedef struct {
 	char byte[1024];
 } Mem_Address_Description;
 
+extern void (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]);
+
 extern Registers registers;
 extern bool halted;
 extern bool mem_logging_enabled;

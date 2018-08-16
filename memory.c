@@ -54,11 +54,7 @@ void switch_rom_bank(int new_bank_index) {
 	const int rom_bank_source = new_bank_index * 0x4000; // Multiples of 16kB
 	const int rom_bank_destination = 0x4000;
 	
-	FILE *f = fopen(current_rom_file_path, "rb");
-	assert(f);
-	fseek(f, rom_bank_source, SEEK_SET);
-	fread(&memory[rom_bank_destination], sizeof(u8), single_bank_size, f);
-	fclose(f);
+	robingb_read_file(current_rom_file_path, rom_bank_source, single_bank_size, &memory[rom_bank_destination]);
 	
 	current_rom_bank = new_bank_index;
 }
@@ -126,14 +122,7 @@ void mem_init(const char *rom_file_path) {
 	const int single_bank_size = 1024 * 16; // 16kB
 	const int bank_0_destination = 0x0000;
 	
-	FILE *f = fopen(current_rom_file_path, "rb");
-	char buf[1024];
-	printf("<%s>\n", current_rom_file_path);
-	printf("<%s>\n", getcwd(buf, 1024));
-	assert(f);
-	fseek(f, 0, SEEK_SET);
-	fread(&memory[bank_0_destination], sizeof(u8), single_bank_size, f);
-	fclose(f);
+	robingb_read_file(current_rom_file_path, 0, single_bank_size, &memory[bank_0_destination]);
 	
 	current_rom_bank = 0;
 	int cart_type = mem_read(0x0147);
