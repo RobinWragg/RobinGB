@@ -163,10 +163,8 @@ void zero_unused_f_register_bits() {
 	registers.f &= 0xf0;
 }
 
-bool initialised = false;
-
-void init() {
-	mem_init();
+void robingb_init(const char *rom_file_path) {
+	mem_init(rom_file_path);
 	
 	printf("Name: ");
 	for (int i = 0x0134; i < 0x0143; i++) {
@@ -191,12 +189,10 @@ void init() {
 	}
 	
 	init_register_values();
-	initialised = true;
 }
 
 // TODO: emulator_pump() should execute until either LY increments (and that line has been drawn, if we do it that way) or (clockfreq / 60) cycles have passed. Whichever comes first.
 int robingb_update(RobinGB_Input *input) {
-	if (!initialised) init();
 	
 	mem_remove_all_logs();
 	

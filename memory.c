@@ -1,4 +1,5 @@
 #include "internal.h"
+#include <unistd.h>
 
 u8 memory[1024 * 64];
 
@@ -41,30 +42,10 @@ typedef enum {
 	MBC_3
 } Mbc_Type;
 
-// games
-const char *rom_file_path = "../roms/Super Mario Land (World).gb";
-// const char *rom_file_path = "../roms/Super Mario Land 2 - 6 Golden Coins.gb";
-// const char *rom_file_path = "../roms/Pokemon Blue Version.gb";
-// const char *rom_file_path = "../roms/Marble Madness.gb";
-
-// passing tests
-// const char *rom_file_path = "../roms/tests/cpu_instrs/individual/06-ld r,r.gb";
-// const char *rom_file_path = "../roms/tests/cpu_instrs/individual/10-bit ops.gb";
-// const char *rom_file_path = "../roms/tests/cpu_instrs/individual/01-special.gb";
-// const char *rom_file_path = "../roms/tests/cpu_instrs/individual/05-op rp.gb";
-
-// failing tests
-// const char *rom_file_path = "../roms/tests/instr_timing/instr_timing.gb";
-// const char *rom_file_path = "../roms/tests/cpu_instrs/individual/02-interrupts.gb";
-// const char *rom_file_path = "../roms/tests/cpu_instrs/individual/03-op sp,hl.gb";
-// const char *rom_file_path = "../roms/tests/cpu_instrs/individual/04-op r,imm.gb";
-// const char *rom_file_path = "../roms/tests/cpu_instrs/individual/07-jr,jp,call,ret,rst.gb";
-// const char *rom_file_path = "../roms/tests/cpu_instrs/individual/08-misc instrs.gb";
-// const char *rom_file_path = "../roms/tests/cpu_instrs/individual/09-op r,r.gb";
-// const char *rom_file_path = "../roms/tests/cpu_instrs/individual/11-op a,(hl).gb";
-
 int current_rom_bank;
 Mbc_Type mbc_type = MBC_NONE;
+
+char current_rom_file_path[256];
 
 void switch_rom_bank(int new_bank_index) {
 	assert(new_bank_index > 0 && new_bank_index <= 125);
@@ -73,7 +54,7 @@ void switch_rom_bank(int new_bank_index) {
 	const int rom_bank_source = new_bank_index * 0x4000; // Multiples of 16kB
 	const int rom_bank_destination = 0x4000;
 	
-	FILE *f = fopen(rom_file_path, "rb");
+	FILE *f = fopen(current_rom_file_path, "rb");
 	assert(f);
 	fseek(f, rom_bank_source, SEEK_SET);
 	fread(&memory[rom_bank_destination], sizeof(u8), single_bank_size, f);
@@ -106,11 +87,16 @@ void calculate_and_switch_rom_bank(int address, u8 value) {
 	}
 }
 
-void mem_init() {
+void mem_init(const char *rom_file_path) {
+	strcpy(current_rom_file_path, rom_file_path);
+	
 	const int single_bank_size = 1024 * 16; // 16kB
 	const int bank_0_destination = 0x0000;
 	
-	FILE *f = fopen(rom_file_path, "rb");
+	FILE *f = fopen(current_rom_file_path, "rb");
+	char buf[1024];
+	printf("<%s>\n", current_rom_file_path);
+	printf("<%s>\n", getcwd(buf, 1024));
 	assert(f);
 	fseek(f, 0, SEEK_SET);
 	fread(&memory[bank_0_destination], sizeof(u8), single_bank_size, f);

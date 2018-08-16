@@ -1,4 +1,4 @@
-#include "robingb.h"
+#include "RobinGB.h"
 
 typedef float f32;
 typedef double f64;
@@ -93,7 +93,7 @@ void finish_instruction(const char *desc, u16 pc_increment, u8 num_cycles_param)
 void mem_get_logs(Mem_Log logs_out[], int *num_logs_out);
 void mem_remove_all_logs();
 Mem_Address_Description mem_get_address_description(int address);
-void mem_init();
+void mem_init(const char *rom_file_path);
 uint8_t mem_read(int address);
 u16 mem_read_u16(int address);
 void mem_write(int address, uint8_t value);

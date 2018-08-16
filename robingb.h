@@ -9,6 +9,7 @@ typedef struct {
 	bool start, select, a, b;
 } RobinGB_Input;
 
+void robingb_init(const char *rom_file_path);
 int robingb_update(RobinGB_Input *input);
 void robingb_read_next_audio_sample(int16_t *l, int16_t *r);
 void robingb_get_background(uint8_t bg_out[]);
