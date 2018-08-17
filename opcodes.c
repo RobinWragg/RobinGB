@@ -1,7 +1,7 @@
 #include "internal.h"
 #include <string.h>
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
 
 // TODO: 8bit ADC func
 // TODO: 8bit CP func
@@ -914,7 +914,12 @@ void execute_opcode(u8 opcode, u8 *num_cycles_out, char *asm_log_out) {
 			registers.pc = 0x0038;
 			finish_instruction("RST 38H", 0, 16);
 		} break;
-		default: printf("Unknown opcode %x at address %x\n", opcode, registers.pc); assert(false); break;
+		default: {
+			char buf[128] = {0};
+			sprintf(buf, "Unknown opcode %x at address %x\n", opcode, registers.pc);
+			robingb_log(buf);
+			assert(false);
+		} break;
 	}
 }
 

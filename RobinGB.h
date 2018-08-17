@@ -1,6 +1,5 @@
 // TODO: Add a print/log function
 // TODO: Remove assert()s
-// TODO: Remove stdio.h. Not needed if we're not printf()ing.
 
 #ifndef ROBINGB_H
 #define ROBINGB_H

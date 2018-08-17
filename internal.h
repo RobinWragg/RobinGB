@@ -87,6 +87,8 @@ extern void (*robingb_read_file)(const char *path, uint32_t offset, uint32_t siz
 extern Registers registers;
 extern bool halted;
 extern bool mem_logging_enabled;
+
+void robingb_log_with_prefix(const char *prefix, const char *main_body);
 void request_interrupt(uint8_t interrupts_to_request);
 void handle_interrupts();
 void stack_push(u16 value);

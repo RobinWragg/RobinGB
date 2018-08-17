@@ -36,13 +36,6 @@ u16 stack_pop() {
 	return value;
 }
 
-void print_binary(u8 byte_value) {
-	for (int i = 0; i < 8; i++) {
-		printf("%i ", (byte_value & (1 << i)) > 0 ? 1 : 0);
-	}
-	printf("\n");
-}
-
 u16 make_u16(u8 least_sig, u8 most_sig) {
 	union {
 		u8 bytes[2];
@@ -64,81 +57,26 @@ void init_registers() {
 	registers.ime = true;
 }
 
-void show_write_progression() {
-	Mem_Log logs[1024];
-	int num_logs;
-	mem_get_logs(logs, &num_logs);
-	
-	static Mem_Address_Description last_address_desc;
-	
-	for (int i = 0; i < num_logs; i++) {
-		if (!logs[i].is_write) continue;
-		
-		Mem_Address_Description desc = mem_get_address_description(logs[i].address);
-		
-		if (strcmp(last_address_desc.region, desc.region) != 0) {
-			printf("Write: %s\n", desc.region);
-			last_address_desc = desc;
-		}
-	}
-}
-
-void temp(Mem_Log log) {
-	Mem_Address_Description desc = mem_get_address_description(log.address);
-	// printf("%x\n", log.address);
-	if (strcmp(desc.region, "Cart ROM, Bank 0") != 0
-		&& strcmp(desc.region, "Cart ROM, Switchable Bank") != 0
-		&& strcmp(desc.region, "HRAM") != 0
-		&& strcmp(desc.region, "WRAM") != 0) {
-		printf("%s, %s\n", desc.region, desc.byte);
-	}
-	// assert(desc.region[0] != '\0');
-}
-
 void report(const char *asm_log) {
-	printf("%s\n", asm_log);
+	char buf[128] = {0};
 	
-	// printf("AF:%2x%2x   BC:%2x%2x   DE:%2x%2x   HL:%2x%2x   SP:%4x   PC:%4x\n", registers.a, registers.f, registers.b, registers.c, registers.d, registers.e, registers.h, registers.l, registers.sp, registers.pc);
+	// sprintf(buf, "%s\n", asm_log);
+	// robingb_log(buf);
 	
-	// printf("IE:%2x   IF:%2x   IME:%i\n", mem_read(IE_ADDRESS), mem_read(IF_ADDRESS), registers.ime);
+	// sprintf(buf, "AF:%2x%2x   BC:%2x%2x   DE:%2x%2x   HL:%2x%2x   SP:%4x   PC:%4x\n", registers.a, registers.f, registers.b, registers.c, registers.d, registers.e, registers.h, registers.l, registers.sp, registers.pc);
+	// robingb_log(buf);
 	
-	// printf("Flags: Z:%i  N:%i  H:%i  C:%i\n", (registers.f & FLAG_Z) > 0, (registers.f & FLAG_N) > 0, (registers.f & FLAG_H) > 0, (registers.f & FLAG_C) > 0);
+	// sprintf(buf, "IE:%2x   IF:%2x   IME:%i\n", mem_read(IE_ADDRESS), mem_read(IF_ADDRESS), registers.ime);
+	// robingb_log(buf);
 	
-	{
-		Mem_Log logs[1024];
-		int num_logs;
-		mem_get_logs(logs, &num_logs);
-		
-		// bool reads_exist = false;
-		// for (int i = 0; i < num_logs; i++) {
-		// 	if (logs[i].is_write) continue;
-			
-		// 	if (!reads_exist) {
-		// 		reads_exist = true;
-		// 		printf("Reads: ");
-		// 	}
-		// 	printf("%2x<-%4x ", logs[i].value, logs[i].address);
-		// }
-		// if (reads_exist) printf("\n");
-		
-		// bool writes_exist = false;
-		// for (int i = 0; i < num_logs; i++) {
-		// 	if (!logs[i].is_write) continue;
-			
-		// 	if (!writes_exist) {
-		// 		writes_exist = true;
-		// 		printf("Writes: ");
-		// 	}
-		// 	// temp(logs[i]);
-		// 	if (logs[i].is_echo) printf("ECHO:%2x->%4x ", logs[i].value, logs[i].address);
-		// 	else printf("%2x->%4x ", logs[i].value, logs[i].address);
-		// }
-		// if (writes_exist) printf("\n");
-	}
+	// sprintf(buf, "Flags: Z:%i  N:%i  H:%i  C:%i\n", (registers.f & FLAG_Z) > 0, (registers.f & FLAG_N) > 0, (registers.f & FLAG_H) > 0, (registers.f & FLAG_C) > 0);
+	// robingb_log(buf);
 	
-	// printf("LY: %x\n", mem_read(0xff44));
-	// printf("%x\n", mem_read(0xff40)); // 11 91
-	printf("\n");
+	// sprintf(buf, "LY: %x\n", mem_read(0xff44));
+	// robingb_log(buf);
+	
+	strcpy(buf, "\n");
+	robingb_log(buf);
 }
 
 void zero_unused_f_register_bits() {
@@ -154,15 +92,16 @@ void robingb_init(const char *rom_file_path, void (*read_file_function_ptr)(cons
 	
 	mem_init(rom_file_path);
 	
-	robingb_log("sup");
-	
-	printf("Name: ");
-	for (int i = 0x0134; i < 0x0143; i++) {
-		u8 b = mem_read(i);
-		if (b == '\0') break;
-		printf("%c", b);
+	{
+		char buf[128] = {0};
+		strcpy(buf, "Name: ");
+		for (int i = 0x0134; i < 0x0143; i++) {
+			s8 b = mem_read(i);
+			if (b == '\0') break;
+			sprintf(buf, "%s%c", buf, b);
+		}
+		robingb_log(buf);
 	}
-	printf("\n");
 	
 	// barebones cart error check
 	{
@@ -186,7 +125,9 @@ int robingb_update(RobinGB_Input *input) {
 	
 	u8 opcode = mem_read(registers.pc);
 	
-	// printf("Address %4x: %2x %2x %2x %2x\n", registers.pc, mem_read(registers.pc), mem_read(registers.pc+1), mem_read(registers.pc+2), mem_read(registers.pc+3));
+	// char buf[128] = {0};
+	// sprintf(buf, "Address %4x: %2x %2x %2x %2x\n", registers.pc, mem_read(registers.pc), mem_read(registers.pc+1), mem_read(registers.pc+2), mem_read(registers.pc+3));
+	// robingb_log(buf);
 	
 	u8 num_cycles;
 	char asm_log[1024];

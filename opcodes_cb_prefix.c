@@ -352,7 +352,12 @@ void execute_cb_opcode() {
 			mem_write(registers.hl, hl_value);
 		} break;
 		case 0xff: execute_instruction_SET(7, &registers.a, "SET 7,A", 8); break;
-		default: printf("Unknown opcode cb%x at address %x\n", opcode, registers.pc-1); assert(false); break;
+		default: {
+			char buf[128] = {0};
+			sprintf(buf, "Unknown opcode cb%x at address %x\n", opcode, registers.pc-1);
+			robingb_log(buf);
+			assert(false);
+		} break;
 	}
 }
 
