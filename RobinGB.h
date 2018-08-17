@@ -1,3 +1,7 @@
+// TODO: Add a print/log function
+// TODO: Remove assert()s
+// TODO: Remove stdio.h. Not needed if we're not printf()ing.
+
 #ifndef ROBINGB_H
 #define ROBINGB_H
 
@@ -12,9 +16,12 @@ typedef struct {
 	bool start, select, a, b;
 } RobinGB_Input;
 
+// Set this to your logging function if you want to receive logs from RobinGB.
+extern void (*robingb_logging_function_ptr)(const char *text);
+
 void robingb_init(
 	const char *rom_file_path,
-	void (*read_file_func_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
+	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
 	);
 int robingb_update(RobinGB_Input *input);
 void robingb_read_next_audio_sample(int16_t *l, int16_t *r);

@@ -14,7 +14,7 @@ typedef int16_t s16;
 typedef uint32_t u32;
 typedef int32_t s32;
 
-#define robingb_log(x) if (robingb_logging_function_ptr) { robingb_logging_function_ptr(x); }
+#define robingb_log(x) robingb_log_with_prefix(__func__, x)
 
 #define bit(n) (0x01 << n)
 

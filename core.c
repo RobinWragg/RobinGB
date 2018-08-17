@@ -7,6 +7,21 @@
 Registers registers;
 bool halted = false;
 
+void (*robingb_logging_function_ptr)(const char *text) = 0;
+
+void robingb_log_with_prefix(const char *prefix, const char *main_body) {
+	if (robingb_logging_function_ptr) {
+		char *buf = malloc(strlen(prefix) + strlen(main_body) + 5);
+		strcat(buf, prefix);
+		strcat(buf, "(): ");
+		strcat(buf, main_body);
+		
+		robingb_logging_function_ptr(buf);
+		
+		free(buf);
+	}
+}
+
 void stack_push(u16 value) {
 	u8 *bytes = (u8*)&value;
 	registers.sp -= 2;
@@ -131,12 +146,14 @@ void zero_unused_f_register_bits() {
 
 void (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]) = 0;
 
-void robingb_init(const char *rom_file_path, void (*read_file_func_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])) {
+void robingb_init(const char *rom_file_path, void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])) {
 	
-	robingb_read_file = read_file_func_ptr;
+	robingb_read_file = read_file_function_ptr;
 	assert(robingb_read_file);
 	
 	mem_init(rom_file_path);
+	
+	robingb_log("sup");
 	
 	printf("Name: ");
 	for (int i = 0x0134; i < 0x0143; i++) {
