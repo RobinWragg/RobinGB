@@ -1,4 +1,5 @@
 #include "internal.h"
+#include <assert.h>
 
 void handle_interrupts() {
 	if (registers.ime) {

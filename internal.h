@@ -1,3 +1,5 @@
+// TODO: Prevent name clashes with user code (RobinGB prefixes, static definitions in .c files)
+
 #ifndef ROBINGB_INTERNAL_H
 #define ROBINGB_INTERNAL_H
 
@@ -12,10 +14,7 @@ typedef int16_t s16;
 typedef uint32_t u32;
 typedef int32_t s32;
 
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#include <math.h>
+#define robingb_log(x) if (robingb_logging_function_ptr) { robingb_logging_function_ptr(x); }
 
 #define bit(n) (0x01 << n)
 

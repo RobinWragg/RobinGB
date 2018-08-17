@@ -1,4 +1,6 @@
 #include "internal.h"
+#include <assert.h>
+#include <stdio.h>
 
 void execute_instruction_RL(u8 *byte_to_rotate, const char *asm_name, u8 num_cycles) {
 	bool prev_carry = registers.f & FLAG_C;

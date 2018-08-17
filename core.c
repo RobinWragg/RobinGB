@@ -1,4 +1,8 @@
 #include "internal.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
 
 Registers registers;
 bool halted = false;

@@ -1,4 +1,5 @@
 #include "internal.h"
+#include <assert.h>
 
 // DIV and AudioPU
 // - The APU uses the DIV to update sweep (channel 1), fade in/out and time out, the same way the timer uses it to update itself.

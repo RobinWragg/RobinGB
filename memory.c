@@ -1,5 +1,6 @@
 #include "internal.h"
-#include <unistd.h>
+#include <assert.h>
+#include <string.h>
 
 u8 memory[1024 * 64];
 

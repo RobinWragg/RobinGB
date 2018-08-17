@@ -1,4 +1,6 @@
 #include "internal.h"
+#include <assert.h>
+#include <string.h>
 
 u8 LY;
 

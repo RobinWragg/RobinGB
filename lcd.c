@@ -1,4 +1,5 @@
 #include "internal.h"
+#include <assert.h>
 
 // TODO: "Each bit is set to 1 automatically when an internal signal from that subsystem goes from '0' to '1', it doesn't matter if the corresponding bit in IE is set. This is specially important in the case of LCD STAT interrupt, as it will be explained in the video controller chapter."
 

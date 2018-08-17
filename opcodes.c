@@ -1,17 +1,19 @@
 #include "internal.h"
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
 
 // TODO: 8bit ADC func
 // TODO: 8bit CP func
 
 char *asm_log_for_finish;
-u8 *num_cycles_for_finish = NULL;
+u8 *num_cycles_for_finish = 0;
 
 void finish_instruction(const char *desc, u16 pc_increment, u8 num_cycles_param) {
 	assert(num_cycles_for_finish);
 	registers.pc += pc_increment;
 	*num_cycles_for_finish = num_cycles_param;
 	
-	// sprintf(asm_log_for_finish, "%s - %i cycles", desc, *num_cycles_for_finish);
 	strcpy(asm_log_for_finish, desc);
 }
 

@@ -1,4 +1,5 @@
 #include "internal.h"
+#include <assert.h>
 
 #define DIV_ADDRESS (0xff04)
 #define TIMA_ADDRESS (0xff05)
