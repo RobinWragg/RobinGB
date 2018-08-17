@@ -1,6 +1,7 @@
 #include "internal.h"
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 
 u8 memory[1024 * 64];
 
@@ -54,6 +55,10 @@ void switch_rom_bank(int new_bank_index) {
 	const int single_bank_size = 0x4000; // 16kB
 	const int rom_bank_source = new_bank_index * 0x4000; // Multiples of 16kB
 	const int rom_bank_destination = 0x4000;
+	
+	char buf[64] = {0};
+	sprintf(buf, "Switching to ROM bank %i, loading %iKB from file", new_bank_index, single_bank_size/1024);
+	robingb_log(buf);
 	
 	robingb_read_file(current_rom_file_path, rom_bank_source, single_bank_size, &memory[rom_bank_destination]);
 	
@@ -123,6 +128,9 @@ void mem_init(const char *rom_file_path) {
 	const int single_bank_size = 1024 * 16; // 16kB
 	const int bank_0_destination = 0x0000;
 	
+	char buf[64] = {0};
+	sprintf(buf, "Loading initial ROM data, loading %iKB from file", single_bank_size/1024);
+	robingb_log(buf);
 	robingb_read_file(current_rom_file_path, 0, single_bank_size, &memory[bank_0_destination]);
 	
 	current_rom_bank = 0;
