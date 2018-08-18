@@ -49,28 +49,33 @@ Mbc_Type mbc_type = MBC_NONE;
 char current_rom_file_path[256];
 
 //
-// ROM banking code
+// cart control code
 //-----------------------------------------------
 
-#define SINGLE_ROM_BANK_SIZE 16384 // 16kB
+#define ROM_BANK_SIZE 16384 // 16kB
+#define MAX_NUM_ROM_BANKS_IN_REAL_RAM 4
 
-int current_switchable_rom_bank = -1;
+int active_switchable_rom_bank_index = -1;
+
+static void init_rom_cache() {
+	
+}
 
 static void load_rom_bank(int destination_slot_index, int new_bank_index) {
 	assert(new_bank_index >= 0 && new_bank_index <= 125);
 	assert(destination_slot_index == 0 || destination_slot_index == 1);
 	if (destination_slot_index == 0) assert(new_bank_index == 0);
 	
-	int source_address = new_bank_index * SINGLE_ROM_BANK_SIZE;
+	int source_address = new_bank_index * ROM_BANK_SIZE;
 	int destination_address = destination_slot_index == 0 ? 0x0000 : 0x4000;
 	
 	char buf[64] = {0};
-	sprintf(buf, "Loading ROM bank %i into slot %i (%iKB from file)", new_bank_index, destination_slot_index, SINGLE_ROM_BANK_SIZE/1024);
+	sprintf(buf, "Loading ROM bank %i into slot %i (%iKB from file)", new_bank_index, destination_slot_index, ROM_BANK_SIZE/1024);
 	robingb_log(buf);
 	
-	robingb_read_file(current_rom_file_path, source_address, SINGLE_ROM_BANK_SIZE, &memory[destination_address]);
+	robingb_read_file(current_rom_file_path, source_address, ROM_BANK_SIZE, &memory[destination_address]);
 	
-	current_switchable_rom_bank = new_bank_index;
+	active_switchable_rom_bank_index = new_bank_index;
 }
 
 static void perform_rom_bank_control(int address, u8 value) {
@@ -79,7 +84,7 @@ static void perform_rom_bank_control(int address, u8 value) {
 	switch (mbc_type) {
 		case MBC_1: {
 			assert(value <= 0x1f);
-			u8 new_bank = current_switchable_rom_bank & ~0x1f; // wipe the lower 5 bits
+			u8 new_bank = active_switchable_rom_bank_index & ~0x1f; // wipe the lower 5 bits
 			new_bank |= value; // set the lower 5 bits to the new value
 
 			if (new_bank == 0x00) new_bank++;
@@ -112,12 +117,21 @@ void perform_cart_control(int address, u8 value) {
 	} else assert(false);
 }
 
+u8 read_rom(int address) {
+	if (address < 0x4000) return memory[address];
+	else {
+		return memory[address];
+	}
+}
+
 //
 // General memory code
 //-----------------------------------------------
 
 void mem_init(const char *rom_file_path) {
 	strcpy(current_rom_file_path, rom_file_path);
+	
+	init_rom_cache();
 	
 	mem_write(0xff10, 0x80);
 	mem_write(0xff11, 0xbf);
@@ -248,8 +262,11 @@ void mem_add_log(u16 address, u8 value, bool is_write, bool is_echo) {
 	mem_num_logs++;
 }
 
-u8 mem_read(int address) {
-	u8 value = memory[address];
+u8 mem_read(int address) {	
+	u8 value;
+	if (address < 0x8000) value = read_rom(address);
+	else value = memory[address];
+	
 	if (mem_logging_enabled) mem_add_log(address, value, false, false);
 	return value;
 }
