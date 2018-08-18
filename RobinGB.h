@@ -1,5 +1,6 @@
 // TODO: Add a print/log function
 // TODO: Remove assert()s
+// TODO: Add formatting cabability to robingb_log()
 
 #ifndef ROBINGB_H
 #define ROBINGB_H

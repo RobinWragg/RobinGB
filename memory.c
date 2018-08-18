@@ -1,9 +1,18 @@
+// TODO: Overwrite the oldest cached ROM bank if there's no more room in the cache
+
 #include "internal.h"
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 
-u8 memory[1024 * 64];
+#define GAME_BOY_TOTAL_MEMORY_SIZE 1024*64
+
+#define ROM_BANK_CACHE_ADDRESS GAME_BOY_TOTAL_MEMORY_SIZE
+#define ROM_BANK_SIZE 16384 // 16kB
+#define MAX_NUM_CACHED_ROM_BANKS 10
+#define MAX_NUM_ROM_BANKS_IN_REAL_RAM (MAX_NUM_CACHED_ROM_BANKS+1) // plus one for bank slot 0
+
+u8 memory[GAME_BOY_TOTAL_MEMORY_SIZE + MAX_NUM_CACHED_ROM_BANKS*ROM_BANK_SIZE];
 
 typedef enum {
 	CART_TYPE_ROM_ONLY = 0x00,
@@ -52,30 +61,94 @@ char current_rom_file_path[256];
 // cart control code
 //-----------------------------------------------
 
-#define ROM_BANK_SIZE 16384 // 16kB
-#define MAX_NUM_ROM_BANKS_IN_REAL_RAM 4
+int active_switchable_rom_bank_index = 0;
 
-int active_switchable_rom_bank_index = -1;
+struct {
+	int bank_index;
+	s32 address;
+} rom_bank_addresses[4];
 
 static void init_rom_cache() {
+	for (int i = 0; i < MAX_NUM_ROM_BANKS_IN_REAL_RAM; i++) {
+		rom_bank_addresses[i].bank_index = -1;
+	}
 	
+	// bank slots 0 and 1 always contain banks 0 and 1
+	rom_bank_addresses[0].bank_index = 0;
+	rom_bank_addresses[0].address = 0x0000;
+	rom_bank_addresses[1].bank_index = 1;
+	rom_bank_addresses[1].address = 0x4000;
+	
+	for (int i = 2; i < MAX_NUM_ROM_BANKS_IN_REAL_RAM; i++) {
+		rom_bank_addresses[i].address = ROM_BANK_CACHE_ADDRESS + ROM_BANK_SIZE * (i-2);
+	}
 }
 
-static void load_rom_bank(int destination_slot_index, int new_bank_index) {
-	assert(new_bank_index >= 0 && new_bank_index <= 125);
+static u8 read_rom(int address) {
+	assert(address < 0x8000);
+	
+	if (address < 0x4000) return memory[address];
+	else {
+		// ROM bank slot 1 needs to be accessed, so look in the cache
+		u16 address_offset = address - 0x4000;
+		
+		s32 cached_bank_address = -1;
+		
+		for (int i = 0; i < MAX_NUM_CACHED_ROM_BANKS; i++) {
+			if (rom_bank_addresses[i].bank_index == active_switchable_rom_bank_index) {
+				cached_bank_address = rom_bank_addresses[i].address;
+				break;
+			}
+		}
+		
+		assert(cached_bank_address != -1);
+		return memory[cached_bank_address + address_offset];
+	}
+}
+
+static void load_rom_bank(int destination_slot_index, int file_bank_index) {
+	assert(file_bank_index >= 0 && file_bank_index <= 125);
 	assert(destination_slot_index == 0 || destination_slot_index == 1);
-	if (destination_slot_index == 0) assert(new_bank_index == 0);
+	if (destination_slot_index == 0) assert(file_bank_index == 0);
+	if (destination_slot_index == 1) assert(file_bank_index > 0);
 	
-	int source_address = new_bank_index * ROM_BANK_SIZE;
-	int destination_address = destination_slot_index == 0 ? 0x0000 : 0x4000;
+	u16 source_address = file_bank_index * ROM_BANK_SIZE;
 	
-	char buf[64] = {0};
-	sprintf(buf, "Loading ROM bank %i into slot %i (%iKB from file)", new_bank_index, destination_slot_index, ROM_BANK_SIZE/1024);
-	robingb_log(buf);
-	
-	robingb_read_file(current_rom_file_path, source_address, ROM_BANK_SIZE, &memory[destination_address]);
-	
-	active_switchable_rom_bank_index = new_bank_index;
+	if (file_bank_index > 1) {
+		// check the cache for the bank
+		bool found = false;
+		for (int i = 0; i < MAX_NUM_CACHED_ROM_BANKS; i++) {
+			if (rom_bank_addresses[i].bank_index == file_bank_index) {
+				found = true;
+				break;
+			}
+		}
+		
+		if (!found) {
+			// store the bank in the cache
+			for (int i = 0; i < MAX_NUM_CACHED_ROM_BANKS; i++) {
+				if (rom_bank_addresses[i].bank_index == -1) {
+					rom_bank_addresses[i].bank_index = file_bank_index;
+					
+					char buf[128] = {0};
+					sprintf(buf, "Loading ROM bank %i (%iKB from %s)", file_bank_index, ROM_BANK_SIZE/1024, current_rom_file_path);
+					robingb_log(buf);
+					
+					robingb_read_file(current_rom_file_path, source_address, ROM_BANK_SIZE, &memory[rom_bank_addresses[i].address]);
+					break;
+				}
+			}
+		}
+		
+		active_switchable_rom_bank_index = file_bank_index;
+	} else {
+		// store it in the appropriate place in standard Game Boy memory
+		u16 destination_address = destination_slot_index == 0 ? 0x0000 : 0x4000;
+		char buf[128] = {0};
+		sprintf(buf, "Loading ROM bank %i (%iKB from file)", file_bank_index, ROM_BANK_SIZE/1024);
+		robingb_log(buf);
+		robingb_read_file(current_rom_file_path, source_address, ROM_BANK_SIZE, &memory[destination_address]);
+	}
 }
 
 static void perform_rom_bank_control(int address, u8 value) {
@@ -115,13 +188,6 @@ void perform_cart_control(int address, u8 value) {
 	} else if (address >= 0x6000 && address < 0x8000) {
 		assert(false); // MBC1: ROM/RAM mode select
 	} else assert(false);
-}
-
-u8 read_rom(int address) {
-	if (address < 0x4000) return memory[address];
-	else {
-		return memory[address];
-	}
 }
 
 //
@@ -262,7 +328,7 @@ void mem_add_log(u16 address, u8 value, bool is_write, bool is_echo) {
 	mem_num_logs++;
 }
 
-u8 mem_read(int address) {	
+u8 mem_read(int address) {
 	u8 value;
 	if (address < 0x8000) value = read_rom(address);
 	else value = memory[address];
