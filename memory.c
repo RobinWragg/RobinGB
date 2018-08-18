@@ -44,50 +44,77 @@ typedef enum {
 	MBC_3
 } Mbc_Type;
 
-int current_rom_bank;
 Mbc_Type mbc_type = MBC_NONE;
 
 char current_rom_file_path[256];
 
-void switch_rom_bank(int new_bank_index) {
-	assert(new_bank_index > 0 && new_bank_index <= 125);
+//
+// ROM banking code
+//-----------------------------------------------
+
+#define SINGLE_ROM_BANK_SIZE 16384 // 16kB
+
+int current_switchable_rom_bank = -1;
+
+static void load_rom_bank(int destination_slot_index, int new_bank_index) {
+	assert(new_bank_index >= 0 && new_bank_index <= 125);
+	assert(destination_slot_index == 0 || destination_slot_index == 1);
+	if (destination_slot_index == 0) assert(new_bank_index == 0);
 	
-	const int single_bank_size = 0x4000; // 16kB
-	const int rom_bank_source = new_bank_index * 0x4000; // Multiples of 16kB
-	const int rom_bank_destination = 0x4000;
+	int source_address = new_bank_index * SINGLE_ROM_BANK_SIZE;
+	int destination_address = destination_slot_index == 0 ? 0x0000 : 0x4000;
 	
 	char buf[64] = {0};
-	sprintf(buf, "Switching to ROM bank %i, loading %iKB from file", new_bank_index, single_bank_size/1024);
+	sprintf(buf, "Loading ROM bank %i into slot %i (%iKB from file)", new_bank_index, destination_slot_index, SINGLE_ROM_BANK_SIZE/1024);
 	robingb_log(buf);
 	
-	robingb_read_file(current_rom_file_path, rom_bank_source, single_bank_size, &memory[rom_bank_destination]);
+	robingb_read_file(current_rom_file_path, source_address, SINGLE_ROM_BANK_SIZE, &memory[destination_address]);
 	
-	current_rom_bank = new_bank_index;
+	current_switchable_rom_bank = new_bank_index;
 }
 
-void calculate_and_switch_rom_bank(int address, u8 value) {
+static void perform_rom_bank_control(int address, u8 value) {
 	assert(address >= 0x2000 && address < 0x4000);
 	
 	switch (mbc_type) {
 		case MBC_1: {
 			assert(value <= 0x1f);
-			u8 new_bank = current_rom_bank & ~0x1f; // wipe the lower 5 bits
+			u8 new_bank = current_switchable_rom_bank & ~0x1f; // wipe the lower 5 bits
 			new_bank |= value; // set the lower 5 bits to the new value
 
 			if (new_bank == 0x00) new_bank++;
 			else if (new_bank == 0x20) new_bank++;
 			else if (new_bank == 0x40) new_bank++;
 			else if (new_bank == 0x60) new_bank++;
-			switch_rom_bank(new_bank);
+			load_rom_bank(1, new_bank);
 		} break;
 		case MBC_3: {
 			assert(value <= 0x7f);
 			if (value == 0x00) value++;
-			switch_rom_bank(value);
+			load_rom_bank(1, value);
 		} break;
 		default: assert(false); break;
 	}
 }
+
+void perform_cart_control(int address, u8 value) {
+	if (address >= 0x0000 && address < 0x2000) {
+		// MBC1: external RAM control (at 0xa000 to 0xbfff)
+		assert(false); 
+	} else if (address >= 0x2000 && address < 0x4000) {
+		
+		perform_rom_bank_control(address, value);
+		
+	} else if (address >= 0x4000 && address < 0x6000) {
+		assert(false); // MBC1: RAM bank control, or, upper bits of ROM bank number, depending on ROM/RAM mode
+	} else if (address >= 0x6000 && address < 0x8000) {
+		assert(false); // MBC1: ROM/RAM mode select
+	} else assert(false);
+}
+
+//
+// General memory code
+//-----------------------------------------------
 
 void mem_init(const char *rom_file_path) {
 	strcpy(current_rom_file_path, rom_file_path);
@@ -125,16 +152,10 @@ void mem_init(const char *rom_file_path) {
 	mem_write(IF_ADDRESS, 0xe1); // TODO: Might be acceptable for this to be 0xe0
 	mem_write(IE_ADDRESS, 0x00);
 	
-	const int single_bank_size = 1024 * 16; // 16kB
-	const int bank_0_destination = 0x0000;
+	load_rom_bank(0, 0);
+	load_rom_bank(1, 1);
 	
-	char buf[64] = {0};
-	sprintf(buf, "Loading initial ROM data, loading %iKB from file", single_bank_size/1024);
-	robingb_log(buf);
-	robingb_read_file(current_rom_file_path, 0, single_bank_size, &memory[bank_0_destination]);
-	
-	current_rom_bank = 0;
-	int cart_type = mem_read(0x0147);
+	Cart_Type cart_type = mem_read(0x0147);
 	
 	switch (cart_type) {
 		case CART_TYPE_ROM_MBC1:
@@ -151,8 +172,6 @@ void mem_init(const char *rom_file_path) {
 		break;
 		default: assert(false); break;
 	}
-	
-	switch_rom_bank(1);
 }
 
 Mem_Address_Description mem_get_address_description(int address) {
@@ -204,21 +223,6 @@ Mem_Address_Description mem_get_address_description(int address) {
 	}
 	
 	return desc;
-}
-
-void perform_cart_control(int address, u8 value) {
-	if (address >= 0x0000 && address < 0x2000) {
-		// MBC1: external RAM control (at 0xa000 to 0xbfff)
-		assert(false); 
-	} else if (address >= 0x2000 && address < 0x4000) {
-		
-		calculate_and_switch_rom_bank(address, value);
-		
-	} else if (address >= 0x4000 && address < 0x6000) {
-		assert(false); // MBC1: RAM bank control, or, upper bits of ROM bank number, depending on ROM/RAM mode
-	} else if (address >= 0x6000 && address < 0x8000) {
-		assert(false); // MBC1: ROM/RAM mode select
-	} else assert(false);
 }
 
 Mem_Log mem_logs[MEM_MAX_NUM_LOGS];
