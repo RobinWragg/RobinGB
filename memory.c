@@ -9,7 +9,7 @@
 
 #define ROM_BANK_CACHE_ADDRESS GAME_BOY_TOTAL_MEMORY_SIZE
 #define ROM_BANK_SIZE 16384 // 16kB
-#define MAX_NUM_CACHED_ROM_BANKS 10
+#define MAX_NUM_CACHED_ROM_BANKS 4
 #define MAX_NUM_ROM_BANKS_IN_REAL_RAM (MAX_NUM_CACHED_ROM_BANKS+1) // plus one for bank slot 0
 
 u8 memory[GAME_BOY_TOTAL_MEMORY_SIZE + MAX_NUM_CACHED_ROM_BANKS*ROM_BANK_SIZE];
@@ -66,7 +66,7 @@ int active_switchable_rom_bank_index = 0;
 struct {
 	int bank_index;
 	s32 address;
-} rom_bank_addresses[4];
+} rom_bank_addresses[MAX_NUM_ROM_BANKS_IN_REAL_RAM];
 
 static void init_rom_cache() {
 	for (int i = 0; i < MAX_NUM_ROM_BANKS_IN_REAL_RAM; i++) {
