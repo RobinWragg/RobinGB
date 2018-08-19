@@ -110,5 +110,6 @@ void init_timer();
 void update_timer(uint8_t num_cycles_delta);
 void update_audio(int num_cycles);
 void render_screen_line(uint8_t ly);
+const char * get_opcode_name(u16 opcode_address);
 
 #endif
