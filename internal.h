@@ -93,7 +93,7 @@ void request_interrupt(u8 interrupts_to_request);
 void handle_interrupts();
 void stack_push(u16 value);
 u16 stack_pop();
-void execute_opcode(u8 *num_cycles_out);
+void execute_next_opcode(u8 *num_cycles_out);
 void execute_cb_opcode();
 void finish_instruction(u16 pc_increment, u8 num_cycles_param);
 void mem_get_logs(Mem_Log logs_out[], int *num_logs_out);
