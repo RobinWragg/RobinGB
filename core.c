@@ -130,10 +130,9 @@ int robingb_update(RobinGB_Input *input) {
 	// robingb_log(buf);
 	
 	u8 num_cycles;
-	char asm_log[1024];
 	
 	mem_logging_enabled = true;
-	execute_opcode(opcode, &num_cycles, asm_log);
+	execute_opcode(opcode, &num_cycles);
 	mem_logging_enabled = false;
 	
 	zero_unused_f_register_bits();
