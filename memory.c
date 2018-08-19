@@ -199,6 +199,8 @@ void mem_init(const char *rom_file_path) {
 	
 	init_rom_cache();
 	
+	// TODO: Remove address names? LCD_STATUS_ADDRESS etc. don't need to be known by memory.c
+	
 	mem_write(0xff10, 0x80);
 	mem_write(0xff11, 0xbf);
 	mem_write(0xff12, 0xf3);

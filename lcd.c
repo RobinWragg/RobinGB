@@ -19,21 +19,21 @@ This signal is set to 1 if:
 -It seems that this interrupt needs less time to execute in DMG than in CGB? -DMG bug?"
 */
 
-const int NUM_CYCLES_PER_LY_INCREMENT = 456;
-const int LY_ADDRESS = 0xff44;
+#define NUM_CYCLES_PER_LY_INCREMENT 456
+#define LY_ADDRESS 0xff44
+#define LYC_ADDRESS 0xff45
+#define MODE_2_CYCLE_DURATION 77
+#define MODE_3_CYCLE_DURATION 169
 
-void update_mode(int elapsed_cycles) {
+void update_mode_and_write_status(int elapsed_cycles, u8 status) {
 	u8 current_mode;
 	
 	if (elapsed_cycles < 65664) {
-		const int MODE_2_DURATION = 77;
-		const int MODE_3_DURATION = 169;
-		
 		int row_draw_phase = elapsed_cycles % NUM_CYCLES_PER_LY_INCREMENT;
 		
-		if (row_draw_phase < MODE_2_DURATION) {
+		if (row_draw_phase < MODE_2_CYCLE_DURATION) {
 			current_mode = 0x02; // The LCD is reading from OAM
-		} else if (row_draw_phase < MODE_2_DURATION+MODE_3_DURATION) {
+		} else if (row_draw_phase < MODE_2_CYCLE_DURATION+MODE_3_CYCLE_DURATION) {
 			current_mode = 0x03; // The LCD is reading from both OAM and VRAM
 		} else {
 			current_mode = 0x00; // H-blank
@@ -42,9 +42,10 @@ void update_mode(int elapsed_cycles) {
 		current_mode = 0x01; // V-blank
 	}
 	
-	const u8 prev_mode = mem_read(LCD_STATUS_ADDRESS) & 0x03; // get lower 2 bits only
-	u8 status = mem_read(LCD_STATUS_ADDRESS) & 0xfc;
+	const u8 prev_mode = status & 0x03; // get lower 2 bits only
+	status &= 0xfc; // wipe the old mode
 	
+	bool should_render_screen_line = false;
 	if (prev_mode != current_mode) {
 		switch (current_mode) {
 			case 0x00: {
@@ -58,57 +59,55 @@ void update_mode(int elapsed_cycles) {
 				if (status & 0x20) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 			} break;
 			case 0x03: {
-				render_screen_line(mem_read(LY_ADDRESS));
+				should_render_screen_line = true;
 			} break;
 		}
 	}
 	
 	status &= 0xfc;
-	mem_write(LCD_STATUS_ADDRESS, status | current_mode);
+	status |= current_mode;
+	mem_write(LCD_STATUS_ADDRESS, status);
+	
+	if (should_render_screen_line) render_screen_line(mem_read(LY_ADDRESS));
 }
 
 void lcd_update(int num_cycles_delta) {
-	const int LYC_ADDRESS = 0xff45;
+	u8 status = mem_read(LCD_STATUS_ADDRESS);
 	
 	if ((mem_read(LCD_CONTROL_ADDRESS) & 0x80) == 0) {
 		// Bit 7 of the LCD control register is 0, so the LCD is switched off.
 		// LY, the mode, and the LYC=LY flag should all be 0.
 		mem_write(LY_ADDRESS, 0x00);
-		mem_write(LCD_STATUS_ADDRESS, mem_read(LCD_STATUS_ADDRESS) & 0xf8);
+		mem_write(LCD_STATUS_ADDRESS, status & 0xf8);
 		return; 
 	}
 	
 	static int elapsed_cycles = 0;
 	elapsed_cycles += num_cycles_delta;
-	while (elapsed_cycles >= ROBINGB_CPU_CYCLES_PER_REFRESH) elapsed_cycles -= ROBINGB_CPU_CYCLES_PER_REFRESH;
+	if (elapsed_cycles >= ROBINGB_CPU_CYCLES_PER_REFRESH) elapsed_cycles -= ROBINGB_CPU_CYCLES_PER_REFRESH;
 	
 	// set LY
 	u8 ly = elapsed_cycles / NUM_CYCLES_PER_LY_INCREMENT;
 	mem_write(LY_ADDRESS, ly);
 	
-	{ // handle LYC
-		u8 status = mem_read(LCD_STATUS_ADDRESS);
-		
-		if (ly == mem_read(LYC_ADDRESS)) {
-			status |= 0x04;
-			if (status & 0x40) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
-		} else {
-			status &= ~0x04;
-		}
-		
-		mem_write(LCD_STATUS_ADDRESS, status);
+	// handle LYC
+	if (ly == mem_read(LYC_ADDRESS)) {
+		status |= 0x04;
+		if (status & 0x40) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+	} else {
+		status &= ~0x04;
 	}
 	
-	update_mode(elapsed_cycles);
+	update_mode_and_write_status(elapsed_cycles, status);
 	
 	// assertions
-	{
-		u8 ly = mem_read(LY_ADDRESS);
-		u8 mode = mem_read(LCD_STATUS_ADDRESS) & 0x03; // get lower 2 bits only
-		assert((ly < 144 && (mode == 0x02 || mode == 0x03 || mode == 0x00))
-			|| (ly >= 144 && mode == 0x01));
-		assert(ly < 154);
-	}
+	// {
+	// 	u8 ly = mem_read(LY_ADDRESS);
+	// 	u8 mode = mem_read(LCD_STATUS_ADDRESS) & 0x03; // get lower 2 bits only
+	// 	assert((ly < 144 && (mode == 0x02 || mode == 0x03 || mode == 0x00))
+	// 		|| (ly >= 144 && mode == 0x01));
+	// 	assert(ly < 154);
+	// }
 }
 
 
