@@ -82,7 +82,7 @@ typedef struct {
 	char byte[1024];
 } Mem_Address_Description;
 
-extern void (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, u8 buffer[]);
+extern void (*robingb_read_file)(const char *path, u32 offset, u32 size, u8 buffer[]);
 
 extern Registers registers;
 extern bool halted;
@@ -93,7 +93,7 @@ void request_interrupt(u8 interrupts_to_request);
 void handle_interrupts();
 void stack_push(u16 value);
 u16 stack_pop();
-void execute_next_opcode(u8 *num_cycles_out);
+void execute_opcode(u8 opcode, u8 *num_cycles_out);
 void execute_cb_opcode();
 void finish_instruction(u16 pc_increment, u8 num_cycles_param);
 void mem_get_logs(Mem_Log logs_out[], int *num_logs_out);

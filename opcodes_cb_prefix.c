@@ -108,7 +108,7 @@ void execute_instruction_SET(u8 bit_index, u8 *register_to_set, u8 num_cycles) {
 
 void execute_cb_opcode() {
 	assert(mem_read(registers.pc) == 0xcb);
-	u8 opcode = mem_read(registers.pc++);
+	u8 opcode = mem_read(++registers.pc);
 	
 	switch (opcode) {
 		case 0x10: execute_instruction_RL(&registers.b, 8); break;
