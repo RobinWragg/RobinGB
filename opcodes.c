@@ -172,8 +172,9 @@ void execute_instruction_SUB_u8(u8 subber, u16 pc_increment, int num_cycles) {
 	finish_instruction(pc_increment, num_cycles);
 }
 
-void execute_opcode(u8 opcode, u8 *num_cycles_out) {
+void execute_next_opcode(u8 *num_cycles_out) {
 	num_cycles_for_finish = num_cycles_out;
+	u8 opcode = mem_read(registers.pc);
 	
 	switch (opcode) {
 		case 0x00: finish_instruction(1, 4); break;

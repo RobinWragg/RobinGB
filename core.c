@@ -123,8 +123,6 @@ int robingb_update(RobinGB_Input *input) {
 	
 	mem_remove_all_logs();
 	
-	u8 opcode = mem_read(registers.pc);
-	
 	// char buf[128] = {0};
 	// sprintf(buf, "Address %4x: %2x %2x %2x %2x\n", registers.pc, mem_read(registers.pc), mem_read(registers.pc+1), mem_read(registers.pc+2), mem_read(registers.pc+3));
 	// robingb_log(buf);
@@ -132,7 +130,7 @@ int robingb_update(RobinGB_Input *input) {
 	u8 num_cycles;
 	
 	mem_logging_enabled = true;
-	execute_opcode(opcode, &num_cycles);
+	execute_next_opcode(&num_cycles);
 	mem_logging_enabled = false;
 	
 	zero_unused_f_register_bits();

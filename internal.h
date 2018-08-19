@@ -42,25 +42,25 @@ typedef int32_t s32;
 typedef struct {
 	struct {
 		union {
-			struct { uint8_t f; uint8_t a; };
+			struct { u8 f; u8 a; };
 			u16 af;
 		};
 	};
 	struct {
 		union {
-			struct { uint8_t c; uint8_t b; };
+			struct { u8 c; u8 b; };
 			u16 bc;
 		};
 	};
 	struct {
 		union {
-			struct { uint8_t e; uint8_t d; };
+			struct { u8 e; u8 d; };
 			u16 de;
 		};
 	};
 	struct {
 		union {
-			struct { uint8_t l; uint8_t h; };
+			struct { u8 l; u8 h; };
 			u16 hl;
 		};
 	};
@@ -69,11 +69,11 @@ typedef struct {
 	bool ime;
 } Registers;
 
-void print_binary(uint8_t value);
+void print_binary(u8 value);
 
 typedef struct {
 	u16 address;
-	uint8_t value;
+	u8 value;
 	bool is_write, is_echo;
 } Mem_Log;
 
@@ -82,34 +82,34 @@ typedef struct {
 	char byte[1024];
 } Mem_Address_Description;
 
-extern void (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]);
+extern void (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, u8 buffer[]);
 
 extern Registers registers;
 extern bool halted;
 extern bool mem_logging_enabled;
 
 void robingb_log_with_prefix(const char *prefix, const char *main_body);
-void request_interrupt(uint8_t interrupts_to_request);
+void request_interrupt(u8 interrupts_to_request);
 void handle_interrupts();
 void stack_push(u16 value);
 u16 stack_pop();
-void execute_opcode(uint8_t opcode, uint8_t *num_cycles_out);
+void execute_next_opcode(u8 *num_cycles_out);
 void execute_cb_opcode();
 void finish_instruction(u16 pc_increment, u8 num_cycles_param);
 void mem_get_logs(Mem_Log logs_out[], int *num_logs_out);
 void mem_remove_all_logs();
 Mem_Address_Description mem_get_address_description(int address);
 void mem_init(const char *rom_file_path);
-uint8_t mem_read(int address);
+u8 mem_read(int address);
 u16 mem_read_u16(int address);
-void mem_write(int address, uint8_t value);
+void mem_write(int address, u8 value);
 void mem_write_u16(int address, u16 value);
 void lcd_update(int num_cycles_passed);
 void joypad_update(RobinGB_Input *input);
 void init_timer();
-void update_timer(uint8_t num_cycles_delta);
+void update_timer(u8 num_cycles_delta);
 void update_audio(int num_cycles);
-void render_screen_line(uint8_t ly);
+void render_screen_line(u8 ly);
 const char * get_opcode_name(u16 opcode_address);
 
 #endif
