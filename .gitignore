@@ -1,0 +1,11 @@
+__pycache__
+.DS_Store
+.DS_Store?
+xcuserdata/
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.sublime-workspace
+*.sublime-project
