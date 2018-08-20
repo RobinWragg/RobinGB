@@ -3,11 +3,10 @@
 
 void handle_interrupts() {
 	if (registers.ime) {
-		u8 requested_interrupts;
-		u8 enabled_interrupts;
-		mem_read_interrupt_memory(&requested_interrupts, &enabled_interrupts);
+		u8 *requested_interrupts = mem_get_pointer(IF_ADDRESS);
+		u8 *enabled_interrupts = mem_get_pointer(IE_ADDRESS);
 		
-		u8 interrupts_to_handle = requested_interrupts & enabled_interrupts;
+		u8 interrupts_to_handle = (*requested_interrupts) & (*enabled_interrupts);
 		
 		if (interrupts_to_handle) {
 			registers.ime = false;
@@ -20,23 +19,21 @@ void handle_interrupts() {
 			stack_push(registers.pc);
 			
 			if (interrupts_to_handle & INTERRUPT_FLAG_VBLANK) {
-				requested_interrupts &= ~INTERRUPT_FLAG_VBLANK;
+				*requested_interrupts &= ~INTERRUPT_FLAG_VBLANK;
 				registers.pc = 0x0040;
 			} else if (interrupts_to_handle & INTERRUPT_FLAG_LCD_STAT) {
-				requested_interrupts &= ~INTERRUPT_FLAG_LCD_STAT;
+				*requested_interrupts &= ~INTERRUPT_FLAG_LCD_STAT;
 				registers.pc = 0x0048;
 			} else if (interrupts_to_handle & INTERRUPT_FLAG_TIMER) {
-				requested_interrupts &= ~INTERRUPT_FLAG_TIMER;
+				*requested_interrupts &= ~INTERRUPT_FLAG_TIMER;
 				registers.pc = 0x0050;
 			} else if (interrupts_to_handle & INTERRUPT_FLAG_SERIAL) {
-				requested_interrupts &= ~INTERRUPT_FLAG_SERIAL;
+				*requested_interrupts &= ~INTERRUPT_FLAG_SERIAL;
 				registers.pc = 0x0058;
 			} else if (interrupts_to_handle & INTERRUPT_FLAG_JOYPAD) {
-				requested_interrupts &= ~INTERRUPT_FLAG_JOYPAD;
+				*requested_interrupts &= ~INTERRUPT_FLAG_JOYPAD;
 				registers.pc = 0x0060;
 			} else assert(false); // unexpected interrupts_to_handle value.
-			
-			mem_write(IF_ADDRESS, requested_interrupts);
 		}
 	}
 }

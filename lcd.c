@@ -24,7 +24,7 @@ This signal is set to 1 if:
 #define MODE_2_CYCLE_DURATION 77
 #define MODE_3_CYCLE_DURATION 169
 
-void update_mode_and_write_status(int elapsed_cycles, u8 status) {
+void update_mode_and_write_status(int elapsed_cycles, u8 *status) {
 	u8 current_mode;
 	
 	if (elapsed_cycles < 65664) {
@@ -41,21 +41,21 @@ void update_mode_and_write_status(int elapsed_cycles, u8 status) {
 		current_mode = 0x01; // V-blank
 	}
 	
-	const u8 prev_mode = status & 0x03; // get lower 2 bits only
-	status &= 0xfc; // wipe the old mode
+	const u8 prev_mode = (*status) & 0x03; // get lower 2 bits only
+	*status &= 0xfc; // wipe the old mode
 	
 	bool should_render_screen_line = false;
 	if (prev_mode != current_mode) {
 		switch (current_mode) {
 			case 0x00: {
-				if (status & 0x08) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+				if ((*status) & 0x08) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 			} break;
 			case 0x01: {
 				request_interrupt(INTERRUPT_FLAG_VBLANK);
-				if (status & 0x10) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+				if ((*status) & 0x10) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 			} break;
 			case 0x02: {
-				if (status & 0x20) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+				if ((*status) & 0x20) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 			} break;
 			case 0x03: {
 				should_render_screen_line = true;
@@ -63,24 +63,22 @@ void update_mode_and_write_status(int elapsed_cycles, u8 status) {
 		}
 	}
 	
-	status &= 0xfc;
-	status |= current_mode;
-	mem_write(LCD_STATUS_ADDRESS, status);
+	*status &= 0xfc;
+	*status |= current_mode;
 	
 	if (should_render_screen_line) render_screen_line(mem_read(LY_ADDRESS));
 }
 
 void lcd_update(int num_cycles_delta) {
-	u8 control;
-	u8 status;
-	u8 lyc;
-	mem_read_lcd_memory(&control, &status, &lyc);
+	u8 *control = mem_get_pointer(LCD_CONTROL_ADDRESS);
+	u8 *status = mem_get_pointer(LCD_STATUS_ADDRESS);
+	u8 *lyc = mem_get_pointer(LCD_LYC_ADDRESS);
 	
-	if ((control & 0x80) == 0) {
+	if (((*control) & 0x80) == 0) {
 		// Bit 7 of the LCD control register is 0, so the LCD is switched off.
 		// LY, the mode, and the LYC=LY flag should all be 0.
 		mem_write(LY_ADDRESS, 0x00);
-		mem_write(LCD_STATUS_ADDRESS, status & 0xf8);
+		*status &= 0xf8;
 		return; 
 	}
 	
@@ -93,11 +91,11 @@ void lcd_update(int num_cycles_delta) {
 	mem_write(LY_ADDRESS, ly);
 	
 	// handle LYC
-	if (ly == lyc) {
-		status |= 0x04;
-		if (status & 0x40) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+	if (ly == *lyc) {
+		*status |= 0x04;
+		if ((*status) & 0x40) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 	} else {
-		status &= ~0x04;
+		*status &= ~0x04;
 	}
 	
 	update_mode_and_write_status(elapsed_cycles, status);
