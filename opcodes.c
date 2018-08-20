@@ -1,3 +1,5 @@
+// TODO: can we speed stuff up if we don't need to know the cycle counts of instructions?
+
 #include "internal.h"
 #include <string.h>
 #include <assert.h>
