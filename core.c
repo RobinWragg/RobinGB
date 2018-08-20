@@ -120,18 +120,12 @@ void robingb_init(const char *rom_file_path, void (*read_file_function_ptr)(cons
 
 // TODO: robingb_update() should execute until LY increments.
 int robingb_update(RobinGB_Input *input) {
-	
-	mem_remove_all_logs();
-	
 	// char buf[128] = {0};
 	// sprintf(buf, "Address %4x: %2x %2x %2x %2x\n", registers.pc, mem_read(registers.pc), mem_read(registers.pc+1), mem_read(registers.pc+2), mem_read(registers.pc+3));
 	// robingb_log(buf);
 	
 	u8 num_cycles;
-	
-	mem_logging_enabled = true;
 	execute_next_opcode(&num_cycles);
-	mem_logging_enabled = false;
 	
 	zero_unused_f_register_bits();
 	handle_interrupts();

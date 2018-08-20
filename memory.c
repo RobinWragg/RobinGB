@@ -302,37 +302,9 @@ Mem_Address_Description mem_get_address_description(int address) {
 	return desc;
 }
 
-// TODO: Logging for reads is costly.
-Mem_Log mem_logs[MEM_MAX_NUM_LOGS];
-int mem_num_logs = 0;
-bool mem_logging_enabled = true;
-
-void mem_get_logs(Mem_Log logs_out[], int *num_logs_out) {
-	memcpy(logs_out, mem_logs, sizeof(Mem_Log) * mem_num_logs);
-	*num_logs_out = mem_num_logs;
-}
-
-void mem_remove_all_logs() {
-	mem_num_logs = 0;
-}
-
-void mem_add_log(u16 address, u8 value, bool is_write, bool is_echo) {
-	assert(mem_num_logs < MEM_MAX_NUM_LOGS);
-	
-	mem_logs[mem_num_logs].address = address;
-	mem_logs[mem_num_logs].value = value;
-	mem_logs[mem_num_logs].is_write = is_write;
-	mem_logs[mem_num_logs].is_echo = is_echo;
-	mem_num_logs++;
-}
-
 u8 mem_read(u16 address) {
-	u8 value;
-	if (address < 0x8000 && address >= 0x4000) value = read_rom_bank_slot_1(address);
-	else value = memory[address];
-	
-	if (mem_logging_enabled) mem_add_log(address, value, false, false);
-	return value;
+	if (address < 0x8000 && address >= 0x4000) return read_rom_bank_slot_1(address);
+	else return memory[address];
 }
 
 u16 mem_read_u16(u16 address) {
@@ -344,7 +316,10 @@ u16 mem_read_u16(u16 address) {
 }
 
 void mem_write(u16 address, u8 value) {
-	if (mem_logging_enabled) mem_add_log(address, value, true, false);
+	if (address == TIMER_DIV_ADDRESS) {
+		memory[address] = get_new_timer_div_value_on_write();
+		return;
+	}
 	
 	if (address < 0x8000) {
 		perform_cart_control(address, value);
@@ -356,11 +331,9 @@ void mem_write(u16 address, u8 value) {
 		if (address >= 0xc000 && address < 0xde00) {
 			int echo_address = address-0xc000+0xe000;
 			memory[echo_address] = value;
-			if (mem_logging_enabled) mem_add_log(echo_address, value, true, true);
 		} else if (address >= 0xe000 && address < 0xfe00) {
 			int echo_address = address-0xe000+0xc000;
 			memory[echo_address] = value;
-			if (mem_logging_enabled) mem_add_log(echo_address, value, true, true);
 		}
 	}
 }

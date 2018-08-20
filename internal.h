@@ -20,12 +20,12 @@ typedef int32_t s32;
 
 #define CPU_CLOCK_FREQ (4194304)
 
-#define MEM_MAX_NUM_LOGS (1024)
-
 #define FLAG_Z (0x80) // Zero Flag
 #define FLAG_N (0x40) // Add/Sub-Flag (BCD)
 #define FLAG_H (0x20) // Half Carry Flag (BCD)
 #define FLAG_C (0x10) // Carry Flag
+
+#define TIMER_DIV_ADDRESS (0xff04)
 
 #define LCD_CONTROL_ADDRESS (0xff40)
 #define LCD_STATUS_ADDRESS (0xff41)
@@ -72,12 +72,6 @@ typedef struct {
 void print_binary(u8 value);
 
 typedef struct {
-	u16 address;
-	u8 value;
-	bool is_write, is_echo;
-} Mem_Log;
-
-typedef struct {
 	char region[1024];
 	char byte[1024];
 } Mem_Address_Description;
@@ -86,7 +80,6 @@ extern void (*robingb_read_file)(const char *path, u32 offset, u32 size, u8 buff
 
 extern Registers registers;
 extern bool halted;
-extern bool mem_logging_enabled;
 
 void robingb_log_with_prefix(const char *prefix, const char *main_body);
 void request_interrupt(u8 interrupts_to_request);
@@ -96,8 +89,6 @@ u16 stack_pop();
 void execute_next_opcode(u8 *num_cycles_out);
 void execute_cb_opcode();
 void finish_instruction(u16 pc_increment, u8 num_cycles_param);
-void mem_get_logs(Mem_Log logs_out[], int *num_logs_out);
-void mem_remove_all_logs();
 Mem_Address_Description mem_get_address_description(int address);
 void mem_init(const char *rom_file_path);
 u8 mem_read(u16 address);
@@ -107,6 +98,7 @@ void mem_write_u16(u16 address, u16 value);
 void lcd_update(int num_cycles_passed);
 void joypad_update(RobinGB_Input *input);
 void init_timer();
+u8 get_new_timer_div_value_on_write();
 void update_timer(u8 num_cycles_delta);
 void update_audio(int num_cycles);
 void render_screen_line(u8 ly);
