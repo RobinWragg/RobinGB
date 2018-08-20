@@ -84,26 +84,21 @@ static void init_rom_cache() {
 	}
 }
 
-static u8 read_rom(int address) {
-	assert(address < 0x8000);
+static u8 read_rom_bank_slot_1(int address) {
+	assert(address >= 0x4000 && address < 0x8000);
 	
-	if (address < 0x4000) return memory[address];
-	else {
-		// ROM bank slot 1 needs to be accessed, so look in the cache
-		u16 address_offset = address - 0x4000;
-		
-		s32 cached_bank_address = -1;
-		
-		for (int i = 0; i < MAX_NUM_CACHED_ROM_BANKS; i++) {
-			if (rom_bank_addresses[i].bank_index == active_switchable_rom_bank_index) {
-				cached_bank_address = rom_bank_addresses[i].address;
-				break;
-			}
+	u16 address_offset = address - 0x4000;
+	s32 cached_bank_address = -1;
+	
+	for (int i = 0; i < MAX_NUM_CACHED_ROM_BANKS; i++) {
+		if (rom_bank_addresses[i].bank_index == active_switchable_rom_bank_index) {
+			cached_bank_address = rom_bank_addresses[i].address;
+			break;
 		}
-		
-		assert(cached_bank_address != -1);
-		return memory[cached_bank_address + address_offset];
 	}
+	
+	assert(cached_bank_address != -1);
+	return memory[cached_bank_address + address_offset];
 }
 
 static void load_rom_bank(int destination_slot_index, int file_bank_index) {
@@ -333,7 +328,7 @@ void mem_add_log(u16 address, u8 value, bool is_write, bool is_echo) {
 
 u8 mem_read(u16 address) {
 	u8 value;
-	if (address < 0x8000) value = read_rom(address);
+	if (address < 0x8000 && address >= 0x4000) value = read_rom_bank_slot_1(address);
 	else value = memory[address];
 	
 	if (mem_logging_enabled) mem_add_log(address, value, false, false);
