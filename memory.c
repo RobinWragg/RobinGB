@@ -307,6 +307,7 @@ Mem_Address_Description mem_get_address_description(int address) {
 	return desc;
 }
 
+// TODO: Logging for reads is costly.
 Mem_Log mem_logs[MEM_MAX_NUM_LOGS];
 int mem_num_logs = 0;
 bool mem_logging_enabled = true;
@@ -330,7 +331,7 @@ void mem_add_log(u16 address, u8 value, bool is_write, bool is_echo) {
 	mem_num_logs++;
 }
 
-u8 mem_read(int address) {
+u8 mem_read(u16 address) {
 	u8 value;
 	if (address < 0x8000) value = read_rom(address);
 	else value = memory[address];
@@ -339,7 +340,7 @@ u8 mem_read(int address) {
 	return value;
 }
 
-u16 mem_read_u16(int address) {
+u16 mem_read_u16(u16 address) {
 	u16 out;
 	u8 *bytes = (u8*)&out;
 	bytes[0] = mem_read(address);
@@ -347,7 +348,7 @@ u16 mem_read_u16(int address) {
 	return out;
 }
 
-void mem_write(int address, u8 value) {
+void mem_write(u16 address, u8 value) {
 	if (mem_logging_enabled) mem_add_log(address, value, true, false);
 	
 	if (address < 0x8000) {
@@ -369,7 +370,7 @@ void mem_write(int address, u8 value) {
 	}
 }
 
-void mem_write_u16(int address, u16 value) {
+void mem_write_u16(u16 address, u16 value) {
 	u8 *values = (u8*)&value;
 	mem_write(address, values[0]);
 	mem_write(address+1, values[1]);
