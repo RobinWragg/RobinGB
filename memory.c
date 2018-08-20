@@ -12,7 +12,7 @@
 #define MAX_NUM_CACHED_ROM_BANKS 4
 #define MAX_NUM_ROM_BANKS_IN_REAL_RAM (MAX_NUM_CACHED_ROM_BANKS+1) // plus one for bank slot 0
 
-u8 memory[GAME_BOY_TOTAL_MEMORY_SIZE + MAX_NUM_CACHED_ROM_BANKS*ROM_BANK_SIZE];
+u8 robingb_memory[GAME_BOY_TOTAL_MEMORY_SIZE + MAX_NUM_CACHED_ROM_BANKS*ROM_BANK_SIZE];
 
 typedef enum {
 	CART_TYPE_ROM_ONLY = 0x00,
@@ -98,7 +98,7 @@ static u8 read_rom_bank_slot_1(int address) {
 	}
 	
 	assert(cached_bank_address != -1);
-	return memory[cached_bank_address + address_offset];
+	return robingb_memory[cached_bank_address + address_offset];
 }
 
 static void load_rom_bank(int destination_slot_index, int file_bank_index) {
@@ -129,7 +129,7 @@ static void load_rom_bank(int destination_slot_index, int file_bank_index) {
 					sprintf(buf, "Loading ROM bank %i (%iKB from %s)", file_bank_index, ROM_BANK_SIZE/1024, current_rom_file_path);
 					robingb_log(buf);
 					
-					robingb_read_file(current_rom_file_path, source_address, ROM_BANK_SIZE, &memory[rom_bank_addresses[i].address]);
+					robingb_read_file(current_rom_file_path, source_address, ROM_BANK_SIZE, &robingb_memory[rom_bank_addresses[i].address]);
 					break;
 				}
 			}
@@ -142,7 +142,7 @@ static void load_rom_bank(int destination_slot_index, int file_bank_index) {
 		char buf[128] = {0};
 		sprintf(buf, "Loading ROM bank %i (%iKB from file)", file_bank_index, ROM_BANK_SIZE/1024);
 		robingb_log(buf);
-		robingb_read_file(current_rom_file_path, source_address, ROM_BANK_SIZE, &memory[destination_address]);
+		robingb_read_file(current_rom_file_path, source_address, ROM_BANK_SIZE, &robingb_memory[destination_address]);
 	}
 }
 
@@ -304,11 +304,11 @@ Mem_Address_Description mem_get_address_description(int address) {
 
 u8 mem_read(u16 address) {
 	if (address < 0x8000 && address >= 0x4000) return read_rom_bank_slot_1(address);
-	else return memory[address];
+	else return robingb_memory[address];
 }
 
 u8 * mem_get_pointer(u16 address) {
-	return &memory[address];
+	return &robingb_memory[address];
 }
 
 u16 mem_read_u16(u16 address) {
@@ -321,23 +321,23 @@ u16 mem_read_u16(u16 address) {
 
 void mem_write(u16 address, u8 value) {
 	if (address == TIMER_DIV_ADDRESS) {
-		memory[address] = get_new_timer_div_value_on_write();
+		robingb_memory[address] = get_new_timer_div_value_on_write();
 		return;
 	}
 	
 	if (address < 0x8000) {
 		perform_cart_control(address, value);
 	} else if (address == 0xff46) {
-		memcpy(&memory[0xfe00], &memory[value * 0x100], 160); // OAM DMA transfer
+		memcpy(&robingb_memory[0xfe00], &robingb_memory[value * 0x100], 160); // OAM DMA transfer
 	} else {
-		memory[address] = value;
+		robingb_memory[address] = value;
 		
 		if (address >= 0xc000 && address < 0xde00) {
 			int echo_address = address-0xc000+0xe000;
-			memory[echo_address] = value;
+			robingb_memory[echo_address] = value;
 		} else if (address >= 0xe000 && address < 0xfe00) {
 			int echo_address = address-0xe000+0xc000;
-			memory[echo_address] = value;
+			robingb_memory[echo_address] = value;
 		}
 	}
 }

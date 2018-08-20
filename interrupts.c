@@ -1,11 +1,11 @@
 #include "internal.h"
 #include <assert.h>
 
+u8 *requested_interrupts = &robingb_memory[IF_ADDRESS];
+u8 *enabled_interrupts = &robingb_memory[IE_ADDRESS];
+
 void handle_interrupts() {
 	if (registers.ime) {
-		u8 *requested_interrupts = mem_get_pointer(IF_ADDRESS);
-		u8 *enabled_interrupts = mem_get_pointer(IE_ADDRESS);
-		
 		u8 interrupts_to_handle = (*requested_interrupts) & (*enabled_interrupts);
 		
 		if (interrupts_to_handle) {
@@ -39,9 +39,8 @@ void handle_interrupts() {
 }
 
 void request_interrupt(u8 interrupt_to_request) {
-	interrupt_to_request |= mem_read(IF_ADDRESS); // combine with the existing request flags.
+	interrupt_to_request |= *requested_interrupts; // combine with the existing request flags.
 	interrupt_to_request |= 0xe0; // top 3 bits are always 1.
-	mem_write(IF_ADDRESS, interrupt_to_request);
 }
 
 

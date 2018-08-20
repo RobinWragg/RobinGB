@@ -24,7 +24,12 @@ This signal is set to 1 if:
 #define MODE_2_CYCLE_DURATION 77
 #define MODE_3_CYCLE_DURATION 169
 
-void update_mode_and_write_status(int elapsed_cycles, u8 *status) {
+u8 *control = &robingb_memory[LCD_CONTROL_ADDRESS];
+u8 *status = &robingb_memory[LCD_STATUS_ADDRESS];
+u8 *ly = &robingb_memory[LY_ADDRESS];
+u8 *lyc = &robingb_memory[LCD_LYC_ADDRESS];
+
+void update_mode_and_write_status(int elapsed_cycles) {
 	u8 current_mode;
 	
 	if (elapsed_cycles < 65664) {
@@ -66,18 +71,14 @@ void update_mode_and_write_status(int elapsed_cycles, u8 *status) {
 	*status &= 0xfc;
 	*status |= current_mode;
 	
-	if (should_render_screen_line) render_screen_line(mem_read(LY_ADDRESS));
+	if (should_render_screen_line) render_screen_line(*ly);
 }
 
 void lcd_update(int num_cycles_delta) {
-	u8 *control = mem_get_pointer(LCD_CONTROL_ADDRESS);
-	u8 *status = mem_get_pointer(LCD_STATUS_ADDRESS);
-	u8 *lyc = mem_get_pointer(LCD_LYC_ADDRESS);
-	
 	if (((*control) & 0x80) == 0) {
 		// Bit 7 of the LCD control register is 0, so the LCD is switched off.
 		// LY, the mode, and the LYC=LY flag should all be 0.
-		mem_write(LY_ADDRESS, 0x00);
+		*ly = 0x00;
 		*status &= 0xf8;
 		return; 
 	}
@@ -87,26 +88,24 @@ void lcd_update(int num_cycles_delta) {
 	if (elapsed_cycles >= ROBINGB_CPU_CYCLES_PER_REFRESH) elapsed_cycles -= ROBINGB_CPU_CYCLES_PER_REFRESH;
 	
 	// set LY
-	u8 ly = elapsed_cycles / NUM_CYCLES_PER_LY_INCREMENT;
-	mem_write(LY_ADDRESS, ly);
+	*ly = elapsed_cycles / NUM_CYCLES_PER_LY_INCREMENT;
 	
 	// handle LYC
-	if (ly == *lyc) {
+	if (*ly == *lyc) {
 		*status |= 0x04;
 		if ((*status) & 0x40) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 	} else {
 		*status &= ~0x04;
 	}
 	
-	update_mode_and_write_status(elapsed_cycles, status);
+	update_mode_and_write_status(elapsed_cycles);
 	
 	// assertions
 	// {
-	// 	u8 ly = mem_read(LY_ADDRESS);
-	// 	u8 mode = mem_read(LCD_STATUS_ADDRESS) & 0x03; // get lower 2 bits only
-	// 	assert((ly < 144 && (mode == 0x02 || mode == 0x03 || mode == 0x00))
-	// 		|| (ly >= 144 && mode == 0x01));
-	// 	assert(ly < 154);
+	// 	u8 mode = (*status) & 0x03; // get lower 2 bits only
+	// 	assert(((*ly) < 144 && (mode == 0x02 || mode == 0x03 || mode == 0x00))
+	// 		|| ((*ly) >= 144 && mode == 0x01));
+	// 	assert((*ly) < 154);
 	// }
 }
 

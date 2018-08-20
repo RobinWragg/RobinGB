@@ -27,10 +27,12 @@ typedef int32_t s32;
 
 #define TIMER_DIV_ADDRESS (0xff04)
 
+// TODO: do these need to be global?
 #define LCD_CONTROL_ADDRESS (0xff40)
 #define LCD_STATUS_ADDRESS (0xff41)
 #define LCD_LYC_ADDRESS 0xff45
 
+// TODO: do these need to be global?
 #define IF_ADDRESS (0xff0f)
 #define IE_ADDRESS (0xffff)
 
@@ -92,6 +94,7 @@ void execute_cb_opcode();
 void finish_instruction(u16 pc_increment, u8 num_cycles_param);
 Mem_Address_Description mem_get_address_description(int address);
 
+extern u8 robingb_memory[];
 void mem_init(const char *rom_file_path);
 u8 * mem_get_pointer(u16 address);
 u8 mem_read(u16 address);
