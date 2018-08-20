@@ -57,28 +57,6 @@ void init_registers() {
 	registers.ime = true;
 }
 
-void report(const char *asm_log) {
-	char buf[128] = {0};
-	
-	// sprintf(buf, "%s\n", asm_log);
-	// robingb_log(buf);
-	
-	// sprintf(buf, "AF:%2x%2x   BC:%2x%2x   DE:%2x%2x   HL:%2x%2x   SP:%4x   PC:%4x\n", registers.a, registers.f, registers.b, registers.c, registers.d, registers.e, registers.h, registers.l, registers.sp, registers.pc);
-	// robingb_log(buf);
-	
-	// sprintf(buf, "IE:%2x   IF:%2x   IME:%i\n", mem_read(IE_ADDRESS), mem_read(IF_ADDRESS), registers.ime);
-	// robingb_log(buf);
-	
-	// sprintf(buf, "Flags: Z:%i  N:%i  H:%i  C:%i\n", (registers.f & FLAG_Z) > 0, (registers.f & FLAG_N) > 0, (registers.f & FLAG_H) > 0, (registers.f & FLAG_C) > 0);
-	// robingb_log(buf);
-	
-	// sprintf(buf, "LY: %x\n", mem_read(0xff44));
-	// robingb_log(buf);
-	
-	strcpy(buf, "\n");
-	robingb_log(buf);
-}
-
 void zero_unused_f_register_bits() {
 	registers.f &= 0xf0;
 }
@@ -118,26 +96,24 @@ void robingb_init(const char *rom_file_path, void (*read_file_function_ptr)(cons
 	init_timer();
 }
 
-// TODO: robingb_update() should execute until LY increments.
-int robingb_update(RobinGB_Input *input) {
-	// char buf[128] = {0};
-	// sprintf(buf, "Address %4x: %2x %2x %2x %2x\n", registers.pc, mem_read(registers.pc), mem_read(registers.pc+1), mem_read(registers.pc+2), mem_read(registers.pc+3));
-	// robingb_log(buf);
+u8 *lcd_ly = &robingb_memory[LCD_LY_ADDRESS];
+
+void robingb_update(RobinGB_Input *input, u8 *ly_out) {
+	u8 prev_lcd_ly = *lcd_ly;
 	
-	u8 num_cycles;
-	execute_next_opcode(&num_cycles);
+	while (*lcd_ly == prev_lcd_ly) {
+		u8 num_cycles;
+		execute_next_opcode(&num_cycles);
+		
+		zero_unused_f_register_bits();
+		handle_interrupts();
+		lcd_update(num_cycles);
+		joypad_update(input);
+		update_audio(num_cycles);
+		update_timer(num_cycles);
+	}
 	
-	zero_unused_f_register_bits();
-	handle_interrupts();
-	lcd_update(num_cycles);
-	joypad_update(input);
-	update_audio(num_cycles);
-	update_timer(num_cycles);
-	
-	// show_write_progression();
-	// report(asm_log);
-	
-	return num_cycles;
+	*ly_out = *lcd_ly;
 }
 
 

@@ -20,13 +20,12 @@ This signal is set to 1 if:
 */
 
 #define NUM_CYCLES_PER_LY_INCREMENT 456
-#define LY_ADDRESS 0xff44
 #define MODE_2_CYCLE_DURATION 77
 #define MODE_3_CYCLE_DURATION 169
 
 u8 *control = &robingb_memory[LCD_CONTROL_ADDRESS];
 u8 *status = &robingb_memory[LCD_STATUS_ADDRESS];
-u8 *ly = &robingb_memory[LY_ADDRESS];
+u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
 u8 *lyc = &robingb_memory[LCD_LYC_ADDRESS];
 
 void update_mode_and_write_status(int elapsed_cycles) {

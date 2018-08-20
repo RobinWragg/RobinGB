@@ -11,12 +11,6 @@ void joypad_update(RobinGB_Input *input) {
 	const u8 RIGHT_OR_A = 0x01;
 	
 	u8 bits = mem_read(joypad_address);
-	// bool bits_non_one = false;
-	// if (bits != 0xff) {
-	// 	bits_non_one = true;
-	// 	printf("in:\nr l u d dror- -\n");
-	// 	print_binary(bits);
-	// }
 	bits |= 0xc0; // bits 6 and 7 are always 1.
 	bits |= 0x0f; // unpressed buttons are 1.
 	
@@ -59,12 +53,6 @@ void joypad_update(RobinGB_Input *input) {
 	}
 	
 	mem_write(joypad_address, bits);
-	
-	// if (bits_non_one) {
-	// 	printf("out:\nr l u d dror- -\n");
-	// 	print_binary(bits);
-	// 	printf("\n");
-	// }
 }
 
 

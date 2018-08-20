@@ -23,7 +23,7 @@ void robingb_init(
 	const char *rom_file_path,
 	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
 	);
-int robingb_update(RobinGB_Input *input);
+void robingb_update(RobinGB_Input *input, uint8_t *ly_out);
 void robingb_read_next_audio_sample(int16_t *l, int16_t *r);
 void robingb_get_background(uint8_t bg_out[]);
 void robingb_get_screen(uint8_t screen_out[]);

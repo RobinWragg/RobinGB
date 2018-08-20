@@ -14,39 +14,39 @@ void finish_instruction(u16 pc_increment, u8 num_cycles_param) {
 	*num_cycles_for_finish = num_cycles_param;
 }
 
-bool negate_produces_u8_half_carry(s16 a, s16 b) {
+static bool negate_produces_u8_half_carry(s16 a, s16 b) {
 	if ((a & 0x0f) - (b & 0x0f) < 0) return true;
 	else return false;
 }
 
-bool addition_produces_u8_half_carry(s16 a, s16 b) {
+static bool addition_produces_u8_half_carry(s16 a, s16 b) {
 	if (a + b > 0x0f) return true;
 	else return false;
 }
 
-bool negate_produces_u8_full_carry(s16 a, s16 b) {
+static bool negate_produces_u8_full_carry(s16 a, s16 b) {
 	if (a - b < 0) return true;
 	else return false;
 }
 
-bool addition_produces_u8_full_carry(s16 a, s16 b) {
+static bool addition_produces_u8_full_carry(s16 a, s16 b) {
 	if (a + b > 0xff) return true;
 	else return false;
 }
 
-bool addition_produces_u16_half_carry(u16 a, u16 b) {
+static bool addition_produces_u16_half_carry(u16 a, u16 b) {
 	u16 a_bit_11_and_under = a & 0xfff;
 	u16 b_bit_11_and_under = b & 0xfff;
 	if (a_bit_11_and_under + b_bit_11_and_under > 0x0fff) return true;
 	else return false;
 }
 
-bool addition_produces_u16_full_carry(s32 a, s32 b) {
+static bool addition_produces_u16_full_carry(s32 a, s32 b) {
 	if (a + b > 0xffff) return true;
 	else return false;
 }
 
-void execute_instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
+static void execute_instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
 	if (negate_produces_u8_half_carry(*value_to_decrement, 1)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -60,7 +60,7 @@ void execute_instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
 	finish_instruction(1, num_cycles);
 }
 
-void execute_instruction_INC_u8(u8 *value_to_increment, u8 num_cycles) {
+static void execute_instruction_INC_u8(u8 *value_to_increment, u8 num_cycles) {
 	if (addition_produces_u8_half_carry(*value_to_increment, 1)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 
@@ -74,7 +74,7 @@ void execute_instruction_INC_u8(u8 *value_to_increment, u8 num_cycles) {
 	finish_instruction(1, num_cycles);
 }
 
-void execute_instruction_ADC(u8 to_add, u16 pc_increment, int num_cycles) {
+static void execute_instruction_ADC(u8 to_add, u16 pc_increment, int num_cycles) {
 	int carry = registers.f & FLAG_C ? 1 : 0;
 	
 	if (addition_produces_u8_half_carry(registers.a, to_add + carry)) registers.f |= FLAG_H;
@@ -93,7 +93,7 @@ void execute_instruction_ADC(u8 to_add, u16 pc_increment, int num_cycles) {
 	finish_instruction(pc_increment, num_cycles);
 }
 
-void execute_instruction_SBC(u8 to_subtract, u16 pc_increment, int num_cycles) {
+static void execute_instruction_SBC(u8 to_subtract, u16 pc_increment, int num_cycles) {
 	int carry = registers.f & FLAG_C ? 1 : 0;
 	
 	if (negate_produces_u8_half_carry(registers.a, to_subtract + carry)) registers.f |= FLAG_H;
@@ -112,7 +112,7 @@ void execute_instruction_SBC(u8 to_subtract, u16 pc_increment, int num_cycles) {
 	finish_instruction(pc_increment, num_cycles);
 }
 
-void execute_instruction_OR(u8 right_hand_value, u16 pc_increment, int num_cycles) {
+static void execute_instruction_OR(u8 right_hand_value, u16 pc_increment, int num_cycles) {
 	registers.a |= right_hand_value;
 	
 	if (registers.a == 0) registers.f |= FLAG_Z;
@@ -124,7 +124,7 @@ void execute_instruction_OR(u8 right_hand_value, u16 pc_increment, int num_cycle
 	finish_instruction(pc_increment, num_cycles);
 }
 
-void execute_instruction_ADD_A_u8(u8 to_add, u16 pc_increment, u8 num_cycles) {
+static void execute_instruction_ADD_A_u8(u8 to_add, u16 pc_increment, u8 num_cycles) {
 	if (addition_produces_u8_half_carry(registers.a, to_add)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -141,7 +141,7 @@ void execute_instruction_ADD_A_u8(u8 to_add, u16 pc_increment, u8 num_cycles) {
 	finish_instruction(pc_increment, num_cycles);
 }
 
-void execute_instruction_ADD_HL_u16(u16 to_add, u16 pc_increment, u8 num_cycles) {
+static void execute_instruction_ADD_HL_u16(u16 to_add, u16 pc_increment, u8 num_cycles) {
 	if (addition_produces_u16_half_carry(registers.hl, to_add)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -155,7 +155,7 @@ void execute_instruction_ADD_HL_u16(u16 to_add, u16 pc_increment, u8 num_cycles)
 	finish_instruction(pc_increment, num_cycles);
 }
 
-void execute_instruction_SUB_u8(u8 subber, u16 pc_increment, int num_cycles) {
+static void execute_instruction_SUB_u8(u8 subber, u16 pc_increment, int num_cycles) {
 	if (negate_produces_u8_half_carry(registers.a, subber)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	

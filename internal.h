@@ -1,4 +1,5 @@
 // TODO: Prevent name clashes with user code (RobinGB prefixes, static definitions in .c files)
+// TODO: Almost all subsystems should access memory via robingb_memory[address] rather than mem_read()/mem_write()
 
 #ifndef ROBINGB_INTERNAL_H
 #define ROBINGB_INTERNAL_H
@@ -27,8 +28,9 @@ typedef int32_t s32;
 
 #define TIMER_DIV_ADDRESS (0xff04)
 
-#define LCD_CONTROL_ADDRESS (0xff40)
-#define LCD_STATUS_ADDRESS (0xff41)
+#define LCD_CONTROL_ADDRESS 0xff40
+#define LCD_STATUS_ADDRESS 0xff41
+#define LCD_LY_ADDRESS 0xff44
 #define LCD_LYC_ADDRESS 0xff45
 
 #define IF_ADDRESS (0xff0f)
