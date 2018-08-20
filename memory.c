@@ -315,6 +315,19 @@ u16 mem_read_u16(u16 address) {
 	return out;
 }
 
+// TODO: remove these subsystem-specific reads and just have the subsystems execute memory[address] directly
+void mem_read_lcd_memory(u8 *control, u8 *status, u8 *lyc) {
+	*control = memory[LCD_CONTROL_ADDRESS];
+	*status = memory[LCD_STATUS_ADDRESS];
+	*lyc = memory[LCD_LYC_ADDRESS];
+}
+
+// TODO: remove these subsystem-specific reads and just have the subsystems execute memory[address] directly
+void mem_read_interrupt_memory(u8 *interrupt_flags, u8 *interrupt_enable) {
+	*interrupt_flags = memory[IF_ADDRESS];
+	*interrupt_enable = memory[IE_ADDRESS];
+}
+
 void mem_write(u16 address, u8 value) {
 	if (address == TIMER_DIV_ADDRESS) {
 		memory[address] = get_new_timer_div_value_on_write();

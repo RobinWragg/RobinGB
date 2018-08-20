@@ -3,8 +3,9 @@
 
 void handle_interrupts() {
 	if (registers.ime) {
-		u8 requested_interrupts = mem_read(IF_ADDRESS);
-		u8 enabled_interrupts = mem_read(IE_ADDRESS);
+		u8 requested_interrupts;
+		u8 enabled_interrupts;
+		mem_read_interrupt_memory(&requested_interrupts, &enabled_interrupts);
 		
 		u8 interrupts_to_handle = requested_interrupts & enabled_interrupts;
 		

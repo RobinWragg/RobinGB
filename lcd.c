@@ -21,7 +21,6 @@ This signal is set to 1 if:
 
 #define NUM_CYCLES_PER_LY_INCREMENT 456
 #define LY_ADDRESS 0xff44
-#define LYC_ADDRESS 0xff45
 #define MODE_2_CYCLE_DURATION 77
 #define MODE_3_CYCLE_DURATION 169
 
@@ -72,9 +71,12 @@ void update_mode_and_write_status(int elapsed_cycles, u8 status) {
 }
 
 void lcd_update(int num_cycles_delta) {
-	u8 status = mem_read(LCD_STATUS_ADDRESS);
+	u8 control;
+	u8 status;
+	u8 lyc;
+	mem_read_lcd_memory(&control, &status, &lyc);
 	
-	if ((mem_read(LCD_CONTROL_ADDRESS) & 0x80) == 0) {
+	if ((control & 0x80) == 0) {
 		// Bit 7 of the LCD control register is 0, so the LCD is switched off.
 		// LY, the mode, and the LYC=LY flag should all be 0.
 		mem_write(LY_ADDRESS, 0x00);
@@ -91,7 +93,7 @@ void lcd_update(int num_cycles_delta) {
 	mem_write(LY_ADDRESS, ly);
 	
 	// handle LYC
-	if (ly == mem_read(LYC_ADDRESS)) {
+	if (ly == lyc) {
 		status |= 0x04;
 		if (status & 0x40) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 	} else {

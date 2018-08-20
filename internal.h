@@ -29,6 +29,7 @@ typedef int32_t s32;
 
 #define LCD_CONTROL_ADDRESS (0xff40)
 #define LCD_STATUS_ADDRESS (0xff41)
+#define LCD_LYC_ADDRESS 0xff45
 
 #define IF_ADDRESS (0xff0f)
 #define IE_ADDRESS (0xffff)
@@ -93,6 +94,8 @@ Mem_Address_Description mem_get_address_description(int address);
 void mem_init(const char *rom_file_path);
 u8 mem_read(u16 address);
 u16 mem_read_u16(u16 address);
+void mem_read_lcd_memory(u8 *control, u8 *status, u8 *lyc);
+void mem_read_interrupt_memory(u8 *interrupt_flags, u8 *interrupt_enable);
 void mem_write(u16 address, u8 value);
 void mem_write_u16(u16 address, u16 value);
 void lcd_update(int num_cycles_passed);
