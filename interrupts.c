@@ -39,8 +39,8 @@ void handle_interrupts() {
 }
 
 void request_interrupt(u8 interrupt_to_request) {
-	interrupt_to_request |= *requested_interrupts; // combine with the existing request flags.
-	interrupt_to_request |= 0xe0; // top 3 bits are always 1.
+	*requested_interrupts |= interrupt_to_request; // combine with the existing request flags
+	*requested_interrupts |= 0xe0; // top 3 bits are always 1.
 }
 
 
