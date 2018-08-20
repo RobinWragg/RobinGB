@@ -27,12 +27,10 @@ typedef int32_t s32;
 
 #define TIMER_DIV_ADDRESS (0xff04)
 
-// TODO: do these need to be global?
 #define LCD_CONTROL_ADDRESS (0xff40)
 #define LCD_STATUS_ADDRESS (0xff41)
 #define LCD_LYC_ADDRESS 0xff45
 
-// TODO: do these need to be global?
 #define IF_ADDRESS (0xff0f)
 #define IE_ADDRESS (0xffff)
 
