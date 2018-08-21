@@ -481,41 +481,14 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x9d: execute_instruction_SBC(registers.l, 1, 4); break;
 		case 0x9e: execute_instruction_SBC(mem_read(registers.hl), 1, 8); break;
 		case 0x9f: execute_instruction_SBC(registers.a, 1, 4); break;
-		case 0xa0: {
-			registers.a &= registers.b;
-			
-			if (registers.a == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			
-			registers.f &= ~FLAG_N;
-			registers.f |= FLAG_H;
-			registers.f &= ~FLAG_C;
-			
-			finish_instruction(1, 4);
-		} break;
-		case 0xa1: {
-			registers.a &= registers.c;
-			
-			if (registers.a == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			
-			registers.f &= ~FLAG_N;
-			registers.f |= FLAG_H;
-			registers.f &= ~FLAG_C;
-			
-			finish_instruction(1, 4);
-		} break;
-		case 0xa7: {
-			registers.a &= registers.a;
-			
-			if (registers.a == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			
-			registers.f &= ~FLAG_N;
-			registers.f |= FLAG_H;
-			registers.f &= ~FLAG_C;
-			finish_instruction(1, 4);
-		} break;
+		case 0xa0: execute_instruction_AND(registers.b, 1, 4); break;
+		case 0xa1: execute_instruction_AND(registers.c, 1, 4); break;
+		case 0xa2: execute_instruction_AND(registers.d, 1, 4); break;
+		case 0xa3: execute_instruction_AND(registers.e, 1, 4); break;
+		case 0xa4: execute_instruction_AND(registers.h, 1, 4); break;
+		case 0xa5: execute_instruction_AND(registers.l, 1, 4); break;
+		case 0xa6: execute_instruction_AND(mem_read(registers.hl), 1, 8); break;
+		case 0xa7: execute_instruction_AND(registers.a, 1, 4); break;
 		case 0xa8: {
 			registers.a ^= registers.b;
 			
