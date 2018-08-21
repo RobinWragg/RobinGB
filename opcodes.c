@@ -693,18 +693,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			stack_push(registers.hl);
 			finish_instruction(1, 16);
 		} break;
-		case 0xe6: {
-			u8 byte_0 = mem_read(registers.pc+1);
-			registers.a &= byte_0;
-			
-			if (registers.a == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			
-			registers.f &= ~FLAG_N;
-			registers.f |= FLAG_H;
-			registers.f &= ~FLAG_C;
-			finish_instruction(2, 8);
-		} break;
+		case 0xe6: execute_instruction_AND(mem_read(registers.pc+1), 2, 8); break;
 		case 0xe9: {
 			registers.pc = registers.hl;
 			finish_instruction(0, 4);
