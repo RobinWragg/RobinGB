@@ -6,19 +6,17 @@ static u8 *lcdc = &robingb_memory[LCD_CONTROL_ADDRESS];
 static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
 u8 *bg_scroll_x = &robingb_memory[0xff43];
 
-#define SCREEN_WIDTH (160)
-#define SCREEN_HEIGHT (144)
+#define SCREEN_WIDTH 160
+#define SCREEN_HEIGHT 144
 
-#define BG_WIDTH (256)
-#define BG_HEIGHT (256)
-u8 bg[BG_WIDTH*BG_HEIGHT];
-// u8 bg[((BG_WIDTH*BG_HEIGHT) * 2) / 8];
+#define BG_WIDTH 256
+#define BG_HEIGHT 256
 
-#define NUM_TILES_PER_BG_LINE (32)
-#define NUM_BYTES_PER_TILE (16)
-#define NUM_BYTES_PER_TILE_LINE (2)
-#define TILE_WIDTH_IN_PIXELS (8)
-#define TILE_HEIGHT_IN_PIXELS (8)
+#define NUM_TILES_PER_BG_LINE 32
+#define NUM_BYTES_PER_TILE 16
+#define NUM_BYTES_PER_TILE_LINE 2
+#define TILE_WIDTH_IN_PIXELS 8
+#define TILE_HEIGHT_IN_PIXELS 8
 
 void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[]) {
 	for (int r = 0; r < 8; r++) {
@@ -51,7 +49,7 @@ void get_tile_line_data_for_bg_tile_coord(u8 x, u8 y, u8 tile_line_index, u8 til
 	tile_line_data_out[1] = robingb_memory[tile_line_address+1];
 }
 
-void render_background_line() {
+void render_background_line(u8 bg_line[]) {
 	const u8 bg_y = *ly; // TODO: temp. This won't work for vertical scrolling.
 	const u8 bg_tile_y = bg_y / TILE_HEIGHT_IN_PIXELS;
 	const u8 tile_line_index = (*ly) - bg_tile_y*TILE_HEIGHT_IN_PIXELS;
@@ -65,7 +63,7 @@ void render_background_line() {
 		u8 pixel_row[TILE_WIDTH_IN_PIXELS];
 		get_pixel_row_from_tile_line_data(tile_line_data, pixel_row);
 		
-		memcpy(&bg[bg_x + bg_y*BG_WIDTH], pixel_row, sizeof(u8) * TILE_WIDTH_IN_PIXELS);
+		memcpy(&bg_line[bg_x], pixel_row, sizeof(u8) * TILE_WIDTH_IN_PIXELS);
 	}
 }
 
@@ -101,12 +99,14 @@ void render_objects_on_line() {
 
 void render_screen_line() {
 	if ((*lcdc) & 0x01) { // NOTE: bit 0 of lcdc has different meanings for Game Boy Color.
-		render_background_line();
+		
+		u8 bg_line[BG_WIDTH];
+		render_background_line(bg_line);
 		
 		for (u8 s = 0; s < SCREEN_WIDTH; s++) {
 			int bg_x = (*bg_scroll_x) + s;
 			while (bg_x >= BG_WIDTH) bg_x -= BG_WIDTH;
-			screen[s + (*ly)*SCREEN_WIDTH] = bg[bg_x + (*ly)*BG_WIDTH];
+			screen[s + (*ly)*SCREEN_WIDTH] = bg_line[bg_x];
 		}
 	} else {
 		for (u8 s = 0; s < SCREEN_WIDTH; s++) screen[s + (*ly)*SCREEN_WIDTH] = 0xff;
@@ -117,7 +117,7 @@ void render_screen_line() {
 }
 
 void robingb_get_background(u8 bg_out[]) {
-	memcpy(bg_out, bg, BG_WIDTH*BG_HEIGHT);
+	// memcpy(bg_out, bg, BG_WIDTH*BG_HEIGHT);
 }
 
 void robingb_get_screen(u8 screen_out[]) {
