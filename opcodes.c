@@ -1,12 +1,9 @@
-// TODO: can we speed stuff up if we don't need to know the cycle counts of instructions?
+// TODO: can we speed stuff up if we increment pc gradually instead of in one go as part of finish_instruction()?
 
 #include "internal.h"
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
-
-// TODO: 8bit ADC func
-// TODO: 8bit CP func
 
 u8 *num_cycles_for_finish = 0;
 
@@ -46,6 +43,22 @@ static bool addition_produces_u16_half_carry(u16 a, u16 b) {
 static bool addition_produces_u16_full_carry(s32 a, s32 b) {
 	if (a + b > 0xffff) return true;
 	else return false;
+}
+
+static void execute_instruction_CP(u8 comparator, u16 pc_increment, u8 num_cycles) {
+	if (negate_produces_u8_half_carry(registers.a, comparator)) registers.f |= FLAG_H;
+	else registers.f &= ~FLAG_H;
+	
+	if (negate_produces_u8_full_carry(registers.a, comparator)) registers.f |= FLAG_C;
+	else registers.f &= ~FLAG_C;
+	
+	registers.f |= FLAG_N; // set the add/sub flag high, indicating subtraction
+	
+	u8 sub_result = registers.a - comparator;
+	
+	if (sub_result == 0) registers.f |= FLAG_Z;
+	else registers.f &= ~FLAG_Z;
+	finish_instruction(pc_increment, num_cycles);
 }
 
 static void execute_instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
@@ -553,113 +566,14 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0xb5: execute_instruction_OR(registers.l, 1, 4); break;
 		case 0xb6: execute_instruction_OR(mem_read(registers.hl), 1, 8); break;
 		case 0xb7: execute_instruction_OR(registers.a, 1, 4); break;
-		case 0xb8: {
-			if (negate_produces_u8_half_carry(registers.a, registers.b)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
-			
-			if (negate_produces_u8_full_carry(registers.a, registers.b)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.f |= FLAG_N; // set the add/sub flag high, indicating subtraction
-			
-			u8 sub_result = registers.a - registers.b;
-			
-			if (sub_result == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			finish_instruction(1, 4);
-		} break;
-		case 0xb9: {
-			if (negate_produces_u8_half_carry(registers.a, registers.c)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
-			
-			if (negate_produces_u8_full_carry(registers.a, registers.c)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.f |= FLAG_N; // set the add/sub flag high, indicating subtraction
-			
-			u8 sub_result = registers.a - registers.c;
-			
-			if (sub_result == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			finish_instruction(1, 4);
-		} break;
-		case 0xba: {
-			if (negate_produces_u8_half_carry(registers.a, registers.d)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
-			
-			if (negate_produces_u8_full_carry(registers.a, registers.d)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.f |= FLAG_N; // set the add/sub flag high, indicating subtraction
-			
-			u8 sub_result = registers.a - registers.d;
-			
-			if (sub_result == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			finish_instruction(1, 4);
-		} break;
-		case 0xbb: {
-			if (negate_produces_u8_half_carry(registers.a, registers.e)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
-			
-			if (negate_produces_u8_full_carry(registers.a, registers.e)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.f |= FLAG_N; // set the add/sub flag high, indicating subtraction
-			
-			u8 sub_result = registers.a - registers.e;
-			
-			if (sub_result == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			finish_instruction(1, 4);
-		} break;
-		case 0xbc: {
-			if (negate_produces_u8_half_carry(registers.a, registers.h)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
-			
-			if (negate_produces_u8_full_carry(registers.a, registers.h)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.f |= FLAG_N; // set the add/sub flag high, indicating subtraction
-			
-			u8 sub_result = registers.a - registers.h;
-			
-			if (sub_result == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			finish_instruction(1, 4);
-		} break;
-		case 0xbd: {
-			if (negate_produces_u8_half_carry(registers.a, registers.l)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
-			
-			if (negate_produces_u8_full_carry(registers.a, registers.l)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.f |= FLAG_N; // set the add/sub flag high, indicating subtraction
-			
-			u8 sub_result = registers.a - registers.l;
-			
-			if (sub_result == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			finish_instruction(1, 4);
-		} break;
-		case 0xbe: {
-			u8 value = mem_read(registers.hl);
-			
-			if (negate_produces_u8_half_carry(registers.a, value)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
-			
-			if (negate_produces_u8_full_carry(registers.a, value)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.f |= FLAG_N; // set the add/sub flag high, indicating subtraction
-			
-			u8 sub_result = registers.a - value;
-			
-			if (sub_result == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			finish_instruction(1, 8);
-		} break;
+		case 0xb8: execute_instruction_CP(registers.b, 1, 4); break;
+		case 0xb9: execute_instruction_CP(registers.c, 1, 4); break;
+		case 0xba: execute_instruction_CP(registers.d, 1, 4); break;
+		case 0xbb: execute_instruction_CP(registers.e, 1, 4); break;
+		case 0xbc: execute_instruction_CP(registers.h, 1, 4); break;
+		case 0xbd: execute_instruction_CP(registers.l, 1, 4); break;
+		case 0xbe: execute_instruction_CP(mem_read(registers.hl), 1, 8); break;
+		case 0xbf: execute_instruction_CP(registers.a, 1, 4); break;
 		case 0xc0: {
 			if (registers.f & FLAG_Z) finish_instruction(1, 8);
 			else {
