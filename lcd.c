@@ -23,10 +23,10 @@ This signal is set to 1 if:
 #define MODE_2_CYCLE_DURATION 77
 #define MODE_3_CYCLE_DURATION 169
 
-u8 *control = &robingb_memory[LCD_CONTROL_ADDRESS];
-u8 *status = &robingb_memory[LCD_STATUS_ADDRESS];
-u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
-u8 *lyc = &robingb_memory[LCD_LYC_ADDRESS];
+static u8 *control = &robingb_memory[LCD_CONTROL_ADDRESS];
+static u8 *status = &robingb_memory[LCD_STATUS_ADDRESS];
+static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
+static u8 *lyc = &robingb_memory[LCD_LYC_ADDRESS];
 
 void update_mode_and_write_status(int elapsed_cycles) {
 	u8 current_mode;
@@ -48,7 +48,7 @@ void update_mode_and_write_status(int elapsed_cycles) {
 	const u8 prev_mode = (*status) & 0x03; // get lower 2 bits only
 	*status &= 0xfc; // wipe the old mode
 	
-	bool should_render_screen_line = false;
+	bool should_render = false;
 	if (prev_mode != current_mode) {
 		switch (current_mode) {
 			case 0x00: {
@@ -62,7 +62,7 @@ void update_mode_and_write_status(int elapsed_cycles) {
 				if ((*status) & 0x20) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 			} break;
 			case 0x03: {
-				should_render_screen_line = true;
+				should_render = true;
 			} break;
 		}
 	}
@@ -70,7 +70,7 @@ void update_mode_and_write_status(int elapsed_cycles) {
 	*status &= 0xfc;
 	*status |= current_mode;
 	
-	if (should_render_screen_line) render_screen_line(*ly);
+	if (should_render) render_screen_line();
 }
 
 void lcd_update(int num_cycles_delta) {

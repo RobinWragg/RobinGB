@@ -2,7 +2,9 @@
 #include <assert.h>
 #include <string.h>
 
-u8 LY;
+static u8 *lcdc = &robingb_memory[LCD_CONTROL_ADDRESS];
+static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
+u8 *bg_scroll_x = &robingb_memory[0xff43];
 
 #define SCREEN_WIDTH (160)
 #define SCREEN_HEIGHT (144)
@@ -35,25 +37,24 @@ void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[]) {
 }
 
 void get_tile_line_data_for_bg_tile_coord(u8 x, u8 y, u8 tile_line_index, u8 tile_line_data_out[]) {
-	u8 lcdc = mem_read(LCD_CONTROL_ADDRESS);
-	u16 bg_tile_data_address_space_start = (lcdc & 0x10) ? 0x8000 : 0x9000;
-	u16 bg_tile_map_address_space_start = (lcdc & 0x08) ? 0x9c00 : 0x9800;
+	u16 bg_tile_data_address_space_start = ((*lcdc) & 0x10) ? 0x8000 : 0x9000;
+	u16 bg_tile_map_address_space_start = ((*lcdc) & 0x08) ? 0x9c00 : 0x9800;
 	
 	// TODO: data:0x8000 and map:0x9800 for window on the levels of super mario land?
 	
 	int bg_tile_map_index = x + y*NUM_TILES_PER_BG_LINE;
-	int tile_data_index = mem_read(bg_tile_map_address_space_start + bg_tile_map_index);
+	int tile_data_index = robingb_memory[bg_tile_map_address_space_start + bg_tile_map_index];
 	int tile_data_address = bg_tile_data_address_space_start + tile_data_index*NUM_BYTES_PER_TILE;
 	int tile_line_address = tile_data_address + tile_line_index*NUM_BYTES_PER_TILE_LINE;
 	
-	tile_line_data_out[0] = mem_read(tile_line_address);
-	tile_line_data_out[1] = mem_read(tile_line_address+1);
+	tile_line_data_out[0] = robingb_memory[tile_line_address];
+	tile_line_data_out[1] = robingb_memory[tile_line_address+1];
 }
 
 void render_background_line() {
-	const u8 bg_y = LY; // TODO: temp. This won't work for vertical scrolling.
+	const u8 bg_y = *ly; // TODO: temp. This won't work for vertical scrolling.
 	const u8 bg_tile_y = bg_y / TILE_HEIGHT_IN_PIXELS;
-	const u8 tile_line_index = LY - bg_tile_y*TILE_HEIGHT_IN_PIXELS;
+	const u8 tile_line_index = (*ly) - bg_tile_y*TILE_HEIGHT_IN_PIXELS;
 	
 	for (int bg_x = 0; bg_x < BG_WIDTH; bg_x += 8) {
 		const u8 bg_tile_x = bg_x / TILE_WIDTH_IN_PIXELS;
@@ -70,7 +71,7 @@ void render_background_line() {
 
 void get_object_data(int object_data_index, u8 object_data_out[]) {
 	for (int b =  0; b < NUM_BYTES_PER_TILE; b++) {
-		object_data_out[b] = mem_read(0x8000 + object_data_index*NUM_BYTES_PER_TILE + b);
+		object_data_out[b] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + b];
 	}
 }
 
@@ -79,45 +80,40 @@ void get_object_data(int object_data_index, u8 object_data_out[]) {
 u8 screen[SCREEN_WIDTH*SCREEN_HEIGHT];
 
 void render_objects_on_line() {
-	assert((mem_read(LCD_CONTROL_ADDRESS) & bit(2)) == false); // not handling 8x16 objects yet
+	assert(((*lcdc) & bit(2)) == false); // not handling 8x16 objects yet
 	
 	for (int address = 0xfe00; address < 0xfea0; address += 4) {
-		u8 y = mem_read(address) - 16; // TODO: +/- 16?
+		u8 y = robingb_memory[address] - 16; // TODO: +/- 16?
 		
-		if (LY >= y && LY < y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
-			u8 x = mem_read(address+1) - 8;
+		if (*ly >= y && *ly < y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
+			u8 x = robingb_memory[address+1] - 8;
 			
 			// TODO: ignore the lower bit of this if in 8x16 mode.
-			u8 object_data_index = mem_read(address+2);
+			u8 object_data_index = robingb_memory[address+2];
 			
 			u8 object_data[NUM_BYTES_PER_TILE];
 			get_object_data(object_data_index, object_data);
 			
-			// get_pixel_row_from_tile_data(object_data, LY - y, &screen[x + LY*160]);
+			// get_pixel_row_from_tile_data(object_data, (*ly) - y, &screen[x + (*ly)*160]);
 		}
 	}
 }
 
-void render_screen_line(u8 ly) {
-	LY = ly;
-	
-	u8 lcdc = mem_read(LCD_CONTROL_ADDRESS);
-	
-	if (lcdc & 0x01) { // NOTE: bit 0 of lcdc has different meanings for Game Boy Color.
+void render_screen_line() {
+	if ((*lcdc) & 0x01) { // NOTE: bit 0 of lcdc has different meanings for Game Boy Color.
 		render_background_line();
 		
-		u8 bg_scroll_x = mem_read(0xff43);
 		for (u8 s = 0; s < SCREEN_WIDTH; s++) {
-			int bg_x = bg_scroll_x + s;
+			int bg_x = (*bg_scroll_x) + s;
 			while (bg_x >= BG_WIDTH) bg_x -= BG_WIDTH;
-			screen[s + LY*SCREEN_WIDTH] = bg[bg_x + LY*BG_WIDTH];
+			screen[s + (*ly)*SCREEN_WIDTH] = bg[bg_x + (*ly)*BG_WIDTH];
 		}
 	} else {
-		for (u8 s = 0; s < SCREEN_WIDTH; s++) screen[s + LY*SCREEN_WIDTH] = 0xff;
+		for (u8 s = 0; s < SCREEN_WIDTH; s++) screen[s + (*ly)*SCREEN_WIDTH] = 0xff;
 	}
 	
 	// check if object object drawing is enabled
-	// if (lcdc & bit(1)) render_objects_on_line();
+	// if ((*lcdc) & bit(1)) render_objects_on_line();
 }
 
 void robingb_get_background(u8 bg_out[]) {

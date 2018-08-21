@@ -108,7 +108,7 @@ void init_timer();
 u8 get_new_timer_div_value_on_write();
 void update_timer(u8 num_cycles_delta);
 void update_audio(int num_cycles);
-void render_screen_line(u8 ly);
+void render_screen_line();
 const char * get_opcode_name(u16 opcode_address);
 
 #endif
