@@ -178,8 +178,6 @@ void execute_next_opcode(u8 *num_cycles_out) {
 	num_cycles_for_finish = num_cycles_out;
 	u8 opcode = mem_read(registers.pc);
 	
-	robingb_log("switch");
-	
 	switch (opcode) {
 		case 0x00: finish_instruction(1, 4); break;
 		case 0x01: registers.bc = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
@@ -686,7 +684,6 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			}
 		} break;
 		case 0xc3: {
-			robingb_log("c3");
 			registers.pc = mem_read_u16(registers.pc+1);
 			finish_instruction(0, 16);
 		} break;
