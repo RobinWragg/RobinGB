@@ -28,10 +28,10 @@ static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[])
 		
 		u8 shade = lower_bit | upper_bit;
 		switch (shade) {
-			case 0x00: row_out[r] = 85 * 3; break;
-			case 0x01: row_out[r] = 85 * 2; break;
-			case 0x02: row_out[r] = 85; break;
-			case 0x03: row_out[r] = 0; break;
+			case 0x00: row_out[r] = 0x03; break;
+			case 0x01: row_out[r] = 0x02; break;
+			case 0x02: row_out[r] = 0x01; break;
+			case 0x03: row_out[r] = 0x00; break;
 		}
 	}
 }
@@ -82,7 +82,7 @@ static void render_background_line(u8 bg_line[]) {
 		get_pixel_row_from_tile_line_data(tile_line_data, pixel_row);
 		
 		for (int p_x = bg_x; p_x < bg_x+8; p_x++) {
-			set_bg_line_pixel(bg_line, p_x, pixel_row[p_x - bg_x] / 85);
+			set_bg_line_pixel(bg_line, p_x, pixel_row[p_x - bg_x]);
 		}
 	}
 }
