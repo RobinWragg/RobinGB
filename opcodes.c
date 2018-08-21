@@ -263,8 +263,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 4);
 		} break;
 		case 0x20: {
-			u8 byte_0 = mem_read(registers.pc+1);
-			if ((registers.f & FLAG_Z) == 0) finish_instruction(2 + (s8)byte_0, 12);
+			if ((registers.f & FLAG_Z) == 0) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
 		case 0x21: registers.hl = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
@@ -297,8 +296,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 4);
 		} break;
 		case 0x28: {
-			u8 byte_0 = mem_read(registers.pc+1);
-			if (registers.f & FLAG_Z) finish_instruction(2 + (s8)byte_0, 12);
+			if (registers.f & FLAG_Z) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
 		case 0x29: execute_instruction_ADD_HL_u16(registers.hl, 1, 8); break;
@@ -314,8 +312,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 4);
 		} break;
 		case 0x30: {
-			u8 byte_0 = mem_read(registers.pc+1);
-			if ((registers.f & FLAG_C) == 0) finish_instruction(2 + (s8)byte_0, 12);
+			if ((registers.f & FLAG_C) == 0) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
 		case 0x31: registers.sp = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
@@ -339,8 +336,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 4);
 		} break;
 		case 0x38: {
-			u8 byte_0 = mem_read(registers.pc+1);
-			if (registers.f & FLAG_C) finish_instruction(2 + (s8)byte_0, 12);
+			if (registers.f & FLAG_C) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
 		case 0x39: execute_instruction_ADD_HL_u16(registers.sp, 1, 8); break;
