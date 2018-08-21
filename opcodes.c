@@ -127,6 +127,19 @@ static void execute_instruction_SBC(u8 to_subtract, u16 pc_increment, int num_cy
 	finish_instruction(pc_increment, num_cycles);
 }
 
+static void execute_instruction_AND(u8 right_hand_value, u16 pc_increment, int num_cycles) {
+	registers.a &= right_hand_value;
+	
+	if (registers.a == 0) registers.f |= FLAG_Z;
+	else registers.f &= ~FLAG_Z;
+	
+	registers.f &= ~FLAG_N;
+	registers.f |= FLAG_H;
+	registers.f &= ~FLAG_C;
+	
+	finish_instruction(pc_increment, num_cycles);
+}
+
 static void execute_instruction_OR(u8 right_hand_value, u16 pc_increment, int num_cycles) {
 	registers.a |= right_hand_value;
 	
