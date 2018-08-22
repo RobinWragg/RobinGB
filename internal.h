@@ -80,6 +80,7 @@ typedef struct {
 } Mem_Address_Description;
 
 extern void (*robingb_read_file)(const char *path, u32 offset, u32 size, u8 buffer[]);
+extern u8 *robingb_screen;
 
 extern Registers registers;
 extern bool halted;

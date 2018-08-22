@@ -4,7 +4,7 @@
 
 #define SCREEN_WIDTH_IN_PIXELS 160
 #define SCREEN_WIDTH_IN_BYTES 40
-#define SCREEN_HEIGHT_IN_PIXELS 144
+#define SCREEN_HEIGHT 144
 
 #define BG_WIDTH_IN_BYTES 64
 #define BG_WIDTH_IN_PIXELS 256
@@ -19,7 +19,7 @@ static u8 *lcdc = &robingb_memory[LCD_CONTROL_ADDRESS];
 static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
 static u8 *bg_scroll_x = &robingb_memory[0xff43];
 
-static u8 screen[SCREEN_WIDTH_IN_PIXELS*SCREEN_HEIGHT_IN_PIXELS];
+u8 *robingb_screen;
 
 static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[]) {
 	for (int r = 0; r < 8; r++) {
@@ -27,13 +27,7 @@ static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[])
 		u8 lower_bit = (tile_line_data[0] & relevant_bit) ? 0x01 : 0x00;
 		u8 upper_bit = (tile_line_data[1] & relevant_bit) ? 0x02 : 0x00;
 		
-		u8 shade = lower_bit | upper_bit;
-		switch (shade) {
-			case 0x00: row_out[r] = 0x03; break;
-			case 0x01: row_out[r] = 0x02; break;
-			case 0x02: row_out[r] = 0x01; break;
-			case 0x03: row_out[r] = 0x00; break;
-		}
+		row_out[r] = lower_bit | upper_bit;
 	}
 }
 
@@ -109,29 +103,20 @@ static void render_background_line(u8 bg_line[]) {
 // 			u8 object_data[NUM_BYTES_PER_TILE];
 // 			get_object_data(object_data_index, object_data);
 			
-// 			// get_pixel_row_from_tile_data(object_data, (*ly) - y, &screen[x + (*ly)*160]);
+// 			// get_pixel_row_from_tile_data(object_data, (*ly) - y, &robingb_screen[x + (*ly)*160]);
 // 		}
 // 	}
 // }
 
 static void set_screen_pixel(u8 x, u8 y, u8 doublebit_shade) {
-	u8 byte_index = x/4 + y*SCREEN_WIDTH_IN_BYTES; // 4 pixels per byte
+	u16 byte_index = x/4 + y*SCREEN_WIDTH_IN_BYTES; // 4 pixels per byte
 	u8 bit_index = (x % 4) * 2; // 2 bits per pixel
-	screen[byte_index] &= ~(0x03 << bit_index); // wipe the pixel
-	screen[byte_index] |= doublebit_shade << bit_index;
+	robingb_screen[byte_index] &= ~(0x03 << bit_index); // wipe the pixel
+	robingb_screen[byte_index] |= doublebit_shade << bit_index;
 }
 
-// static u8 get_screen_pixel(u8 x, u8 y) {
-// 	u8 byte_index = x / 4; // 4 pixels per byte
-// 	u8 bit_index = (x % 4) * 2; // 2 bits per pixel
-	
-// 	u8 bg_byte = bg_line[byte_index];
-// 	u8 bg_pixel = bg_byte & (0x03 << bit_index);
-// 	return (bg_pixel >> bit_index) * 85;
-// }
-
 void render_screen_line() {
-	if ((*lcdc) & 0x01) { // NOTE: bit 0 of lcdc has different meanings for Game Boy Color.
+	if ((*lcdc) & 0x01) { // Check if the background is enabled. NOTE: bit 0 of lcdc has different meanings for Game Boy Color.
 		
 		u8 bg_line[BG_WIDTH_IN_BYTES];
 		render_background_line(bg_line);
@@ -141,24 +126,38 @@ void render_screen_line() {
 			
 			while (bg_x >= BG_WIDTH_IN_PIXELS) bg_x -= BG_WIDTH_IN_PIXELS;
 			
-			screen[s + (*ly)*SCREEN_WIDTH_IN_PIXELS] = get_bg_line_pixel(bg_line, bg_x);
+			u8 pixel = get_bg_line_pixel(bg_line, bg_x);
+			set_screen_pixel(s, *ly, pixel);
 		}
 	} else {
-		// TODO: make the current line of the screen white.
+		// Background is disabled, so just render white
+		for (int x = 0; x < SCREEN_WIDTH_IN_BYTES; x++) {
+			robingb_screen[x + (*ly)*SCREEN_WIDTH_IN_BYTES] = 0x00;
+		}
 	}
 	
 	// check if object object drawing is enabled
 	// if ((*lcdc) & bit(1)) render_objects_on_line();
 	
-	set_screen_pixel(0, 0, 0x03);
-	set_screen_pixel(1, 1, 0x03);
-	set_screen_pixel(2, 2, 0x03);
-	set_screen_pixel(3, 3, 0x03);
-	set_screen_pixel(4, 4, 0x03);
 }
 
-void robingb_get_screen(u8 screen_out[]) {
-	memcpy(screen_out, screen, SCREEN_WIDTH_IN_PIXELS*SCREEN_HEIGHT_IN_PIXELS);
+static u8 get_screen_pixel(u8 x, u8 y) {
+	u16 byte_index = x/4 + y*SCREEN_WIDTH_IN_BYTES; // 4 pixels per byte
+	u8 bit_index = (x % 4) * 2; // 2 bits per pixel
+	
+	u8 screen_byte = robingb_screen[byte_index];
+	u8 screen_pixel = screen_byte & (0x03 << bit_index);
+	
+	s16 pixel_out = (screen_pixel >> bit_index) * -85;
+	return pixel_out + 255;
+}
+
+void robingb_get_8bit_screen(u8 screen_out[]) {
+	for (int y = 0; y < SCREEN_HEIGHT; y++) {
+		for (int x = 0; x < SCREEN_WIDTH_IN_PIXELS; x++) {
+			screen_out[x + y*SCREEN_WIDTH_IN_PIXELS] = get_screen_pixel(x, y);
+		}
+	}
 }
 
 
