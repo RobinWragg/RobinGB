@@ -46,13 +46,6 @@ static void get_tile_line_data_for_bg_tile_coord(u8 x, u8 y, u8 tile_line_index,
 	tile_line_data_out[1] = robingb_memory[tile_line_address+1];
 }
 
-static void set_bg_line_pixel(u8 bg_line[], u8 x, u8 doublebit_shade) {
-	u8 byte_index = x / 4; // 4 pixels per byte
-	u8 bit_index = (x % 4) * 2; // 2 bits per pixel
-	bg_line[byte_index] &= ~(0x03 << bit_index); // wipe the pixel
-	bg_line[byte_index] |= doublebit_shade << bit_index;
-}
-
 static u8 get_bg_line_pixel(u8 bg_line[], u8 x) {
 	u8 byte_index = x / 4; // 4 pixels per byte
 	u8 bit_index = (x % 4) * 2; // 2 bits per pixel
@@ -74,10 +67,29 @@ static void render_background_line(u8 bg_line[]) {
 		get_tile_line_data_for_bg_tile_coord(bg_tile_x, bg_tile_y, tile_line_index, tile_line_data);
 		
 		u8 pixel_row[TILE_WIDTH_IN_PIXELS];
-		get_pixel_row_from_tile_line_data(tile_line_data, pixel_row);
+		// get_pixel_row_from_tile_line_data(tile_line_data, pixel_row);
 		
-		for (int p_x = bg_x; p_x < bg_x+8; p_x++) {
-			set_bg_line_pixel(bg_line, p_x, pixel_row[p_x - bg_x]);
+		
+		
+		
+		for (int r = 0; r < 8; r++) {
+			u8 pixel_bit_index = 0x80 >> r;
+			u8 lower_bit = (tile_line_data[0] & pixel_bit_index) ? 0x01 : 0x00;
+			u8 upper_bit = (tile_line_data[1] & pixel_bit_index) ? 0x02 : 0x00;
+			
+			pixel_row[r] = lower_bit | upper_bit;
+		}
+		
+		
+		
+		
+		for (u16 pixel_x = bg_x; pixel_x < bg_x+8; pixel_x++) {
+			u8 doublebit_shade = pixel_row[pixel_x - bg_x];
+			
+			u8 byte_index = pixel_x / 4; // 4 pixels per byte
+			u8 bit_index = (pixel_x % 4) * 2; // 2 bits per pixel
+			bg_line[byte_index] &= ~(0x03 << bit_index); // wipe the pixel
+			bg_line[byte_index] |= doublebit_shade << bit_index;
 		}
 	}
 }
