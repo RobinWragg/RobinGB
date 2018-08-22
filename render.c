@@ -32,8 +32,10 @@ static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[])
 }
 
 static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u8 tile_line_index, u8 tile_line_data_out[]) {
-	u16 bg_tile_data_address_space_start = ((*lcdc) & 0x10) ? 0x8000 : 0x9000;
-	u16 bg_tile_map_address_space_start = ((*lcdc) & 0x08) ? 0x9c00 : 0x9800;
+	
+	// TODO: pull this out and feed it in as parameters for efficiency?
+	u16 bg_tile_data_address_space_start = ((*lcdc) & bit(4)) ? 0x8000 : 0x9000;
+	u16 bg_tile_map_address_space_start = ((*lcdc) & bit(3)) ? 0x9c00 : 0x9800;
 	
 	int bg_tile_map_index = x + y*NUM_TILES_PER_BG_LINE;
 	int tile_data_index = robingb_memory[bg_tile_map_address_space_start + bg_tile_map_index];
