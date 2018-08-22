@@ -66,30 +66,18 @@ static void render_background_line(u8 bg_line[]) {
 		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
 		get_tile_line_data_for_bg_tile_coord(bg_tile_x, bg_tile_y, tile_line_index, tile_line_data);
 		
-		u8 pixel_row[TILE_WIDTH_IN_PIXELS];
-		// get_pixel_row_from_tile_line_data(tile_line_data, pixel_row);
-		
-		
-		
-		
-		for (int r = 0; r < 8; r++) {
-			u8 pixel_bit_index = 0x80 >> r;
-			u8 lower_bit = (tile_line_data[0] & pixel_bit_index) ? 0x01 : 0x00;
-			u8 upper_bit = (tile_line_data[1] & pixel_bit_index) ? 0x02 : 0x00;
+		for (int pixel_x = 0; pixel_x < 8; pixel_x++) {
+			u8 pixel_bit_index = 0x80 >> pixel_x;
+			u8 lower_shade_bit = (tile_line_data[0] & pixel_bit_index) ? 0x01 : 0x00;
+			u8 upper_shade_bit = (tile_line_data[1] & pixel_bit_index) ? 0x02 : 0x00;
 			
-			pixel_row[r] = lower_bit | upper_bit;
-		}
-		
-		
-		
-		
-		for (u16 pixel_x = bg_x; pixel_x < bg_x+8; pixel_x++) {
-			u8 doublebit_shade = pixel_row[pixel_x - bg_x];
+			u8 shade_2bit = lower_shade_bit | upper_shade_bit;
 			
-			u8 byte_index = pixel_x / 4; // 4 pixels per byte
+			u16 bg_pixel_x = bg_x + pixel_x;
+			
+			u8 byte_index = bg_pixel_x / 4; // 4 pixels per byte
 			u8 bit_index = (pixel_x % 4) * 2; // 2 bits per pixel
-			bg_line[byte_index] &= ~(0x03 << bit_index); // wipe the pixel
-			bg_line[byte_index] |= doublebit_shade << bit_index;
+			bg_line[byte_index] |= shade_2bit << bit_index;
 		}
 	}
 }
@@ -130,7 +118,7 @@ static void set_screen_pixel(u8 x, u8 y, u8 doublebit_shade) {
 void render_screen_line() {
 	if ((*lcdc) & 0x01) { // Check if the background is enabled. NOTE: bit 0 of lcdc has different meanings for Game Boy Color.
 		
-		u8 bg_line[BG_WIDTH_IN_BYTES];
+		u8 bg_line[BG_WIDTH_IN_BYTES] = {0};
 		render_background_line(bg_line);
 		
 		for (u8 s = 0; s < SCREEN_WIDTH_IN_PIXELS; s++) {
