@@ -93,8 +93,8 @@ static void set_screen_pixel(u8 x, u8 y, u8 doublebit_shade) {
 static void render_objects_on_line() {
 	assert(((*lcdc) & bit(2)) == false); // not handling 8x16 objects yet
 	
-	for (int address = 0xfe00; address < 0xfea0; address += 4) {
-		u8 y = robingb_memory[address] - 16; // TODO: +/- 16?
+	for (int address = 0xfe00; address <= 0xfe9f; address += 4) {
+		u8 y = robingb_memory[address] - 16;
 		
 		if (*ly >= y && *ly < y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
 			u8 x = robingb_memory[address+1] - 8;
@@ -102,14 +102,25 @@ static void render_objects_on_line() {
 			// TODO: ignore the lower bit of this if in 8x16 mode.
 			u8 object_data_index = robingb_memory[address+2];
 			
+			u8 object_flags = robingb_memory[address+3]; // TODO: all the other flags
+			bool flip_x = object_flags & bit(5);
+			bool flip_y = object_flags & bit(6);
+			
 			u8 object_data[NUM_BYTES_PER_TILE];
 			get_object_data(object_data_index, object_data); // TODO: don't need to get the full object
 			
 			u8 pixel_row[8];
-			get_pixel_row_from_tile_line_data(&object_data[(*ly - y)*2], pixel_row);
+			if (flip_y) get_pixel_row_from_tile_line_data(&object_data[(y+7 - *ly)*2], pixel_row);
+			else get_pixel_row_from_tile_line_data(&object_data[(*ly - y)*2], pixel_row);
 			
-			for (int i = 0; i < 8; i++) {
-				if (pixel_row[i]) set_screen_pixel(x+i, *ly, pixel_row[i]);
+			if (flip_x) {
+				for (int i = 0; i < 8; i++) {
+					if (pixel_row[i]) set_screen_pixel(x+8-i, *ly, pixel_row[i]);
+				}
+			} else {
+				for (int i = 0; i < 8; i++) {
+					if (pixel_row[i]) set_screen_pixel(x+i, *ly, pixel_row[i]);
+				}
 			}
 		}
 	}
