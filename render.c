@@ -141,24 +141,6 @@ void render_screen_line() {
 	
 }
 
-static u8 get_screen_pixel(u8 x, u8 y) {
-	u16 byte_index = x/4 + y*SCREEN_WIDTH_IN_BYTES; // 4 pixels per byte
-	u8 bit_index = (x % 4) * 2; // 2 bits per pixel
-	
-	u8 screen_byte = robingb_screen[byte_index];
-	u8 screen_pixel = screen_byte & (0x03 << bit_index);
-	
-	s16 pixel_out = (screen_pixel >> bit_index) * -85;
-	return pixel_out + 255;
-}
-
-void robingb_get_8bit_screen(u8 screen_out[]) {
-	for (int y = 0; y < SCREEN_HEIGHT; y++) {
-		for (int x = 0; x < SCREEN_WIDTH_IN_PIXELS; x++) {
-			screen_out[x + y*SCREEN_WIDTH_IN_PIXELS] = get_screen_pixel(x, y);
-		}
-	}
-}
 
 
 
