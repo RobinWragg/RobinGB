@@ -65,15 +65,16 @@ static void render_background_line(u8 bg_line[]) {
 		get_tile_line_data_for_bg_tilegrid_coord(tilegrid_x, tilegrid_y, tile_y, tile_line_data);
 		
 		for (int pixel_x = 0; pixel_x < 8; pixel_x++) {
+			u8 bg_byte_index = tilegrid_x*2 + pixel_x/4; // 2 bytes per tile line, 4 pixels per byte
+			u8 bg_bit_index = (pixel_x % 4) * 2; // 4 pixels per byte, 2 bits per pixel
+			
 			u8 pixel_bit_index = 0x80 >> pixel_x;
-			u8 lower_shade_bit = (tile_line_data[0] & pixel_bit_index) ? 0x01 : 0x00;
-			u8 upper_shade_bit = (tile_line_data[1] & pixel_bit_index) ? 0x02 : 0x00;
 			
-			u8 shade_2bit = lower_shade_bit | upper_shade_bit;
+			// lower bit of shade
+			if (tile_line_data[0] & pixel_bit_index) bg_line[bg_byte_index] |= 0x01 << bg_bit_index;
 			
-			u8 byte_index = tilegrid_x*2 + pixel_x/4; // 2 bytes per tile line, 4 pixels per byte
-			u8 bit_index = (pixel_x % 4) * 2; // 4 pixels per byte, 2 bits per pixel
-			bg_line[byte_index] |= shade_2bit << bit_index;
+			// upper bit of shade
+			if (tile_line_data[1] & pixel_bit_index) bg_line[bg_byte_index] |= 0x02 << bg_bit_index;
 		}
 	}
 }
