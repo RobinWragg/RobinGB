@@ -35,8 +35,6 @@ static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u8 tile_line_in
 	u16 bg_tile_data_address_space_start = ((*lcdc) & 0x10) ? 0x8000 : 0x9000;
 	u16 bg_tile_map_address_space_start = ((*lcdc) & 0x08) ? 0x9c00 : 0x9800;
 	
-	// TODO: data:0x8000 and map:0x9800 for window on the levels of super mario land?
-	
 	int bg_tile_map_index = x + y*NUM_TILES_PER_BG_LINE;
 	int tile_data_index = robingb_memory[bg_tile_map_address_space_start + bg_tile_map_index];
 	int tile_data_address = bg_tile_data_address_space_start + tile_data_index*NUM_BYTES_PER_TILE;
@@ -79,37 +77,42 @@ static void render_background_line(u8 bg_line[]) {
 	}
 }
 
-// static void get_object_data(int object_data_index, u8 object_data_out[]) {
-// 	for (int b =  0; b < NUM_BYTES_PER_TILE; b++) {
-// 		object_data_out[b] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + b];
-// 	}
-// }
-
-// static void render_objects_on_line() {
-// 	assert(((*lcdc) & bit(2)) == false); // not handling 8x16 objects yet
-	
-// 	for (int address = 0xfe00; address < 0xfea0; address += 4) {
-// 		u8 y = robingb_memory[address] - 16; // TODO: +/- 16?
-		
-// 		if (*ly >= y && *ly < y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
-// 			u8 x = robingb_memory[address+1] - 8;
-			
-// 			// TODO: ignore the lower bit of this if in 8x16 mode.
-// 			u8 object_data_index = robingb_memory[address+2];
-			
-// 			u8 object_data[NUM_BYTES_PER_TILE];
-// 			get_object_data(object_data_index, object_data);
-			
-// 			// get_pixel_row_from_tile_data(object_data, (*ly) - y, &robingb_screen[x + (*ly)*160]);
-// 		}
-// 	}
-// }
+static void get_object_data(int object_data_index, u8 object_data_out[]) {
+	for (int b =  0; b < NUM_BYTES_PER_TILE; b++) {
+		object_data_out[b] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + b];
+	}
+}
 
 static void set_screen_pixel(u8 x, u8 y, u8 doublebit_shade) {
 	u16 byte_index = x/4 + y*SCREEN_WIDTH_IN_BYTES; // 4 pixels per byte
 	u8 bit_index = (x % 4) * 2; // 2 bits per pixel
 	robingb_screen[byte_index] &= ~(0x03 << bit_index); // wipe the pixel
 	robingb_screen[byte_index] |= doublebit_shade << bit_index;
+}
+
+static void render_objects_on_line() {
+	assert(((*lcdc) & bit(2)) == false); // not handling 8x16 objects yet
+	
+	for (int address = 0xfe00; address < 0xfea0; address += 4) {
+		u8 y = robingb_memory[address] - 16; // TODO: +/- 16?
+		
+		if (*ly >= y && *ly < y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
+			u8 x = robingb_memory[address+1] - 8;
+			
+			// TODO: ignore the lower bit of this if in 8x16 mode.
+			u8 object_data_index = robingb_memory[address+2];
+			
+			u8 object_data[NUM_BYTES_PER_TILE];
+			get_object_data(object_data_index, object_data); // TODO: don't need to get the full object
+			
+			u8 pixel_row[8];
+			get_pixel_row_from_tile_line_data(&object_data[(*ly - y)*2], pixel_row);
+			
+			for (int i = 0; i < 8; i++) {
+				if (pixel_row[i]) set_screen_pixel(x+i, *ly, pixel_row[i]);
+			}
+		}
+	}
 }
 
 void render_screen_line() {
@@ -134,7 +137,7 @@ void render_screen_line() {
 	}
 	
 	// check if object object drawing is enabled
-	// if ((*lcdc) & bit(1)) render_objects_on_line();
+	if ((*lcdc) & bit(1)) render_objects_on_line();
 	
 }
 
