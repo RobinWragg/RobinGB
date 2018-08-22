@@ -31,7 +31,7 @@ static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[])
 	}
 }
 
-static void get_tile_line_data_for_bg_tile_coord(u8 x, u8 y, u8 tile_line_index, u8 tile_line_data_out[]) {
+static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u8 tile_line_index, u8 tile_line_data_out[]) {
 	u16 bg_tile_data_address_space_start = ((*lcdc) & 0x10) ? 0x8000 : 0x9000;
 	u16 bg_tile_map_address_space_start = ((*lcdc) & 0x08) ? 0x9c00 : 0x9800;
 	
@@ -57,14 +57,12 @@ static u8 get_bg_line_pixel(u8 bg_line[], u8 x) {
 
 static void render_background_line(u8 bg_line[]) {
 	const u8 bg_y = *ly; // TODO: temp. This won't work for vertical scrolling.
-	const u8 bg_tile_y = bg_y / TILE_HEIGHT_IN_PIXELS;
-	const u8 tile_line_index = (*ly) - bg_tile_y*TILE_HEIGHT_IN_PIXELS;
+	const u8 tilegrid_y = bg_y / TILE_HEIGHT_IN_PIXELS;
+	const u8 tile_y = (*ly) - tilegrid_y*TILE_HEIGHT_IN_PIXELS;
 	
-	for (int bg_x = 0; bg_x < BG_WIDTH_IN_PIXELS; bg_x += 8) {
-		const u8 bg_tile_x = bg_x / TILE_WIDTH_IN_PIXELS;
-		
+	for (int tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
 		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
-		get_tile_line_data_for_bg_tile_coord(bg_tile_x, bg_tile_y, tile_line_index, tile_line_data);
+		get_tile_line_data_for_bg_tilegrid_coord(tilegrid_x, tilegrid_y, tile_y, tile_line_data);
 		
 		for (int pixel_x = 0; pixel_x < 8; pixel_x++) {
 			u8 pixel_bit_index = 0x80 >> pixel_x;
@@ -73,10 +71,8 @@ static void render_background_line(u8 bg_line[]) {
 			
 			u8 shade_2bit = lower_shade_bit | upper_shade_bit;
 			
-			u16 bg_pixel_x = bg_x + pixel_x;
-			
-			u8 byte_index = bg_pixel_x / 4; // 4 pixels per byte
-			u8 bit_index = (pixel_x % 4) * 2; // 2 bits per pixel
+			u8 byte_index = tilegrid_x*2 + pixel_x/4; // 2 bytes per tile line, 4 pixels per byte
+			u8 bit_index = (pixel_x % 4) * 2; // 4 pixels per byte, 2 bits per pixel
 			bg_line[byte_index] |= shade_2bit << bit_index;
 		}
 	}
