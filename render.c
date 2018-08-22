@@ -2,8 +2,9 @@
 #include <assert.h>
 #include <string.h>
 
-#define SCREEN_WIDTH 160
-#define SCREEN_HEIGHT 144
+#define SCREEN_WIDTH_IN_PIXELS 160
+#define SCREEN_WIDTH_IN_BYTES 40
+#define SCREEN_HEIGHT_IN_PIXELS 144
 
 #define BG_WIDTH_IN_BYTES 64
 #define BG_WIDTH_IN_PIXELS 256
@@ -18,7 +19,7 @@ static u8 *lcdc = &robingb_memory[LCD_CONTROL_ADDRESS];
 static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
 static u8 *bg_scroll_x = &robingb_memory[0xff43];
 
-static u8 screen[SCREEN_WIDTH*SCREEN_HEIGHT];
+static u8 screen[SCREEN_WIDTH_IN_PIXELS*SCREEN_HEIGHT_IN_PIXELS];
 
 static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[]) {
 	for (int r = 0; r < 8; r++) {
@@ -113,29 +114,51 @@ static void render_background_line(u8 bg_line[]) {
 // 	}
 // }
 
+static void set_screen_pixel(u8 x, u8 y, u8 doublebit_shade) {
+	u8 byte_index = x/4 + y*SCREEN_WIDTH_IN_BYTES; // 4 pixels per byte
+	u8 bit_index = (x % 4) * 2; // 2 bits per pixel
+	screen[byte_index] &= ~(0x03 << bit_index); // wipe the pixel
+	screen[byte_index] |= doublebit_shade << bit_index;
+}
+
+// static u8 get_screen_pixel(u8 x, u8 y) {
+// 	u8 byte_index = x / 4; // 4 pixels per byte
+// 	u8 bit_index = (x % 4) * 2; // 2 bits per pixel
+	
+// 	u8 bg_byte = bg_line[byte_index];
+// 	u8 bg_pixel = bg_byte & (0x03 << bit_index);
+// 	return (bg_pixel >> bit_index) * 85;
+// }
+
 void render_screen_line() {
 	if ((*lcdc) & 0x01) { // NOTE: bit 0 of lcdc has different meanings for Game Boy Color.
 		
 		u8 bg_line[BG_WIDTH_IN_BYTES];
 		render_background_line(bg_line);
 		
-		for (u8 s = 0; s < SCREEN_WIDTH; s++) {
+		for (u8 s = 0; s < SCREEN_WIDTH_IN_PIXELS; s++) {
 			int bg_x = (*bg_scroll_x) + s;
 			
 			while (bg_x >= BG_WIDTH_IN_PIXELS) bg_x -= BG_WIDTH_IN_PIXELS;
 			
-			screen[s + (*ly)*SCREEN_WIDTH] = get_bg_line_pixel(bg_line, bg_x);
+			screen[s + (*ly)*SCREEN_WIDTH_IN_PIXELS] = get_bg_line_pixel(bg_line, bg_x);
 		}
 	} else {
-		for (u8 s = 0; s < SCREEN_WIDTH; s++) screen[s + (*ly)*SCREEN_WIDTH] = 0xff;
+		// TODO: make the current line of the screen white.
 	}
 	
 	// check if object object drawing is enabled
 	// if ((*lcdc) & bit(1)) render_objects_on_line();
+	
+	set_screen_pixel(0, 0, 0x03);
+	set_screen_pixel(1, 1, 0x03);
+	set_screen_pixel(2, 2, 0x03);
+	set_screen_pixel(3, 3, 0x03);
+	set_screen_pixel(4, 4, 0x03);
 }
 
 void robingb_get_screen(u8 screen_out[]) {
-	memcpy(screen_out, screen, SCREEN_WIDTH*SCREEN_HEIGHT);
+	memcpy(screen_out, screen, SCREEN_WIDTH_IN_PIXELS*SCREEN_HEIGHT_IN_PIXELS);
 }
 
 
