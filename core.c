@@ -64,7 +64,7 @@ void zero_unused_f_register_bits() {
 void (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]) = 0;
 
 void robingb_init(
-	const char *rom_file_path,
+	const char *cart_file_path,
 	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]),
 	u8 *screen_out
 	) {
@@ -75,7 +75,7 @@ void robingb_init(
 	robingb_screen = screen_out;
 	assert(robingb_screen);
 	
-	mem_init(rom_file_path);
+	mem_init(cart_file_path);
 	
 	{
 		char buf[128] = {0};

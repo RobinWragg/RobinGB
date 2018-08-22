@@ -96,7 +96,7 @@ void finish_instruction(u16 pc_increment, u8 num_cycles_param);
 Mem_Address_Description mem_get_address_description(int address);
 
 extern u8 robingb_memory[];
-void mem_init(const char *rom_file_path);
+void mem_init(const char *cart_file_path);
 u8 * mem_get_pointer(u16 address);
 u8 mem_read(u16 address);
 u16 mem_read_u16(u16 address);

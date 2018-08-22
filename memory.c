@@ -53,9 +53,11 @@ typedef enum {
 	MBC_3
 } Mbc_Type;
 
-Mbc_Type mbc_type = MBC_NONE;
-
-char current_rom_file_path[256];
+struct {
+	Mbc_Type mbc_type;
+	char file_path[256];
+	bool has_ram;
+} cart_attributes;
 
 //
 // cart control code
@@ -126,10 +128,10 @@ static void load_rom_bank(int destination_slot_index, int file_bank_index) {
 					rom_bank_addresses[i].bank_index = file_bank_index;
 					
 					char buf[128] = {0};
-					sprintf(buf, "Loading ROM bank %i (%iKB from %s)", file_bank_index, ROM_BANK_SIZE/1024, current_rom_file_path);
+					sprintf(buf, "Loading ROM bank %i (%iKB from %s)", file_bank_index, ROM_BANK_SIZE/1024, cart_attributes.file_path);
 					robingb_log(buf);
 					
-					robingb_read_file(current_rom_file_path, source_address, ROM_BANK_SIZE, &robingb_memory[rom_bank_addresses[i].address]);
+					robingb_read_file(cart_attributes.file_path, source_address, ROM_BANK_SIZE, &robingb_memory[rom_bank_addresses[i].address]);
 					break;
 				}
 			}
@@ -142,14 +144,14 @@ static void load_rom_bank(int destination_slot_index, int file_bank_index) {
 		char buf[128] = {0};
 		sprintf(buf, "Loading ROM bank %i (%iKB from file)", file_bank_index, ROM_BANK_SIZE/1024);
 		robingb_log(buf);
-		robingb_read_file(current_rom_file_path, source_address, ROM_BANK_SIZE, &robingb_memory[destination_address]);
+		robingb_read_file(cart_attributes.file_path, source_address, ROM_BANK_SIZE, &robingb_memory[destination_address]);
 	}
 }
 
 static void perform_rom_bank_control(int address, u8 value) {
 	assert(address >= 0x2000 && address < 0x4000);
 	
-	switch (mbc_type) {
+	switch (cart_attributes.mbc_type) {
 		case MBC_1: {
 			assert(value <= 0x1f);
 			u8 new_bank = active_switchable_rom_bank_index & ~0x1f; // wipe the lower 5 bits
@@ -173,7 +175,7 @@ static void perform_rom_bank_control(int address, u8 value) {
 void perform_cart_control(int address, u8 value) {
 	if (address >= 0x0000 && address < 0x2000) {
 		// MBC1: external RAM control (at 0xa000 to 0xbfff)
-		assert(false); 
+		assert(false);
 	} else if (address >= 0x2000 && address < 0x4000) {
 		
 		perform_rom_bank_control(address, value);
@@ -189,8 +191,33 @@ void perform_cart_control(int address, u8 value) {
 // General memory code
 //-----------------------------------------------
 
-void mem_init(const char *rom_file_path) {
-	strcpy(current_rom_file_path, rom_file_path);
+void set_mbc_type(Cart_Type cart_type) {
+	switch (cart_type) {
+		case CART_TYPE_ROM_MBC1:
+		case CART_TYPE_ROM_MBC1_RAM:
+		case CART_TYPE_ROM_MBC1_RAM_BATTERY:
+			robingb_log("MBC1");
+			cart_attributes.mbc_type = MBC_1;
+		break;
+		case CART_TYPE_ROM_MBC3:
+		case CART_TYPE_ROM_MBC3_RAM:
+		case CART_TYPE_ROM_MBC3_RAM_BATTERY:
+		case CART_TYPE_ROM_MBC3_TIMER_BATTERY:
+		case CART_TYPE_ROM_MBC3_TIMER_RAM_BATTERY:
+			robingb_log("MBC3");
+			cart_attributes.mbc_type = MBC_3;
+		break;
+		default: {
+			char buf[128];
+			sprintf(buf, "Unrecognised cart type: %x", cart_type);
+			robingb_log(buf);
+			assert(false);
+		} break;
+	}
+}
+
+void mem_init(const char *cart_file_path) {
+	strcpy(cart_attributes.file_path, cart_file_path);
 	
 	init_rom_cache();
 	
@@ -233,22 +260,7 @@ void mem_init(const char *rom_file_path) {
 	load_rom_bank(1, 1);
 	
 	Cart_Type cart_type = mem_read(0x0147);
-	
-	switch (cart_type) {
-		case CART_TYPE_ROM_MBC1:
-		case CART_TYPE_ROM_MBC1_RAM:
-		case CART_TYPE_ROM_MBC1_RAM_BATTERY:
-			mbc_type = MBC_1;
-		break;
-		case CART_TYPE_ROM_MBC3:
-		case CART_TYPE_ROM_MBC3_RAM:
-		case CART_TYPE_ROM_MBC3_RAM_BATTERY:
-		case CART_TYPE_ROM_MBC3_TIMER_BATTERY:
-		case CART_TYPE_ROM_MBC3_TIMER_RAM_BATTERY:
-			mbc_type = MBC_3;
-		break;
-		default: assert(false); break;
-	}
+	set_mbc_type(cart_type);
 }
 
 Mem_Address_Description mem_get_address_description(int address) {

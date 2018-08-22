@@ -20,7 +20,7 @@ typedef struct {
 extern void (*robingb_logging_function_ptr)(const char *text);
 
 void robingb_init(
-	const char *rom_file_path,
+	const char *cart_file_path,
 	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]),
 	uint8_t screen_out[]
 	);
