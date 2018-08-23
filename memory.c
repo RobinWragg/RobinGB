@@ -16,35 +16,35 @@ u8 robingb_memory[GAME_BOY_TOTAL_MEMORY_SIZE + MAX_NUM_CACHED_ROM_BANKS*ROM_BANK
 
 typedef enum {
 	CART_TYPE_ROM_ONLY = 0x00,
-	CART_TYPE_ROM_MBC1 = 0x01,
-	CART_TYPE_ROM_MBC1_RAM = 0x02,
-	CART_TYPE_ROM_MBC1_RAM_BATTERY = 0x03,
-	CART_TYPE_ROM_MBC2 = 0x05,
-	CART_TYPE_ROM_MBC2_BATTERY = 0x06,
-	CART_TYPE_ROM_RAM = 0x08,
-	CART_TYPE_ROM_RAM_BATTERY = 0x09,
-	CART_TYPE_ROM_MMM01 = 0x0b,
-	CART_TYPE_ROM_MMM01_RAM = 0x0c,
-	CART_TYPE_ROM_MMM01_RAM_BATTERY = 0x0d,
-	CART_TYPE_ROM_MBC3_TIMER_BATTERY = 0x0f,
-	CART_TYPE_ROM_MBC3_TIMER_RAM_BATTERY = 0x10,
-	CART_TYPE_ROM_MBC3 = 0x11,
-	CART_TYPE_ROM_MBC3_RAM = 0x12,
-	CART_TYPE_ROM_MBC3_RAM_BATTERY = 0x13,
-	CART_TYPE_ROM_MBC4 = 0x15,
-	CART_TYPE_ROM_MBC4_RAM = 0x16,
-	CART_TYPE_ROM_MBC4_RAM_BATTERY = 0x17,
-	CART_TYPE_ROM_MBC5 = 0x19,
-	CART_TYPE_ROM_MBC5_RAM = 0x1a,
-	CART_TYPE_ROM_MBC5_RAM_BATTERY = 0x1b,
-	CART_TYPE_ROM_MBC5_RUMBLE = 0x1c,
-	CART_TYPE_ROM_MBC5_RUMBLE_RAM = 0x1d,
-	CART_TYPE_ROM_MBC5_RUMBLE_RAM_BATTERY = 0x1e,
-	CART_TYPE_ROM_POCKET_CAMERA = 0xfc,
-	CART_TYPE_ROM_BANDAI_TAMA5 = 0xfd,
-	CART_TYPE_ROM_HuC3 = 0xfe,
-	CART_TYPE_ROM_HuC1_RAM_BATTERY = 0xff,
-	CART_TYPE_ROM_UNDEFINED
+	CART_TYPE_MBC1 = 0x01,
+	CART_TYPE_MBC1_RAM = 0x02,
+	CART_TYPE_MBC1_RAM_BATTERY = 0x03,
+	CART_TYPE_MBC2 = 0x05,
+	CART_TYPE_MBC2_BATTERY = 0x06,
+	CART_TYPE_RAM = 0x08,
+	CART_TYPE_RAM_BATTERY = 0x09,
+	CART_TYPE_MMM01 = 0x0b,
+	CART_TYPE_MMM01_RAM = 0x0c,
+	CART_TYPE_MMM01_RAM_BATTERY = 0x0d,
+	CART_TYPE_MBC3_TIMER_BATTERY = 0x0f,
+	CART_TYPE_MBC3_TIMER_RAM_BATTERY = 0x10,
+	CART_TYPE_MBC3 = 0x11,
+	CART_TYPE_MBC3_RAM = 0x12,
+	CART_TYPE_MBC3_RAM_BATTERY = 0x13,
+	CART_TYPE_MBC4 = 0x15,
+	CART_TYPE_MBC4_RAM = 0x16,
+	CART_TYPE_MBC4_RAM_BATTERY = 0x17,
+	CART_TYPE_MBC5 = 0x19,
+	CART_TYPE_MBC5_RAM = 0x1a,
+	CART_TYPE_MBC5_RAM_BATTERY = 0x1b,
+	CART_TYPE_MBC5_RUMBLE = 0x1c,
+	CART_TYPE_MBC5_RUMBLE_RAM = 0x1d,
+	CART_TYPE_MBC5_RUMBLE_RAM_BATTERY = 0x1e,
+	CART_TYPE_POCKET_CAMERA = 0xfc,
+	CART_TYPE_BANDAI_TAMA5 = 0xfd,
+	CART_TYPE_HuC3 = 0xfe,
+	CART_TYPE_HuC1_RAM_BATTERY = 0xff,
+	CART_TYPE_UNDEFINED
 } Cart_Type;
 
 typedef enum {
@@ -191,19 +191,21 @@ void perform_cart_control(int address, u8 value) {
 // General memory code
 //-----------------------------------------------
 
-void set_mbc_type(Cart_Type cart_type) {
+void set_cart_attributes(Cart_Type cart_type) {
+	
+	// mbc type
 	switch (cart_type) {
-		case CART_TYPE_ROM_MBC1:
-		case CART_TYPE_ROM_MBC1_RAM:
-		case CART_TYPE_ROM_MBC1_RAM_BATTERY:
+		case CART_TYPE_MBC1:
+		case CART_TYPE_MBC1_RAM:
+		case CART_TYPE_MBC1_RAM_BATTERY:
 			robingb_log("MBC1");
 			cart_attributes.mbc_type = MBC_1;
 		break;
-		case CART_TYPE_ROM_MBC3:
-		case CART_TYPE_ROM_MBC3_RAM:
-		case CART_TYPE_ROM_MBC3_RAM_BATTERY:
-		case CART_TYPE_ROM_MBC3_TIMER_BATTERY:
-		case CART_TYPE_ROM_MBC3_TIMER_RAM_BATTERY:
+		case CART_TYPE_MBC3:
+		case CART_TYPE_MBC3_RAM:
+		case CART_TYPE_MBC3_RAM_BATTERY:
+		case CART_TYPE_MBC3_TIMER_BATTERY:
+		case CART_TYPE_MBC3_TIMER_RAM_BATTERY:
 			robingb_log("MBC3");
 			cart_attributes.mbc_type = MBC_3;
 		break;
@@ -212,6 +214,31 @@ void set_mbc_type(Cart_Type cart_type) {
 			sprintf(buf, "Unrecognised cart type: %x", cart_type);
 			robingb_log(buf);
 			assert(false);
+		} break;
+	}
+	
+	// has RAM
+	switch (cart_type) {
+		case CART_TYPE_MBC1_RAM:
+		case CART_TYPE_MBC1_RAM_BATTERY:
+		case CART_TYPE_RAM:
+		case CART_TYPE_RAM_BATTERY:
+		case CART_TYPE_MMM01_RAM:
+		case CART_TYPE_MMM01_RAM_BATTERY:
+		case CART_TYPE_MBC3_TIMER_RAM_BATTERY:
+		case CART_TYPE_MBC3_RAM:
+		case CART_TYPE_MBC3_RAM_BATTERY:
+		case CART_TYPE_MBC4_RAM:
+		case CART_TYPE_MBC4_RAM_BATTERY:
+		case CART_TYPE_MBC5_RAM:
+		case CART_TYPE_MBC5_RAM_BATTERY:
+		case CART_TYPE_MBC5_RUMBLE_RAM:
+		case CART_TYPE_MBC5_RUMBLE_RAM_BATTERY:
+		case CART_TYPE_HuC1_RAM_BATTERY:
+			cart_attributes.has_ram = true;
+		break;
+		default: {
+			cart_attributes.has_ram = false;
 		} break;
 	}
 }
@@ -260,7 +287,7 @@ void mem_init(const char *cart_file_path) {
 	load_rom_bank(1, 1);
 	
 	Cart_Type cart_type = mem_read(0x0147);
-	set_mbc_type(cart_type);
+	set_cart_attributes(cart_type);
 }
 
 Mem_Address_Description mem_get_address_description(int address) {
