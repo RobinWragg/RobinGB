@@ -457,6 +457,7 @@ const char * get_opcode_name(u16 opcode_address) {
 		case 0xf3: return "DI";
 		case 0xf5: return "PUSH AF";
 		case 0xf6: return "OR x";
+		case 0xf7: return "RST 30h";
 		case 0xf8: return "LDHL SP,s";
 		case 0xf9: return "LD SP,HL";
 		case 0xfa: return "LD A,(xx)";

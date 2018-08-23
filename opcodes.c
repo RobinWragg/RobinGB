@@ -747,6 +747,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 16);
 		} break;
 		case 0xf6: instruction_OR(mem_read(registers.pc+1), 2, 8); break;
+		case 0xf7: instruction_RST(0x30); break;
 		case 0xf8: {
 			s8 signed_byte = mem_read(registers.pc+1);
 			
