@@ -324,14 +324,22 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.h = mem_read(registers.pc+1);
 			finish_instruction(2, 8);
 		} break;
-		case 0x27: {
-			if ((registers.f & FLAG_N) == 0) { // after an addition, adjust if (half-)carry occurred or if result is out of bounds
-				if ((registers.f & FLAG_C) || registers.a > 0x99) {
+		case 0x27: { // DAA
+			if ((registers.f & FLAG_N) == 0) {
+				u8 a_lower_nybble = registers.a & 0x0f;
+				
+				if (a_lower_nybble > 0x09) {
+					registers.a += 0x06;
+					registers.f |= FLAG_H;
+				}
+				
+				u8 a_upper_nybble = (registers.a & 0xf0) >> 4;
+				
+				if (a_upper_nybble > 0x09 || registers.f & FLAG_C) {
 					registers.a += 0x60;
 					registers.f |= FLAG_C;
 				}
-				if ((registers.f & FLAG_H) || (registers.a & 0x0f) > 0x09) registers.a += 0x6;
-			} else { // after a subtraction, only adjust if (half-)carry occurred
+			} else {
 				if (registers.f & FLAG_C) registers.a -= 0x60;
 				if (registers.f & FLAG_H) registers.a -= 0x6;
 			}
