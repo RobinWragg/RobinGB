@@ -63,7 +63,7 @@ struct {
 // cart control code
 //-----------------------------------------------
 
-int active_switchable_rom_bank_index = 0;
+int active_switchable_rom_bank_index = 1; // 1 by default
 
 struct {
 	int bank_index;
