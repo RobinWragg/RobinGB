@@ -195,10 +195,17 @@ void set_cart_attributes(Cart_Type cart_type) {
 	
 	// mbc type
 	switch (cart_type) {
+		case CART_TYPE_ROM_ONLY:
+		case CART_TYPE_RAM:
+		case CART_TYPE_RAM_BATTERY:
+			// TODO: Not sure if this is a complete list of non-MBC cart types.
+			robingb_log("Cart has no MBC");
+			cart_attributes.mbc_type = MBC_NONE;
+		break;
 		case CART_TYPE_MBC1:
 		case CART_TYPE_MBC1_RAM:
 		case CART_TYPE_MBC1_RAM_BATTERY:
-			robingb_log("MBC1");
+			robingb_log("Cart has an MBC1");
 			cart_attributes.mbc_type = MBC_1;
 		break;
 		case CART_TYPE_MBC3:
@@ -206,7 +213,7 @@ void set_cart_attributes(Cart_Type cart_type) {
 		case CART_TYPE_MBC3_RAM_BATTERY:
 		case CART_TYPE_MBC3_TIMER_BATTERY:
 		case CART_TYPE_MBC3_TIMER_RAM_BATTERY:
-			robingb_log("MBC3");
+			robingb_log("Cart has an MBC3");
 			cart_attributes.mbc_type = MBC_3;
 		break;
 		default: {
@@ -236,9 +243,11 @@ void set_cart_attributes(Cart_Type cart_type) {
 		case CART_TYPE_MBC5_RUMBLE_RAM_BATTERY:
 		case CART_TYPE_HuC1_RAM_BATTERY:
 			cart_attributes.has_ram = true;
+			robingb_log("Cart has RAM");
 		break;
 		default: {
 			cart_attributes.has_ram = false;
+			robingb_log("Cart has no RAM");
 		} break;
 	}
 }
