@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <stdio.h>
 
+#define INSTRUCTION static
+
 u8 *num_cycles_for_finish = 0;
 
 void finish_instruction(u16 pc_increment, u8 num_cycles_param) {
@@ -45,7 +47,13 @@ static bool addition_produces_u16_full_carry(s32 a, s32 b) {
 	else return false;
 }
 
-static void execute_instruction_CP(u8 comparator, u16 pc_increment, u8 num_cycles) {
+INSTRUCTION void instruction_RST(u8 address_lower_byte) {
+	stack_push(registers.pc+1);
+	registers.pc = address_lower_byte;
+	finish_instruction(0, 16);
+}
+
+INSTRUCTION void instruction_CP(u8 comparator, u16 pc_increment, u8 num_cycles) {
 	if (negate_produces_u8_half_carry(registers.a, comparator)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -61,7 +69,7 @@ static void execute_instruction_CP(u8 comparator, u16 pc_increment, u8 num_cycle
 	finish_instruction(pc_increment, num_cycles);
 }
 
-static void execute_instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
+INSTRUCTION void instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
 	if (negate_produces_u8_half_carry(*value_to_decrement, 1)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -75,7 +83,7 @@ static void execute_instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
 	finish_instruction(1, num_cycles);
 }
 
-static void execute_instruction_INC_u8(u8 *value_to_increment, u8 num_cycles) {
+INSTRUCTION void instruction_INC_u8(u8 *value_to_increment, u8 num_cycles) {
 	if (addition_produces_u8_half_carry(*value_to_increment, 1)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 
@@ -89,7 +97,7 @@ static void execute_instruction_INC_u8(u8 *value_to_increment, u8 num_cycles) {
 	finish_instruction(1, num_cycles);
 }
 
-static void execute_instruction_ADC(u8 to_add, u16 pc_increment, int num_cycles) {
+INSTRUCTION void instruction_ADC(u8 to_add, u16 pc_increment, int num_cycles) {
 	int carry = registers.f & FLAG_C ? 1 : 0;
 	
 	if (addition_produces_u8_half_carry(registers.a, to_add + carry)) registers.f |= FLAG_H;
@@ -108,7 +116,7 @@ static void execute_instruction_ADC(u8 to_add, u16 pc_increment, int num_cycles)
 	finish_instruction(pc_increment, num_cycles);
 }
 
-static void execute_instruction_SBC(u8 to_subtract, u16 pc_increment, int num_cycles) {
+INSTRUCTION void instruction_SBC(u8 to_subtract, u16 pc_increment, int num_cycles) {
 	int carry = registers.f & FLAG_C ? 1 : 0;
 	
 	if (negate_produces_u8_half_carry(registers.a, to_subtract + carry)) registers.f |= FLAG_H;
@@ -127,7 +135,7 @@ static void execute_instruction_SBC(u8 to_subtract, u16 pc_increment, int num_cy
 	finish_instruction(pc_increment, num_cycles);
 }
 
-static void execute_instruction_AND(u8 right_hand_value, u16 pc_increment, int num_cycles) {
+INSTRUCTION void instruction_AND(u8 right_hand_value, u16 pc_increment, int num_cycles) {
 	registers.a &= right_hand_value;
 	
 	if (registers.a == 0) registers.f |= FLAG_Z;
@@ -140,7 +148,7 @@ static void execute_instruction_AND(u8 right_hand_value, u16 pc_increment, int n
 	finish_instruction(pc_increment, num_cycles);
 }
 
-static void execute_instruction_OR(u8 right_hand_value, u16 pc_increment, int num_cycles) {
+INSTRUCTION void instruction_OR(u8 right_hand_value, u16 pc_increment, int num_cycles) {
 	registers.a |= right_hand_value;
 	
 	if (registers.a == 0) registers.f |= FLAG_Z;
@@ -152,7 +160,7 @@ static void execute_instruction_OR(u8 right_hand_value, u16 pc_increment, int nu
 	finish_instruction(pc_increment, num_cycles);
 }
 
-static void execute_instruction_ADD_A_u8(u8 to_add, u16 pc_increment, u8 num_cycles) {
+INSTRUCTION void instruction_ADD_A_u8(u8 to_add, u16 pc_increment, u8 num_cycles) {
 	if (addition_produces_u8_half_carry(registers.a, to_add)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -169,7 +177,7 @@ static void execute_instruction_ADD_A_u8(u8 to_add, u16 pc_increment, u8 num_cyc
 	finish_instruction(pc_increment, num_cycles);
 }
 
-static void execute_instruction_ADD_HL_u16(u16 to_add, u16 pc_increment, u8 num_cycles) {
+INSTRUCTION void instruction_ADD_HL_u16(u16 to_add, u16 pc_increment, u8 num_cycles) {
 	if (addition_produces_u16_half_carry(registers.hl, to_add)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -183,7 +191,7 @@ static void execute_instruction_ADD_HL_u16(u16 to_add, u16 pc_increment, u8 num_
 	finish_instruction(pc_increment, num_cycles);
 }
 
-static void execute_instruction_SUB_u8(u8 subber, u16 pc_increment, int num_cycles) {
+INSTRUCTION void instruction_SUB_u8(u8 subber, u16 pc_increment, int num_cycles) {
 	if (negate_produces_u8_half_carry(registers.a, subber)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -209,8 +217,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x01: registers.bc = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
 		case 0x02: mem_write(registers.bc, registers.a); finish_instruction(1, 8); break;
 		case 0x03: registers.bc++; finish_instruction(1, 8); break;
-		case 0x04: execute_instruction_INC_u8(&registers.b, 4); break;
-		case 0x05: execute_instruction_DEC_u8(&registers.b, 4); break;
+		case 0x04: instruction_INC_u8(&registers.b, 4); break;
+		case 0x05: instruction_DEC_u8(&registers.b, 4); break;
 		case 0x06: registers.b = mem_read(registers.pc+1); finish_instruction(2, 8); break;
 		case 0x07: {
 			if (registers.a & 0x80) registers.f |= FLAG_C;
@@ -225,11 +233,11 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 4);
 		} break;
 		case 0x08: mem_write_u16(mem_read_u16(registers.pc+1), registers.sp); finish_instruction(3, 20); break;
-		case 0x09: execute_instruction_ADD_HL_u16(registers.bc, 1, 8); break;
+		case 0x09: instruction_ADD_HL_u16(registers.bc, 1, 8); break;
 		case 0x0a: registers.a = mem_read(registers.bc); finish_instruction(1, 8); break;
 		case 0x0b: registers.bc--; finish_instruction(1, 8); break;
-		case 0x0c: execute_instruction_INC_u8(&registers.c, 4); break;
-		case 0x0d: execute_instruction_DEC_u8(&registers.c, 4); break;
+		case 0x0c: instruction_INC_u8(&registers.c, 4); break;
+		case 0x0d: instruction_DEC_u8(&registers.c, 4); break;
 		case 0x0e: registers.c = mem_read(registers.pc+1); finish_instruction(2, 8); break;
 		case 0x0f: {
 			if (registers.a & 0x01) registers.f |= FLAG_C;
@@ -246,8 +254,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x11: registers.de = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
 		case 0x12: mem_write(registers.de, registers.a); finish_instruction(1, 8); break;
 		case 0x13: registers.de++; finish_instruction(1, 8); break;
-		case 0x14: execute_instruction_INC_u8(&registers.d, 4); break;
-		case 0x15: execute_instruction_DEC_u8(&registers.d, 4); break;
+		case 0x14: instruction_INC_u8(&registers.d, 4); break;
+		case 0x15: instruction_DEC_u8(&registers.d, 4); break;
 		case 0x16: registers.d = mem_read(registers.pc+1); finish_instruction(2, 8); break;
 		case 0x17: {
 			bool prev_carry = registers.f & FLAG_C;
@@ -266,11 +274,11 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 4);
 		} break;
 		case 0x18: finish_instruction(2 + (s8)mem_read(registers.pc+1), 12); break;
-		case 0x19: execute_instruction_ADD_HL_u16(registers.de, 1, 8); break;
+		case 0x19: instruction_ADD_HL_u16(registers.de, 1, 8); break;
 		case 0x1a: registers.a = mem_read(registers.de); finish_instruction(1, 8); break;
 		case 0x1b: registers.de--; finish_instruction(1, 8); break;
-		case 0x1c: execute_instruction_INC_u8(&registers.e, 4); break;
-		case 0x1d: execute_instruction_DEC_u8(&registers.e, 4); break;
+		case 0x1c: instruction_INC_u8(&registers.e, 4); break;
+		case 0x1d: instruction_DEC_u8(&registers.e, 4); break;
 		case 0x1e: registers.e = mem_read(registers.pc+1); finish_instruction(2, 8); break;
 		case 0x1f: {
 			bool prev_carry = registers.f & FLAG_C;
@@ -295,8 +303,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x21: registers.hl = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
 		case 0x22: mem_write(registers.hl++, registers.a); finish_instruction(1, 8); break;
 		case 0x23:  registers.hl++; finish_instruction(1, 8); break;
-		case 0x24: execute_instruction_INC_u8(&registers.h, 4); break;
-		case 0x25: execute_instruction_DEC_u8(&registers.h, 4); break;
+		case 0x24: instruction_INC_u8(&registers.h, 4); break;
+		case 0x25: instruction_DEC_u8(&registers.h, 4); break;
 		case 0x26: {
 			registers.h = mem_read(registers.pc+1);
 			finish_instruction(2, 8);
@@ -325,11 +333,11 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			if (registers.f & FLAG_Z) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
-		case 0x29: execute_instruction_ADD_HL_u16(registers.hl, 1, 8); break;
+		case 0x29: instruction_ADD_HL_u16(registers.hl, 1, 8); break;
 		case 0x2a: registers.a = mem_read(registers.hl++); finish_instruction(1, 8); break;
 		case 0x2b: registers.hl--; finish_instruction(1, 8); break;
-		case 0x2c: execute_instruction_INC_u8(&registers.l, 4); break;
-		case 0x2d: execute_instruction_DEC_u8(&registers.l, 4); break;
+		case 0x2c: instruction_INC_u8(&registers.l, 4); break;
+		case 0x2d: instruction_DEC_u8(&registers.l, 4); break;
 		case 0x2e: registers.l = mem_read(registers.pc+1); finish_instruction(2, 8); break;
 		case 0x2f: {
 			registers.a ^= 0xff;
@@ -346,12 +354,12 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x33:  registers.sp++; finish_instruction(1, 8); break;
 		case 0x34: {
 			u8 hl_value = mem_read(registers.hl);
-			execute_instruction_INC_u8(&hl_value, 12);
+			instruction_INC_u8(&hl_value, 12);
 			mem_write(registers.hl, hl_value);
 		} break;
 		case 0x35: {
 			u8 hl_value = mem_read(registers.hl);
-			execute_instruction_DEC_u8(&hl_value, 12);
+			instruction_DEC_u8(&hl_value, 12);
 			mem_write(registers.hl, hl_value);
 		} break;
 		case 0x36: mem_write(registers.hl, mem_read(registers.pc+1)); finish_instruction(2, 12); break;
@@ -365,11 +373,11 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			if (registers.f & FLAG_C) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
-		case 0x39: execute_instruction_ADD_HL_u16(registers.sp, 1, 8); break;
+		case 0x39: instruction_ADD_HL_u16(registers.sp, 1, 8); break;
 		case 0x3a: registers.a = mem_read(registers.hl--); finish_instruction(1, 8); break;
 		case 0x3b: registers.sp--; finish_instruction(1, 8); break;
-		case 0x3c: execute_instruction_INC_u8(&registers.a, 4); break;
-		case 0x3d: execute_instruction_DEC_u8(&registers.a, 4); break;
+		case 0x3c: instruction_INC_u8(&registers.a, 4); break;
+		case 0x3d: instruction_DEC_u8(&registers.a, 4); break;
 		case 0x3e: registers.a = mem_read(registers.pc+1); finish_instruction(2, 8); break;
 		case 0x3f: {
 			registers.f &= ~FLAG_N;
@@ -449,46 +457,46 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x7d: registers.a = registers.l; finish_instruction(1, 4); break;
 		case 0x7e: registers.a = mem_read(registers.hl); finish_instruction(1, 8); break;
 		case 0x7f: registers.a = registers.a; finish_instruction(1, 4); break;
-		case 0x80: execute_instruction_ADD_A_u8(registers.b, 1, 4); break;
-		case 0x81: execute_instruction_ADD_A_u8(registers.c, 1, 4); break;
-		case 0x82: execute_instruction_ADD_A_u8(registers.d, 1, 4); break;
-		case 0x83: execute_instruction_ADD_A_u8(registers.e, 1, 4); break;
-		case 0x84: execute_instruction_ADD_A_u8(registers.h, 1, 4); break;
-		case 0x85: execute_instruction_ADD_A_u8(registers.l, 1, 4); break;
-		case 0x86: execute_instruction_ADD_A_u8(mem_read(registers.hl), 1, 8); break;
-		case 0x87: execute_instruction_ADD_A_u8(registers.a, 1, 4); break;
-		case 0x88: execute_instruction_ADC(registers.b, 1, 4); break;
-		case 0x89: execute_instruction_ADC(registers.c, 1, 4); break;
-		case 0x8a: execute_instruction_ADC(registers.d, 1, 4); break;
-		case 0x8b: execute_instruction_ADC(registers.e, 1, 4); break;
-		case 0x8c: execute_instruction_ADC(registers.h, 1, 4); break;
-		case 0x8d: execute_instruction_ADC(registers.l, 1, 4); break;
-		case 0x8e: execute_instruction_ADC(mem_read(registers.hl), 1, 8); break;
-		case 0x8f: execute_instruction_ADC(registers.a, 1, 4); break;
-		case 0x90: execute_instruction_SUB_u8(registers.b, 1, 4); break;
-		case 0x91: execute_instruction_SUB_u8(registers.c, 1, 4); break;
-		case 0x92: execute_instruction_SUB_u8(registers.d, 1, 4); break;
-		case 0x93: execute_instruction_SUB_u8(registers.e, 1, 4); break;
-		case 0x94: execute_instruction_SUB_u8(registers.h, 1, 4); break;
-		case 0x95: execute_instruction_SUB_u8(registers.l, 1, 4); break;
-		case 0x96: execute_instruction_SUB_u8(mem_read(registers.hl), 1, 8); break;
-		case 0x97: execute_instruction_SUB_u8(registers.a, 1, 4); break;
-		case 0x98: execute_instruction_SBC(registers.b, 1, 4); break;	
-		case 0x99: execute_instruction_SBC(registers.c, 1, 4); break;
-		case 0x9a: execute_instruction_SBC(registers.d, 1, 4); break;
-		case 0x9b: execute_instruction_SBC(registers.e, 1, 4); break;
-		case 0x9c: execute_instruction_SBC(registers.h, 1, 4); break;
-		case 0x9d: execute_instruction_SBC(registers.l, 1, 4); break;
-		case 0x9e: execute_instruction_SBC(mem_read(registers.hl), 1, 8); break;
-		case 0x9f: execute_instruction_SBC(registers.a, 1, 4); break;
-		case 0xa0: execute_instruction_AND(registers.b, 1, 4); break;
-		case 0xa1: execute_instruction_AND(registers.c, 1, 4); break;
-		case 0xa2: execute_instruction_AND(registers.d, 1, 4); break;
-		case 0xa3: execute_instruction_AND(registers.e, 1, 4); break;
-		case 0xa4: execute_instruction_AND(registers.h, 1, 4); break;
-		case 0xa5: execute_instruction_AND(registers.l, 1, 4); break;
-		case 0xa6: execute_instruction_AND(mem_read(registers.hl), 1, 8); break;
-		case 0xa7: execute_instruction_AND(registers.a, 1, 4); break;
+		case 0x80: instruction_ADD_A_u8(registers.b, 1, 4); break;
+		case 0x81: instruction_ADD_A_u8(registers.c, 1, 4); break;
+		case 0x82: instruction_ADD_A_u8(registers.d, 1, 4); break;
+		case 0x83: instruction_ADD_A_u8(registers.e, 1, 4); break;
+		case 0x84: instruction_ADD_A_u8(registers.h, 1, 4); break;
+		case 0x85: instruction_ADD_A_u8(registers.l, 1, 4); break;
+		case 0x86: instruction_ADD_A_u8(mem_read(registers.hl), 1, 8); break;
+		case 0x87: instruction_ADD_A_u8(registers.a, 1, 4); break;
+		case 0x88: instruction_ADC(registers.b, 1, 4); break;
+		case 0x89: instruction_ADC(registers.c, 1, 4); break;
+		case 0x8a: instruction_ADC(registers.d, 1, 4); break;
+		case 0x8b: instruction_ADC(registers.e, 1, 4); break;
+		case 0x8c: instruction_ADC(registers.h, 1, 4); break;
+		case 0x8d: instruction_ADC(registers.l, 1, 4); break;
+		case 0x8e: instruction_ADC(mem_read(registers.hl), 1, 8); break;
+		case 0x8f: instruction_ADC(registers.a, 1, 4); break;
+		case 0x90: instruction_SUB_u8(registers.b, 1, 4); break;
+		case 0x91: instruction_SUB_u8(registers.c, 1, 4); break;
+		case 0x92: instruction_SUB_u8(registers.d, 1, 4); break;
+		case 0x93: instruction_SUB_u8(registers.e, 1, 4); break;
+		case 0x94: instruction_SUB_u8(registers.h, 1, 4); break;
+		case 0x95: instruction_SUB_u8(registers.l, 1, 4); break;
+		case 0x96: instruction_SUB_u8(mem_read(registers.hl), 1, 8); break;
+		case 0x97: instruction_SUB_u8(registers.a, 1, 4); break;
+		case 0x98: instruction_SBC(registers.b, 1, 4); break;	
+		case 0x99: instruction_SBC(registers.c, 1, 4); break;
+		case 0x9a: instruction_SBC(registers.d, 1, 4); break;
+		case 0x9b: instruction_SBC(registers.e, 1, 4); break;
+		case 0x9c: instruction_SBC(registers.h, 1, 4); break;
+		case 0x9d: instruction_SBC(registers.l, 1, 4); break;
+		case 0x9e: instruction_SBC(mem_read(registers.hl), 1, 8); break;
+		case 0x9f: instruction_SBC(registers.a, 1, 4); break;
+		case 0xa0: instruction_AND(registers.b, 1, 4); break;
+		case 0xa1: instruction_AND(registers.c, 1, 4); break;
+		case 0xa2: instruction_AND(registers.d, 1, 4); break;
+		case 0xa3: instruction_AND(registers.e, 1, 4); break;
+		case 0xa4: instruction_AND(registers.h, 1, 4); break;
+		case 0xa5: instruction_AND(registers.l, 1, 4); break;
+		case 0xa6: instruction_AND(mem_read(registers.hl), 1, 8); break;
+		case 0xa7: instruction_AND(registers.a, 1, 4); break;
 		case 0xa8: {
 			registers.a ^= registers.b;
 			
@@ -544,22 +552,22 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.f &= ~FLAG_C;
 			finish_instruction(1, 4);
 		} break;
-		case 0xb0: execute_instruction_OR(registers.b, 1, 4); break;
-		case 0xb1: execute_instruction_OR(registers.c, 1, 4); break;
-		case 0xb2: execute_instruction_OR(registers.d, 1, 4); break;
-		case 0xb3: execute_instruction_OR(registers.e, 1, 4); break;
-		case 0xb4: execute_instruction_OR(registers.h, 1, 4); break;
-		case 0xb5: execute_instruction_OR(registers.l, 1, 4); break;
-		case 0xb6: execute_instruction_OR(mem_read(registers.hl), 1, 8); break;
-		case 0xb7: execute_instruction_OR(registers.a, 1, 4); break;
-		case 0xb8: execute_instruction_CP(registers.b, 1, 4); break;
-		case 0xb9: execute_instruction_CP(registers.c, 1, 4); break;
-		case 0xba: execute_instruction_CP(registers.d, 1, 4); break;
-		case 0xbb: execute_instruction_CP(registers.e, 1, 4); break;
-		case 0xbc: execute_instruction_CP(registers.h, 1, 4); break;
-		case 0xbd: execute_instruction_CP(registers.l, 1, 4); break;
-		case 0xbe: execute_instruction_CP(mem_read(registers.hl), 1, 8); break;
-		case 0xbf: execute_instruction_CP(registers.a, 1, 4); break;
+		case 0xb0: instruction_OR(registers.b, 1, 4); break;
+		case 0xb1: instruction_OR(registers.c, 1, 4); break;
+		case 0xb2: instruction_OR(registers.d, 1, 4); break;
+		case 0xb3: instruction_OR(registers.e, 1, 4); break;
+		case 0xb4: instruction_OR(registers.h, 1, 4); break;
+		case 0xb5: instruction_OR(registers.l, 1, 4); break;
+		case 0xb6: instruction_OR(mem_read(registers.hl), 1, 8); break;
+		case 0xb7: instruction_OR(registers.a, 1, 4); break;
+		case 0xb8: instruction_CP(registers.b, 1, 4); break;
+		case 0xb9: instruction_CP(registers.c, 1, 4); break;
+		case 0xba: instruction_CP(registers.d, 1, 4); break;
+		case 0xbb: instruction_CP(registers.e, 1, 4); break;
+		case 0xbc: instruction_CP(registers.h, 1, 4); break;
+		case 0xbd: instruction_CP(registers.l, 1, 4); break;
+		case 0xbe: instruction_CP(mem_read(registers.hl), 1, 8); break;
+		case 0xbf: instruction_CP(registers.a, 1, 4); break;
 		case 0xc0: {
 			if (registers.f & FLAG_Z) finish_instruction(1, 8);
 			else {
@@ -595,7 +603,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			stack_push(registers.bc);
 			finish_instruction(1, 16);
 		} break;
-		case 0xc6: execute_instruction_ADD_A_u8(mem_read(registers.pc+1), 2, 8); break;
+		case 0xc6: instruction_ADD_A_u8(mem_read(registers.pc+1), 2, 8); break;
 		case 0xc8: {
 			if (registers.f & FLAG_Z) {
 				registers.pc = stack_pop();
@@ -627,7 +635,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.pc = mem_read_u16(registers.pc+1);
 			finish_instruction(0, 24);
 		} break;
-		case 0xce: execute_instruction_ADC(mem_read(registers.pc+1), 2, 8); break;
+		case 0xce: instruction_ADC(mem_read(registers.pc+1), 2, 8); break;
 		case 0xd0: {
 			if ((registers.f & FLAG_C) == false) {
 				registers.pc = stack_pop();
@@ -657,7 +665,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			stack_push(registers.de);
 			finish_instruction(1, 16);
 		} break;
-		case 0xd6: execute_instruction_SUB_u8(mem_read(registers.pc+1), 2, 8); break;
+		case 0xd6: instruction_SUB_u8(mem_read(registers.pc+1), 2, 8); break;
+		case 0xd7: instruction_RST(0x10); break;
 		case 0xd8: {
 			if (registers.f & FLAG_C) {
 				registers.pc = stack_pop();
@@ -675,7 +684,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				finish_instruction(0, 16);
 			} else finish_instruction(3, 12);
 		} break;
-		case 0xde: execute_instruction_SBC(mem_read(registers.pc+1), 2, 8); break;
+		case 0xde: instruction_SBC(mem_read(registers.pc+1), 2, 8); break;
 		case 0xe0: {
 			u8 byte_0 = mem_read(registers.pc+1);
 			mem_write(0xff00 + byte_0, registers.a);
@@ -693,7 +702,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			stack_push(registers.hl);
 			finish_instruction(1, 16);
 		} break;
-		case 0xe6: execute_instruction_AND(mem_read(registers.pc+1), 2, 8); break;
+		case 0xe6: instruction_AND(mem_read(registers.pc+1), 2, 8); break;
 		case 0xe9: {
 			registers.pc = registers.hl;
 			finish_instruction(0, 4);
@@ -714,11 +723,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.f &= ~FLAG_C;
 			finish_instruction(2, 4);
 		} break;
-		case 0xef: {
-			stack_push(registers.pc + 1);
-			registers.pc = 0x0028;
-			finish_instruction(0, 16);
-		} break;
+		case 0xef: instruction_RST(0x28); break;
 		case 0xf0: {
 			u8 byte_0 = mem_read(registers.pc+1);
 			registers.a = mem_read(0xff00 + byte_0);
@@ -740,7 +745,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			stack_push(registers.af);
 			finish_instruction(1, 16);
 		} break;
-		case 0xf6: execute_instruction_OR(mem_read(registers.pc+1), 2, 8); break;
+		case 0xf6: instruction_OR(mem_read(registers.pc+1), 2, 8); break;
 		case 0xf8: {
 			s8 signed_byte = mem_read(registers.pc+1);
 			
@@ -793,11 +798,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			else registers.f &= ~FLAG_Z;
 			finish_instruction(2, 8);
 		} break;
-		case 0xff: {
-			stack_push(registers.pc + 1);
-			registers.pc = 0x0038;
-			finish_instruction(0, 16);
-		} break;
+		case 0xff: instruction_RST(0x38); break;
 		default: {
 			char buf[128] = {0};
 			sprintf(buf, "Unknown opcode %x at address %x\n", opcode, registers.pc);

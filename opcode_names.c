@@ -432,6 +432,7 @@ const char * get_opcode_name(u16 opcode_address) {
 		case 0xd4: return "CALL NC,xx";
 		case 0xd5: return "PUSH DE";
 		case 0xd6: return "SUB x";
+		case 0xd7: return "RST 10h";
 		case 0xd8: return "RET C";
 		case 0xd9: return "RETI";
 		case 0xda: return "JP C,xx";
