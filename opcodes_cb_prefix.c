@@ -12,7 +12,6 @@ INSTRUCTION void instruction_RL(u8 *byte_to_rotate, u8 num_cycles) {
 	
 	*byte_to_rotate <<= 1;
 	
-	assert(((*byte_to_rotate) & 0x0f) == false);
 	if (prev_carry) *byte_to_rotate |= 0x0f;
 	
 	if (*byte_to_rotate == 0) registers.f |= FLAG_Z;

@@ -31,15 +31,13 @@ static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[])
 	}
 }
 
-static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u8 tile_line_index, u8 tile_line_data_out[]) {
-	
-	// TODO: pull this out and feed it in as parameters for efficiency?
-	u16 bg_tile_data_address_space_start = ((*lcdc) & bit(4)) ? 0x8000 : 0x9000;
-	u16 bg_tile_map_address_space_start = ((*lcdc) & bit(3)) ? 0x9c00 : 0x9800;
-	
+static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u16 tile_map_address_space, u16 tile_data_address_space, u8 tile_line_index, u8 tile_line_data_out[]) {
 	int bg_tile_map_index = x + y*NUM_TILES_PER_BG_LINE;
-	int tile_data_index = robingb_memory[bg_tile_map_address_space_start + bg_tile_map_index];
-	int tile_data_address = bg_tile_data_address_space_start + tile_data_index*NUM_BYTES_PER_TILE;
+	
+	int tile_data_index = robingb_memory[tile_map_address_space + bg_tile_map_index];
+	if (tile_data_address_space == 0x9000) tile_data_index = (s8)tile_data_index;
+	
+	int tile_data_address = tile_data_address_space + tile_data_index*NUM_BYTES_PER_TILE;
 	int tile_line_address = tile_data_address + tile_line_index*NUM_BYTES_PER_TILE_LINE;
 	
 	tile_line_data_out[0] = robingb_memory[tile_line_address];
@@ -55,14 +53,18 @@ static u8 get_bg_line_pixel(u8 bg_line[], u8 x) {
 	return (bg_pixel >> bit_index) * 85;
 }
 
-static void render_background_line(u8 bg_line[]) {
+static void render_background_line(u8 bg_line[], bool is_window) {
 	const u8 bg_y = *ly; // TODO: temp. This won't work for vertical scrolling.
 	const u8 tilegrid_y = bg_y / TILE_HEIGHT_IN_PIXELS;
 	const u8 tile_y = (*ly) - tilegrid_y*TILE_HEIGHT_IN_PIXELS;
 	
+	u8 tile_map_control_bit = is_window ? bit(6) : bit(3);
+	u16 tile_map_address_space = ((*lcdc) & tile_map_control_bit) ? 0x9c00 : 0x9800;
+	u16 tile_data_address_space = ((*lcdc) & bit(4)) ? 0x8000 : 0x9000;
+	
 	for (int tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
 		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
-		get_tile_line_data_for_bg_tilegrid_coord(tilegrid_x, tilegrid_y, tile_y, tile_line_data);
+		get_tile_line_data_for_bg_tilegrid_coord(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_y, tile_line_data);
 		
 		for (int pixel_x = 0; pixel_x < 8; pixel_x++) {
 			u8 bg_byte_index = tilegrid_x*2 + pixel_x/4; // 2 bytes per tile line, 4 pixels per byte
@@ -132,7 +134,7 @@ void render_screen_line() {
 	if ((*lcdc) & 0x01) { // Check if the background is enabled. NOTE: bit 0 of lcdc has different meanings for Game Boy Color.
 		
 		u8 bg_line[BG_WIDTH_IN_BYTES] = {0};
-		render_background_line(bg_line);
+		render_background_line(bg_line, false);
 		
 		for (u8 s = 0; s < SCREEN_WIDTH_IN_PIXELS; s++) {
 			int bg_x = (*bg_scroll_x) + s;
