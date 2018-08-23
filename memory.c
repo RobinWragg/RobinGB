@@ -152,6 +152,9 @@ static void perform_rom_bank_control(int address, u8 value) {
 	assert(address >= 0x2000 && address < 0x4000);
 	
 	switch (cart_attributes.mbc_type) {
+		case MBC_NONE:
+		// no-op
+		break;
 		case MBC_1: {
 			assert(value <= 0x1f);
 			u8 new_bank = active_switchable_rom_bank_index & ~0x1f; // wipe the lower 5 bits
