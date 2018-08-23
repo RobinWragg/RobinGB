@@ -119,7 +119,7 @@ static void render_objects_on_line() {
 			
 			if (flip_x) {
 				for (int i = 0; i < 8; i++) {
-					if (pixel_row[i]) set_screen_pixel(x+8-i, *ly, pixel_row[i]);
+					if (pixel_row[i]) set_screen_pixel(x+7-i, *ly, pixel_row[i]);
 				}
 			} else {
 				for (int i = 0; i < 8; i++) {
@@ -132,6 +132,10 @@ static void render_objects_on_line() {
 
 void render_screen_line() {
 	if ((*lcdc) & 0x01) { // Check if the background is enabled. NOTE: bit 0 of lcdc has different meanings for Game Boy Color.
+		
+		if ((*lcdc) & bit(5)) {
+			printf("window enabled\n");
+		}
 		
 		u8 bg_line[BG_WIDTH_IN_BYTES] = {0};
 		render_background_line(bg_line, false);
