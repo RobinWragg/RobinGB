@@ -391,6 +391,11 @@ const char * get_opcode_name(u16 opcode_address) {
 		case 0x9f: return "SBC A,A";
 		case 0xa0: return "AND B";
 		case 0xa1: return "AND C";
+		case 0xa2: return "AND D";
+		case 0xa3: return "AND E";
+		case 0xa4: return "AND H";
+		case 0xa5: return "AND L";
+		case 0xa6: return "AND (HL)";
 		case 0xa7: return "AND A";
 		case 0xa8: return "XOR B";
 		case 0xa9: return "XOR C";
