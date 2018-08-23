@@ -636,6 +636,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(0, 24);
 		} break;
 		case 0xce: instruction_ADC(mem_read(registers.pc+1), 2, 8); break;
+		case 0xcf: instruction_RST(0x08); break;
 		case 0xd0: {
 			if ((registers.f & FLAG_C) == false) {
 				registers.pc = stack_pop();

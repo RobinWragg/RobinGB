@@ -200,6 +200,7 @@ void set_cart_attributes(Cart_Type cart_type) {
 		case CART_TYPE_RAM_BATTERY:
 			// TODO: Not sure if this is a complete list of non-MBC cart types.
 			robingb_log("Cart has no MBC");
+			assert(mem_read(0x0148) == 0x00);
 			cart_attributes.mbc_type = MBC_NONE;
 		break;
 		case CART_TYPE_MBC1:
@@ -248,6 +249,7 @@ void set_cart_attributes(Cart_Type cart_type) {
 		default: {
 			cart_attributes.has_ram = false;
 			robingb_log("Cart has no RAM");
+			assert(mem_read(0x0149) == 0x00);
 		} break;
 	}
 }
