@@ -47,6 +47,18 @@ static bool addition_produces_u16_full_carry(s32 a, s32 b) {
 	else return false;
 }
 
+INSTRUCTION void instruction_XOR(u8 to_xor, u8 num_cycles) {
+	registers.a ^= to_xor;
+	
+	if (registers.a == 0) registers.f |= FLAG_Z;
+	else registers.f &= ~FLAG_Z;
+	
+	registers.f &= ~FLAG_N;
+	registers.f &= ~FLAG_H;
+	registers.f &= ~FLAG_C;
+	finish_instruction(1, num_cycles);
+}
+
 INSTRUCTION void instruction_RST(u8 address_lower_byte) {
 	stack_push(registers.pc+1);
 	registers.pc = address_lower_byte;
@@ -212,6 +224,9 @@ void execute_next_opcode(u8 *num_cycles_out) {
 	num_cycles_for_finish = num_cycles_out;
 	u8 opcode = mem_read(registers.pc);
 	
+	// printf("a:%x op:%x(%x) ", registers.pc, opcode, mem_read(registers.pc+1));
+	// printf("%s\n", get_opcode_name(registers.pc));
+	
 	switch (opcode) {
 		case 0x00: finish_instruction(1, 4); break;
 		case 0x01: registers.bc = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
@@ -339,7 +354,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x2c: instruction_INC_u8(&registers.l, 4); break;
 		case 0x2d: instruction_DEC_u8(&registers.l, 4); break;
 		case 0x2e: registers.l = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x2f: {
+		case 0x2f: { // CPL
 			registers.a ^= 0xff;
 			registers.f |= FLAG_N;
 			registers.f |= FLAG_H;
@@ -379,7 +394,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x3c: instruction_INC_u8(&registers.a, 4); break;
 		case 0x3d: instruction_DEC_u8(&registers.a, 4); break;
 		case 0x3e: registers.a = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x3f: {
+		case 0x3f: { // CCF
 			registers.f &= ~FLAG_N;
 			registers.f &= ~FLAG_H;
 			registers.f ^= FLAG_C;
@@ -497,61 +512,14 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0xa5: instruction_AND(registers.l, 1, 4); break;
 		case 0xa6: instruction_AND(mem_read(registers.hl), 1, 8); break;
 		case 0xa7: instruction_AND(registers.a, 1, 4); break;
-		case 0xa8: {
-			registers.a ^= registers.b;
-			
-			if (registers.a == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			
-			registers.f &= ~FLAG_N;
-			registers.f &= ~FLAG_H;
-			registers.f &= ~FLAG_C;
-			finish_instruction(1, 4);
-		} break;
-		case 0xa9: {
-			registers.a ^= registers.c;
-			
-			if (registers.a == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			
-			registers.f &= ~FLAG_N;
-			registers.f &= ~FLAG_H;
-			registers.f &= ~FLAG_C;
-			finish_instruction(1, 4);
-		} break;
-		case 0xad: {
-			registers.a ^= registers.l;
-			
-			if (registers.a == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			
-			registers.f &= ~FLAG_N;
-			registers.f &= ~FLAG_H;
-			registers.f &= ~FLAG_C;
-			finish_instruction(1, 4);
-		} break;
-		case 0xae: {
-			registers.a ^= mem_read(registers.hl);
-			
-			if (registers.a == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			
-			registers.f &= ~FLAG_N;
-			registers.f &= ~FLAG_H;
-			registers.f &= ~FLAG_C;
-			finish_instruction(1, 8);
-		} break;
-		case 0xaf: {
-			registers.a ^= registers.a;
-			
-			if (registers.a == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			
-			registers.f &= ~FLAG_N;
-			registers.f &= ~FLAG_H;
-			registers.f &= ~FLAG_C;
-			finish_instruction(1, 4);
-		} break;
+		case 0xa8: instruction_XOR(registers.b, 4); break;
+		case 0xa9: instruction_XOR(registers.c, 4); break;
+		case 0xaa: instruction_XOR(registers.d, 4); break;
+		case 0xab: instruction_XOR(registers.e, 4); break;
+		case 0xac: instruction_XOR(registers.h, 4); break;
+		case 0xad: instruction_XOR(registers.l, 4); break;
+		case 0xae: instruction_XOR(mem_read(registers.hl), 8); break;
+		case 0xaf: instruction_XOR(registers.a, 4); break;
 		case 0xb0: instruction_OR(registers.b, 1, 4); break;
 		case 0xb1: instruction_OR(registers.c, 1, 4); break;
 		case 0xb2: instruction_OR(registers.d, 1, 4); break;
@@ -604,6 +572,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 16);
 		} break;
 		case 0xc6: instruction_ADD_A_u8(mem_read(registers.pc+1), 2, 8); break;
+		case 0xc7: instruction_RST(0x00); break;
 		case 0xc8: {
 			if (registers.f & FLAG_Z) {
 				registers.pc = stack_pop();
@@ -685,6 +654,9 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				finish_instruction(0, 16);
 			} else finish_instruction(3, 12);
 		} break;
+		// Nothing at 0xdb
+		case 0xdf: instruction_RST(0x18); break;
+		// Nothing at 0xdd
 		case 0xde: instruction_SBC(mem_read(registers.pc+1), 2, 8); break;
 		case 0xe0: {
 			u8 byte_0 = mem_read(registers.pc+1);
@@ -704,6 +676,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 16);
 		} break;
 		case 0xe6: instruction_AND(mem_read(registers.pc+1), 2, 8); break;
+		case 0xe7: instruction_RST(0x20); break;
 		case 0xe9: {
 			registers.pc = registers.hl;
 			finish_instruction(0, 4);

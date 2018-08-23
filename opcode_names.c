@@ -7,6 +7,22 @@ static const char * get_cb_opcode_name(u16 opcode_address) {
 	u8 opcode = mem_read(registers.pc+1);
 
 	switch (opcode) {
+		case 0x00: return "RLC B";
+		case 0x01: return "RLC C";
+		case 0x02: return "RLC D";
+		case 0x03: return "RLC E";
+		case 0x04: return "RLC H";
+		case 0x05: return "RLC L";
+		case 0x06: return "RLC (HL)";
+		case 0x07: return "RLC A";
+		case 0x08: return "RRC B";
+		case 0x09: return "RRC C";
+		case 0x0a: return "RRC D";
+		case 0x0b: return "RRC E";
+		case 0x0c: return "RRC H";
+		case 0x0d: return "RRC L";
+		case 0x0e: return "RRC (HL)";
+		case 0x0f: return "RRC A";
 		case 0x10: return "RR B";
 		case 0x11: return "RR C";
 		case 0x12: return "RR D";
@@ -424,6 +440,7 @@ const char * get_opcode_name(u16 opcode_address) {
 		case 0xc4: return "CALL NZ,xx";
 		case 0xc5: return "PUSH BC";
 		case 0xc6: return "ADD A,x";
+		case 0xc7: return "RST 00h";
 		case 0xc8: return "RET Z";
 		case 0xc9: return "RET";
 		case 0xca: return "JP Z,xx";
@@ -431,6 +448,7 @@ const char * get_opcode_name(u16 opcode_address) {
 		case 0xcc: return "CALL Z,xx";
 		case 0xcd: return "CALL xx";
 		case 0xce: return "ADC A,x";
+		case 0xcf: return "RST 08h";
 		case 0xd0: return "RET NC";
 		case 0xd1: return "POP DE";
 		case 0xd2: return "JP NC,xx";

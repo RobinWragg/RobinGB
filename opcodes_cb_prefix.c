@@ -7,12 +7,28 @@
 INSTRUCTION void instruction_RL(u8 *byte_to_rotate, u8 num_cycles) {
 	bool prev_carry = registers.f & FLAG_C;
 	
-	if ((*byte_to_rotate) & 0x80) registers.f |= FLAG_C;
+	if ((*byte_to_rotate) & bit(7)) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
 	*byte_to_rotate <<= 1;
 	
+	assert(((*byte_to_rotate) & 0x0f) == false);
 	if (prev_carry) *byte_to_rotate |= 0x0f;
+	
+	if (*byte_to_rotate == 0) registers.f |= FLAG_Z;
+	else registers.f &= ~FLAG_Z;
+	
+	registers.f &= ~FLAG_N;
+	registers.f &= ~FLAG_H;
+	
+	finish_instruction(1, num_cycles);
+}
+
+INSTRUCTION void instruction_RLC(u8 *byte_to_rotate, u8 num_cycles) {
+	if ((*byte_to_rotate) & bit(7)) registers.f |= FLAG_C;
+	else registers.f &= ~FLAG_C;
+	
+	*byte_to_rotate <<= 1;
 	
 	if (*byte_to_rotate == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
@@ -113,6 +129,18 @@ void execute_cb_opcode() {
 	u8 opcode = mem_read(++registers.pc);
 	
 	switch (opcode) {
+		case 0x00: instruction_RLC(&registers.b, 8); break;
+		case 0x01: instruction_RLC(&registers.c, 8); break;
+		case 0x02: instruction_RLC(&registers.d, 8); break;
+		case 0x03: instruction_RLC(&registers.e, 8); break;
+		case 0x04: instruction_RLC(&registers.h, 8); break;
+		case 0x05: instruction_RLC(&registers.l, 8); break;
+		case 0x06: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_RLC(&hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
+		case 0x07: instruction_RLC(&registers.a, 8); break;
 		case 0x10: instruction_RL(&registers.b, 8); break;
 		case 0x11: instruction_RL(&registers.c, 8); break;
 		case 0x12: instruction_RL(&registers.d, 8); break;
@@ -188,6 +216,11 @@ void execute_cb_opcode() {
 		case 0x5b: instruction_BIT(3, registers.e, 8); break;
 		case 0x5c: instruction_BIT(3, registers.h, 8); break;
 		case 0x5d: instruction_BIT(3, registers.l, 8); break;
+		case 0x5e: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_SET(3, &hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0x5f: instruction_BIT(3, registers.a, 8); break;
 		case 0x60: instruction_BIT(4, registers.b, 8); break;
 		case 0x61: instruction_BIT(4, registers.c, 8); break;
@@ -238,6 +271,11 @@ void execute_cb_opcode() {
 		case 0x8b: instruction_RES(1, &registers.e, 8); break;
 		case 0x8c: instruction_RES(1, &registers.h, 8); break;
 		case 0x8d: instruction_RES(1, &registers.l, 8); break;
+		case 0x8e: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_RES(1, &hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0x8f: instruction_RES(1, &registers.a, 8); break;
 		case 0x90: instruction_RES(2, &registers.b, 8); break;
 		case 0x91: instruction_RES(2, &registers.c, 8); break;
@@ -245,6 +283,11 @@ void execute_cb_opcode() {
 		case 0x93: instruction_RES(2, &registers.e, 8); break;
 		case 0x94: instruction_RES(2, &registers.h, 8); break;
 		case 0x95: instruction_RES(2, &registers.l, 8); break;
+		case 0x96: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_RES(2, &hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0x97: instruction_RES(2, &registers.a, 8); break;
 		case 0x98: instruction_RES(3, &registers.b, 8); break;
 		case 0x99: instruction_RES(3, &registers.c, 8); break;
@@ -252,6 +295,11 @@ void execute_cb_opcode() {
 		case 0x9b: instruction_RES(3, &registers.e, 8); break;
 		case 0x9c: instruction_RES(3, &registers.h, 8); break;
 		case 0x9d: instruction_RES(3, &registers.l, 8); break;
+		case 0x9e: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_RES(3, &hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0x9f: instruction_RES(3, &registers.a, 8); break;
 		case 0xa0: instruction_RES(4, &registers.b, 8); break;
 		case 0xa1: instruction_RES(4, &registers.c, 8); break;
@@ -318,6 +366,11 @@ void execute_cb_opcode() {
 		case 0xdb: instruction_SET(3, &registers.e, 8); break;
 		case 0xdc: instruction_SET(3, &registers.h, 8); break;
 		case 0xdd: instruction_SET(3, &registers.l, 8); break;
+		case 0xde: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_SET(3, &hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0xdf: instruction_SET(3, &registers.a, 8); break;
 		case 0xe0: instruction_SET(4, &registers.b, 8); break;
 		case 0xe1: instruction_SET(4, &registers.c, 8); break;
@@ -339,6 +392,11 @@ void execute_cb_opcode() {
 		case 0xf3: instruction_SET(6, &registers.e, 8); break;
 		case 0xf4: instruction_SET(6, &registers.h, 8); break;
 		case 0xf5: instruction_SET(6, &registers.l, 8); break;
+		case 0xf6: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_SET(6, &hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0xf7: instruction_SET(6, &registers.a, 8); break;
 		case 0xf8: instruction_SET(7, &registers.b, 8); break;
 		case 0xf9: instruction_SET(7, &registers.c, 8); break;
@@ -354,7 +412,7 @@ void execute_cb_opcode() {
 		case 0xff: instruction_SET(7, &registers.a, 8); break;
 		default: {
 			char buf[128] = {0};
-			sprintf(buf, "Unknown opcode cb%x at address %x\n", opcode, registers.pc-1);
+			sprintf(buf, "Unknown opcode cb %x at address %x\n", opcode, registers.pc-1);
 			robingb_log(buf);
 			assert(false);
 		} break;
