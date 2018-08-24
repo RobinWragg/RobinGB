@@ -134,7 +134,7 @@ void render_screen_line() {
 	if ((*lcdc) & 0x01) { // Check if the background is enabled. NOTE: bit 0 of lcdc has different meanings for Game Boy Color.
 		
 		if ((*lcdc) & bit(5)) {
-			printf("window enabled\n");
+			robingb_log("window enabled");
 		}
 		
 		u8 bg_line[BG_WIDTH_IN_BYTES] = {0};

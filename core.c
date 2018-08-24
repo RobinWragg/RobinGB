@@ -65,15 +65,11 @@ void (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, uint
 
 void robingb_init(
 	const char *cart_file_path,
-	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]),
-	u8 *screen_out
+	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
 	) {
 	
 	robingb_read_file = read_file_function_ptr;
 	assert(robingb_read_file);
-	
-	robingb_screen = screen_out;
-	assert(robingb_screen);
 	
 	mem_init(cart_file_path);
 	
@@ -105,8 +101,11 @@ void robingb_init(
 
 u8 *lcd_ly = &robingb_memory[LCD_LY_ADDRESS];
 
-void robingb_update(RobinGB_Input *input, u8 *ly_out) {
+void robingb_update(RobinGB_Input *input, u8 screen_out[], u8 *ly_out) {
 	u8 prev_lcd_ly = *lcd_ly;
+	
+	robingb_screen = screen_out;
+	assert(robingb_screen);
 	
 	while (*lcd_ly == prev_lcd_ly) {
 		u8 num_cycles;
