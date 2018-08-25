@@ -20,8 +20,10 @@ static bool negate_produces_u8_half_carry(s16 a, s16 b) {
 	else return false;
 }
 
-static bool addition_produces_u8_half_carry(s16 a, s16 b) {
-	if ((a & 0x0f) + (b & 0x0f) > 0x0f) return true;
+static bool addition_produces_u8_half_carry(s16 a, s16 b, bool include_carry) {
+	int optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
+	
+	if ((a & 0x0f) + (b & 0x0f) + optional_carry > 0x0f) return true;
 	else return false;
 }
 
@@ -96,7 +98,7 @@ INSTRUCTION void instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
 }
 
 INSTRUCTION void instruction_INC_u8(u8 *value_to_increment, u8 num_cycles) {
-	if (addition_produces_u8_half_carry(*value_to_increment, 1)) registers.f |= FLAG_H;
+	if (addition_produces_u8_half_carry(*value_to_increment, 1, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 
 	(*value_to_increment)++;
@@ -112,9 +114,10 @@ INSTRUCTION void instruction_INC_u8(u8 *value_to_increment, u8 num_cycles) {
 INSTRUCTION void instruction_ADC(u8 to_add, u16 pc_increment, int num_cycles) {
 	int carry = registers.f & FLAG_C ? 1 : 0;
 	
-	if (addition_produces_u8_half_carry(registers.a, to_add + carry)) registers.f |= FLAG_H;
+	if (addition_produces_u8_half_carry(registers.a, to_add, true)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
+	// TODO: this might have an issue with it similar to the trouble I had with adding the carry for the half-carry calculation above.
 	if (addition_produces_u8_full_carry(registers.a, to_add + carry)) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
@@ -181,7 +184,7 @@ INSTRUCTION void instruction_OR(u8 right_hand_value, u16 pc_increment, int num_c
 }
 
 INSTRUCTION void instruction_ADD_A_u8(u8 to_add, u16 pc_increment, u8 num_cycles) {
-	if (addition_produces_u8_half_carry(registers.a, to_add)) registers.f |= FLAG_H;
+	if (addition_produces_u8_half_carry(registers.a, to_add, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
 	if (addition_produces_u8_full_carry(registers.a, to_add)) registers.f |= FLAG_C;
@@ -722,7 +725,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			
 			// TODO: really not sure about the carries for this operation.
 			if (signed_byte >= 0) {
-				if (addition_produces_u8_half_carry(registers.sp, signed_byte)) registers.f |= FLAG_H;
+				if (addition_produces_u8_half_carry(registers.sp, signed_byte, false)) registers.f |= FLAG_H;
 				else registers.f &= ~FLAG_H;
 				if (addition_produces_u8_full_carry(registers.sp, signed_byte)) registers.f |= FLAG_C;
 				else registers.f &= ~FLAG_C;
