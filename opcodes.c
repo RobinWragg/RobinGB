@@ -15,8 +15,10 @@ void finish_instruction(u16 pc_increment, u8 num_cycles_param) {
 	*num_cycles_for_finish = num_cycles_param;
 }
 
-static bool negate_produces_u8_half_carry(s16 a, s16 b) {
-	if ((a & 0x0f) - (b & 0x0f) < 0) return true;
+static bool negate_produces_u8_half_carry(s16 a, s16 b, bool include_carry) {
+	int optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
+	
+	if ((a & 0x0f) - (b & 0x0f) - optional_carry < 0) return true;
 	else return false;
 }
 
@@ -68,7 +70,7 @@ INSTRUCTION void instruction_RST(u8 address_lower_byte) {
 }
 
 INSTRUCTION void instruction_CP(u8 comparator, u16 pc_increment, u8 num_cycles) {
-	if (negate_produces_u8_half_carry(registers.a, comparator)) registers.f |= FLAG_H;
+	if (negate_produces_u8_half_carry(registers.a, comparator, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
 	if (negate_produces_u8_full_carry(registers.a, comparator)) registers.f |= FLAG_C;
@@ -84,7 +86,7 @@ INSTRUCTION void instruction_CP(u8 comparator, u16 pc_increment, u8 num_cycles) 
 }
 
 INSTRUCTION void instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
-	if (negate_produces_u8_half_carry(*value_to_decrement, 1)) registers.f |= FLAG_H;
+	if (negate_produces_u8_half_carry(*value_to_decrement, 1, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
 	(*value_to_decrement)--;
@@ -142,7 +144,7 @@ INSTRUCTION void instruction_CALL_cond_xx(bool condition) {
 INSTRUCTION void instruction_SBC(u8 to_subtract, u16 pc_increment, int num_cycles) {
 	int carry = registers.f & FLAG_C ? 1 : 0;
 	
-	if (negate_produces_u8_half_carry(registers.a, to_subtract + carry)) registers.f |= FLAG_H;
+	if (negate_produces_u8_half_carry(registers.a, to_subtract, true)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
 	if (negate_produces_u8_full_carry(registers.a, to_subtract + carry)) registers.f |= FLAG_C;
@@ -215,7 +217,7 @@ INSTRUCTION void instruction_ADD_HL_u16(u16 to_add, u16 pc_increment, u8 num_cyc
 }
 
 INSTRUCTION void instruction_SUB_u8(u8 subber, u16 pc_increment, int num_cycles) {
-	if (negate_produces_u8_half_carry(registers.a, subber)) registers.f |= FLAG_H;
+	if (negate_produces_u8_half_carry(registers.a, subber, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
 	if (negate_produces_u8_full_carry(registers.a, subber)) registers.f |= FLAG_C;
@@ -730,7 +732,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				if (addition_produces_u8_full_carry(registers.sp, signed_byte)) registers.f |= FLAG_C;
 				else registers.f &= ~FLAG_C;
 			} else {
-				if (negate_produces_u8_half_carry(registers.sp, -signed_byte)) registers.f |= FLAG_H;
+				if (negate_produces_u8_half_carry(registers.sp, -signed_byte, false)) registers.f |= FLAG_H;
 				else registers.f &= ~FLAG_H;
 				if (negate_produces_u8_full_carry(registers.sp, -signed_byte)) registers.f |= FLAG_C;
 				else registers.f &= ~FLAG_C;
@@ -759,7 +761,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0xfe: {
 			u8 byte_0 = mem_read(registers.pc+1);
 			
-			if (negate_produces_u8_half_carry(registers.a, byte_0)) registers.f |= FLAG_H;
+			if (negate_produces_u8_half_carry(registers.a, byte_0, false)) registers.f |= FLAG_H;
 			else registers.f &= ~FLAG_H;
 			
 			if (negate_produces_u8_full_carry(registers.a, byte_0)) registers.f |= FLAG_C;
