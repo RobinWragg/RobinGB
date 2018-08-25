@@ -17,7 +17,7 @@ int cycles_since_last_tima_increment = 0;
 void init_timer() {
 	incrementer_every_cycle = 0xabcc;
 	assert(*div == 0xab);
-	mem_write(TIMER_DIV_ADDRESS, *div);
+	robingb_memory[TIMER_DIV_ADDRESS] = *div;
 	
 	*tima = 0x00;
 	*tma = 0x00;
@@ -59,7 +59,7 @@ void update_timer(u8 num_cycles) {
 		}
 	}
 	
-	mem_write(TIMER_DIV_ADDRESS, *div);
+	robingb_memory[TIMER_DIV_ADDRESS] = *div;
 }
 
 
