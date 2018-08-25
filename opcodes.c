@@ -21,7 +21,7 @@ static bool negate_produces_u8_half_carry(s16 a, s16 b) {
 }
 
 static bool addition_produces_u8_half_carry(s16 a, s16 b) {
-	if (a + b > 0x0f) return true;
+	if ((a & 0x0f) + (b & 0x0f) > 0x0f) return true;
 	else return false;
 }
 
