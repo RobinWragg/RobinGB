@@ -128,6 +128,14 @@ INSTRUCTION void instruction_ADC(u8 to_add, u16 pc_increment, int num_cycles) {
 	finish_instruction(pc_increment, num_cycles);
 }
 
+INSTRUCTION void instruction_CALL_cond_xx(bool condition) {
+	if (condition) {
+		stack_push(registers.pc+3);
+		registers.pc = mem_read_u16(registers.pc+1);
+		finish_instruction(0, 24);
+	} else finish_instruction(3, 12);
+}
+
 INSTRUCTION void instruction_SBC(u8 to_subtract, u16 pc_increment, int num_cycles) {
 	int carry = registers.f & FLAG_C ? 1 : 0;
 	
@@ -567,14 +575,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.pc = mem_read_u16(registers.pc+1);
 			finish_instruction(0, 16);
 		} break;
-		case 0xc4: {
-			if (registers.f & FLAG_Z) finish_instruction(3, 12);
-			else {
-				stack_push(registers.pc + 3);
-				registers.pc = mem_read_u16(registers.pc+1);
-				finish_instruction(0, 24);
-			}
-		} break;
+		case 0xc4: instruction_CALL_cond_xx((registers.f & FLAG_Z) == 0); break;
 		case 0xc5: {
 			stack_push(registers.bc);
 			finish_instruction(1, 16);
@@ -600,17 +601,9 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0xcb: {
 			execute_cb_opcode();
 		} break;
-		case 0xcc: {
-			if (registers.f & FLAG_Z) {
-				stack_push(registers.pc + 3);
-				registers.pc = mem_read_u16(registers.pc+1);
-				finish_instruction(0, 24);
-			} else finish_instruction(3, 12);
-		} break;
+		case 0xcc: instruction_CALL_cond_xx(registers.f & FLAG_Z); break;
 		case 0xcd: {
-			stack_push(registers.pc + 3);
-			registers.pc = mem_read_u16(registers.pc+1);
-			finish_instruction(0, 24);
+			instruction_CALL_cond_xx(true); break;
 		} break;
 		case 0xce: instruction_ADC(mem_read(registers.pc+1), 2, 8); break;
 		case 0xcf: instruction_RST(0x08); break;
@@ -632,13 +625,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				finish_instruction(3, 12);
 			}
 		} break;
-		case 0xd4: {
-			if ((registers.f & FLAG_C) == 0) {
-				stack_push(registers.pc + 3);
-				registers.pc = mem_read_u16(registers.pc+1);
-				finish_instruction(0, 24);
-			} else finish_instruction(3, 12);
-		} break;
+		case 0xd4: instruction_CALL_cond_xx((registers.f & FLAG_C) == 0); break;
 		case 0xd5: {
 			stack_push(registers.de);
 			finish_instruction(1, 16);
@@ -662,6 +649,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				finish_instruction(0, 16);
 			} else finish_instruction(3, 12);
 		} break;
+		case 0xdc: instruction_CALL_cond_xx(registers.f & FLAG_C); break;
 		// Nothing at 0xdb
 		case 0xdf: instruction_RST(0x18); break;
 		// Nothing at 0xdd
