@@ -272,11 +272,16 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x0c: instruction_INC_u8(&registers.c, 4); break;
 		case 0x0d: instruction_DEC_u8(&registers.c, 4); break;
 		case 0x0e: registers.c = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x0f: {
-			if (registers.a & 0x01) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
-			
-			registers.a = registers.a >> 1;
+		case 0x0f: { // RRCA (different flag manipulation to RRC)
+			if (registers.a & bit(0)) {
+				registers.f |= FLAG_C;
+				registers.a >>= 1;
+				registers.a |= bit(7);
+			} else {
+				registers.f &= ~FLAG_C;
+				registers.a >>= 1;
+				registers.a &= ~bit(7);
+			}
 			
 			registers.f &= ~FLAG_Z;
 			registers.f &= ~FLAG_N;
