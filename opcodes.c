@@ -298,12 +298,12 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x17: {
 			bool prev_carry = registers.f & FLAG_C;
 			
-			if (registers.a & 0x80) registers.f |= FLAG_C;
+			if (registers.a & bit(7)) registers.f |= FLAG_C;
 			else registers.f &= ~FLAG_C;
 			
 			registers.a = registers.a << 1;
 			
-			if (prev_carry) registers.a |= 0x01;
+			if (prev_carry) registers.a |= bit(0);
 			
 			registers.f &= ~FLAG_Z;
 			registers.f &= ~FLAG_N;
@@ -321,12 +321,12 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x1f: {
 			bool prev_carry = registers.f & FLAG_C;
 			
-			if (registers.a & 0x01) registers.f |= FLAG_C;
+			if (registers.a & bit(0)) registers.f |= FLAG_C;
 			else registers.f &= ~FLAG_C;
 			
 			registers.a = registers.a >> 1;
 			
-			if (prev_carry) registers.a |= 0x80;
+			if (prev_carry) registers.a |= bit(7);
 			
 			registers.f &= ~FLAG_Z;
 			registers.f &= ~FLAG_N;
@@ -409,13 +409,13 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			mem_write(registers.hl, hl_value);
 		} break;
 		case 0x36: mem_write(registers.hl, mem_read(registers.pc+1)); finish_instruction(2, 12); break;
-		case 0x37: {
+		case 0x37: { // SCF
 			registers.f &= ~FLAG_N;
 			registers.f &= ~FLAG_H;
 			registers.f |= FLAG_C;
 			finish_instruction(1, 4);
 		} break;
-		case 0x38: {
+		case 0x38: { // JR C,x
 			if (registers.f & FLAG_C) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
@@ -485,7 +485,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x73: mem_write(registers.hl, registers.e); finish_instruction(1, 8); break;
 		case 0x74: mem_write(registers.hl, registers.h); finish_instruction(1, 8); break;
 		case 0x75: mem_write(registers.hl, registers.l); finish_instruction(1, 8); break;
-		case 0x76: {
+		case 0x76: { // HALT
 			if (halted) finish_instruction(0, 4);
 			else {
 				if (registers.ime) {
