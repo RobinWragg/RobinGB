@@ -129,12 +129,12 @@ INSTRUCTION void instruction_SWAP(u8 *byte_to_swap, u8 num_cycles) {
 	finish_instruction(1, num_cycles);
 }
 
-INSTRUCTION void instruction_SRL(u8 *byte_to_shift) {
-	if ((*byte_to_shift) & 0x01) registers.f |= FLAG_C;
+INSTRUCTION void instruction_SRL(u8 *byte_to_shift, u8 num_cycles) {
+	if ((*byte_to_shift) & bit(0)) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
 	*byte_to_shift >>= 1; // bit 7 becomes 0.
-	assert(((*byte_to_shift) & 0x80) == false);
+	assert(((*byte_to_shift) & bit(7)) == false);
 	
 	if ((*byte_to_shift) == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
@@ -142,7 +142,7 @@ INSTRUCTION void instruction_SRL(u8 *byte_to_shift) {
 	registers.f &= ~FLAG_N;
 	registers.f &= ~FLAG_H;
 	
-	finish_instruction(1, 8);
+	finish_instruction(1, num_cycles);
 }
 
 INSTRUCTION void instruction_BIT(u8 bit_index, u8 byte_to_check, int num_cycles) {
@@ -212,6 +212,11 @@ void execute_cb_opcode() {
 		case 0x1b: instruction_RR(&registers.e, 8); break;
 		case 0x1c: instruction_RR(&registers.h, 8); break;
 		case 0x1d: instruction_RR(&registers.l, 8); break;
+		case 0x1e: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_RR(&hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0x1f: instruction_RR(&registers.a, 8); break;
 		case 0x20: instruction_SLA(&registers.b); break;
 		case 0x21: instruction_SLA(&registers.c); break;
@@ -219,6 +224,11 @@ void execute_cb_opcode() {
 		case 0x23: instruction_SLA(&registers.e); break;
 		case 0x24: instruction_SLA(&registers.h); break;
 		case 0x25: instruction_SLA(&registers.l); break;
+		case 0x26: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_SLA(&hl_value);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0x27: instruction_SLA(&registers.a); break;
 		case 0x28: instruction_SRA(&registers.b, 8); break;
 		case 0x29: instruction_SRA(&registers.c, 8); break;
@@ -244,13 +254,18 @@ void execute_cb_opcode() {
 			mem_write(registers.hl, hl_value);
 		} break;
 		case 0x37: instruction_SWAP(&registers.a, 8); break;
-		case 0x38: instruction_SRL(&registers.b); break;
-		case 0x39: instruction_SRL(&registers.c); break;
-		case 0x3a: instruction_SRL(&registers.d); break;
-		case 0x3b: instruction_SRL(&registers.e); break;
-		case 0x3c: instruction_SRL(&registers.h); break;
-		case 0x3d: instruction_SRL(&registers.l); break;
-		case 0x3f: instruction_SRL(&registers.a); break;
+		case 0x38: instruction_SRL(&registers.b, 8); break;
+		case 0x39: instruction_SRL(&registers.c, 8); break;
+		case 0x3a: instruction_SRL(&registers.d, 8); break;
+		case 0x3b: instruction_SRL(&registers.e, 8); break;
+		case 0x3c: instruction_SRL(&registers.h, 8); break;
+		case 0x3d: instruction_SRL(&registers.l, 8); break;
+		case 0x3e: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_SRL(&hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
+		case 0x3f: instruction_SRL(&registers.a, 8); break;
 		case 0x40: instruction_BIT(0, registers.b, 8); break;
 		case 0x41: instruction_BIT(0, registers.c, 8); break;
 		case 0x42: instruction_BIT(0, registers.d, 8); break;

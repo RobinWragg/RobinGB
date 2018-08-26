@@ -665,9 +665,9 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			} else finish_instruction(3, 12);
 		} break;
 		case 0xdc: instruction_CALL_cond_xx(registers.f & FLAG_C); break;
-		// Nothing at 0xdb
+		case 0xdb: assert(false); break; // Nothing at 0xdb
 		case 0xdf: instruction_RST(0x18); break;
-		// Nothing at 0xdd
+		case 0xdd: assert(false); break; // Nothing at 0xdd
 		case 0xde: instruction_SBC(mem_read(registers.pc+1), 2, 8); break;
 		case 0xe0: {
 			u8 byte_0 = mem_read(registers.pc+1);
