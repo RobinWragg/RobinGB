@@ -38,6 +38,21 @@ INSTRUCTION void instruction_RLC(u8 *byte_to_rotate, u8 num_cycles) {
 	finish_instruction(1, num_cycles);
 }
 
+INSTRUCTION void instruction_RRC(u8 *byte_to_rotate, u8 num_cycles) {
+	if ((*byte_to_rotate) & bit(0)) registers.f |= FLAG_C;
+	else registers.f &= ~FLAG_C;
+	
+	*byte_to_rotate >>= 1;
+	
+	if (*byte_to_rotate == 0) registers.f |= FLAG_Z;
+	else registers.f &= ~FLAG_Z;
+	
+	registers.f &= ~FLAG_N;
+	registers.f &= ~FLAG_H;
+	
+	finish_instruction(1, num_cycles);
+}
+
 INSTRUCTION void instruction_RR(u8 *byte_to_rotate, u8 num_cycles) {
 	bool prev_carry = registers.f & FLAG_C;
 	
@@ -61,8 +76,8 @@ INSTRUCTION void instruction_SLA(u8 *byte_to_shift) {
 	if ((*byte_to_shift) & 0x80) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
-	*byte_to_shift <<= 1; // bit 0 becomes 0.
-	assert(((*byte_to_shift) & 0x01) == false);
+	*byte_to_shift <<= 1;
+	*byte_to_shift &= ~0x01; // bit 0 should become 0.
 	
 	if ((*byte_to_shift) == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
@@ -71,6 +86,22 @@ INSTRUCTION void instruction_SLA(u8 *byte_to_shift) {
 	registers.f &= ~FLAG_H;
 	
 	finish_instruction(1, 8);
+}
+
+INSTRUCTION void instruction_SRA(u8 *byte_to_shift, u8 num_cycles) {
+	if ((*byte_to_shift) & 0x01) registers.f |= FLAG_C;
+	else registers.f &= ~FLAG_C;
+	
+	*byte_to_shift >>= 1;
+	*byte_to_shift |= (*byte_to_shift) & 0x40; // bit 7 should stay the same.
+	
+	if ((*byte_to_shift) == 0) registers.f |= FLAG_Z;
+	else registers.f &= ~FLAG_Z;
+	
+	registers.f &= ~FLAG_N;
+	registers.f &= ~FLAG_H;
+	
+	finish_instruction(1, num_cycles);
 }
 
 INSTRUCTION void instruction_SWAP(u8 *byte_to_swap, u8 num_cycles) {
@@ -140,6 +171,18 @@ void execute_cb_opcode() {
 			mem_write(registers.hl, hl_value);
 		} break;
 		case 0x07: instruction_RLC(&registers.a, 8); break;
+		case 0x08: instruction_RRC(&registers.b, 8); break;
+		case 0x09: instruction_RRC(&registers.c, 8); break;
+		case 0x0a: instruction_RRC(&registers.d, 8); break;
+		case 0x0b: instruction_RRC(&registers.e, 8); break;
+		case 0x0c: instruction_RRC(&registers.h, 8); break;
+		case 0x0d: instruction_RRC(&registers.l, 8); break;
+		case 0x0e: {
+					u8 hl_value = mem_read(registers.hl);
+					instruction_RRC(&hl_value, 16);
+					mem_write(registers.hl, hl_value);
+				} break;
+		case 0x0f: instruction_RRC(&registers.a, 8); break;
 		case 0x10: instruction_RL(&registers.b, 8); break;
 		case 0x11: instruction_RL(&registers.c, 8); break;
 		case 0x12: instruction_RL(&registers.d, 8); break;
@@ -166,6 +209,18 @@ void execute_cb_opcode() {
 		case 0x24: instruction_SLA(&registers.h); break;
 		case 0x25: instruction_SLA(&registers.l); break;
 		case 0x27: instruction_SLA(&registers.a); break;
+		case 0x28: instruction_SRA(&registers.b, 8); break;
+		case 0x29: instruction_SRA(&registers.c, 8); break;
+		case 0x2a: instruction_SRA(&registers.d, 8); break;
+		case 0x2b: instruction_SRA(&registers.e, 8); break;
+		case 0x2c: instruction_SRA(&registers.h, 8); break;
+		case 0x2d: instruction_SRA(&registers.l, 8); break;
+		case 0x2e: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_SRA(&hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
+		case 0x2f: instruction_SRA(&registers.a, 8); break;
 		case 0x30: instruction_SWAP(&registers.b, 8); break;
 		case 0x31: instruction_SWAP(&registers.c, 8); break;
 		case 0x32: instruction_SWAP(&registers.d, 8); break;

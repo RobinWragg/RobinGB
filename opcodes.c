@@ -254,7 +254,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			
 			registers.a = registers.a << 1;
 			
-			registers.f &= ~FLAG_Z;
+			registers.f &= ~FLAG_Z; // TODO: conflicting documenation on whether this should depend on the result of registers.a!
 			registers.f &= ~FLAG_N;
 			registers.f &= ~FLAG_H;
 			
