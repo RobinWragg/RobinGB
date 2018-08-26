@@ -248,13 +248,18 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x04: instruction_INC_u8(&registers.b, 4); break;
 		case 0x05: instruction_DEC_u8(&registers.b, 4); break;
 		case 0x06: registers.b = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x07: {
-			if (registers.a & 0x80) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
+		case 0x07: { // RLCA (different flag manipulation to RLC)
+			if (registers.a & bit(7)) {
+				registers.f |= FLAG_C;
+				registers.a <<= 1;
+				registers.a |= bit(0);
+			} else {
+				registers.f &= ~FLAG_C;
+				registers.a <<= 1;
+				registers.a &= ~bit(0);
+			}
 			
-			registers.a = registers.a << 1;
-			
-			registers.f &= ~FLAG_Z; // TODO: conflicting documenation on whether this should depend on the result of registers.a!
+			registers.f &= ~FLAG_Z;
 			registers.f &= ~FLAG_N;
 			registers.f &= ~FLAG_H;
 			
