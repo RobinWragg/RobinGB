@@ -44,10 +44,15 @@ INSTRUCTION void instruction_RLC(u8 *byte_to_rotate, u8 num_cycles) {
 }
 
 INSTRUCTION void instruction_RRC(u8 *byte_to_rotate, u8 num_cycles) {
-	if ((*byte_to_rotate) & bit(0)) registers.f |= FLAG_C;
-	else registers.f &= ~FLAG_C;
-	
-	*byte_to_rotate >>= 1;
+	if ((*byte_to_rotate) & bit(0)) {
+		registers.f |= FLAG_C;
+		*byte_to_rotate >>= 1;
+		*byte_to_rotate |= bit(7);
+	} else {
+		registers.f &= ~FLAG_C;
+		*byte_to_rotate >>= 1;
+		*byte_to_rotate &= ~bit(7);
+	}
 	
 	if (*byte_to_rotate == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
