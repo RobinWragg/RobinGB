@@ -5,16 +5,13 @@ u8 *requested_interrupts = &robingb_memory[IF_ADDRESS];
 u8 *enabled_interrupts = &robingb_memory[IE_ADDRESS];
 
 void handle_interrupts() {
-	if (registers.ime) {
-		u8 interrupts_to_handle = (*requested_interrupts) & (*enabled_interrupts);
+	u8 interrupts_to_handle = (*requested_interrupts) & (*enabled_interrupts);
+	
+	if (interrupts_to_handle) {
+		if (halted) halted = false;
 		
-		if (interrupts_to_handle) {
+		if (registers.ime) {
 			registers.ime = false;
-			
-			if (halted) {
-				registers.pc++; // Advance past the HALT instruction
-				halted = false;
-			}
 			
 			stack_push(registers.pc);
 			

@@ -486,13 +486,12 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x74: mem_write(registers.hl, registers.h); finish_instruction(1, 8); break;
 		case 0x75: mem_write(registers.hl, registers.l); finish_instruction(1, 8); break;
 		case 0x76: { // HALT
-			if (halted) finish_instruction(0, 4);
-			else {
-				if (registers.ime) {
-					halted = true;
-					finish_instruction(0, 4);
-				} else finish_instruction(1, 4);
-			}
+			assert(!halted); // Instructions shouldn't be getting executed while halted.
+			
+			if (registers.ime) {
+				halted = true;
+				finish_instruction(1, 4);
+			} else finish_instruction(1, 4);
 		} break;
 		case 0x77: mem_write(registers.hl, registers.a); finish_instruction(1, 8); break;
 		case 0x78: registers.a = registers.b; finish_instruction(1, 4); break;

@@ -108,14 +108,18 @@ void robingb_update(RobinGB_Input *input, u8 screen_out[], u8 *ly_out) {
 	assert(robingb_screen);
 	
 	while (*lcd_ly == prev_lcd_ly) {
-		u8 num_cycles;
-		execute_next_opcode(&num_cycles); // relative cost: 450
-		zero_unused_f_register_bits(); // relative cost: 160
-		handle_interrupts(); // relative cost: 290
-		lcd_update(num_cycles); // relative cost: 1000 (outdated)
-		joypad_update(input); // relative cost: 500
-		update_audio(num_cycles); // relative cost: 270
-		update_timer(num_cycles); // relative cost: 650
+		u8 num_cycles = 4;
+		
+		if (!halted) {
+			execute_next_opcode(&num_cycles);
+			zero_unused_f_register_bits();
+		}
+		
+		handle_interrupts();
+		lcd_update(num_cycles);
+		joypad_update(input);
+		update_audio(num_cycles);
+		update_timer(num_cycles);
 	}
 	
 	*ly_out = *lcd_ly;
