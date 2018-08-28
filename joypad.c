@@ -11,8 +11,8 @@ void joypad_update(RobinGB_Input *input) {
 	const u8 RIGHT_OR_A = 0x01;
 	
 	u8 bits = mem_read(joypad_address);
-	bits |= 0xc0; // bits 6 and 7 are always 1.
-	bits |= 0x0f; // unpressed buttons are 1.
+	bits |= 0xc0; /* bits 6 and 7 are always 1. */
+	bits |= 0x0f; /* unpressed buttons are 1. */
 	
 	if ((bits & OTHER_BUTTON_REQUEST) == false) {
 		if (input->start) {

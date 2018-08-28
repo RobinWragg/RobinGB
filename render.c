@@ -45,8 +45,8 @@ static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u16 tile_map_ad
 }
 
 static u8 get_bg_line_pixel(u8 bg_line[], u8 x) {
-	u8 byte_index = x / 4; // 4 pixels per byte
-	u8 bit_index = (x % 4) * 2; // 2 bits per pixel
+	u8 byte_index = x / 4; /* 4 pixels per byte */
+	u8 bit_index = (x % 4) * 2; /* 2 bits per pixel */
 	
 	u8 bg_byte = bg_line[byte_index];
 	u8 bg_pixel = bg_byte & (0x03 << bit_index);
@@ -54,7 +54,7 @@ static u8 get_bg_line_pixel(u8 bg_line[], u8 x) {
 }
 
 static void render_background_line(u8 bg_line[], bool is_window) {
-	const u8 bg_y = *ly; // TODO: temp. This won't work for vertical scrolling.
+	const u8 bg_y = *ly; /* TODO: temp. This won't work for vertical scrolling. */
 	const u8 tilegrid_y = bg_y / TILE_HEIGHT_IN_PIXELS;
 	const u8 tile_y = (*ly) - tilegrid_y*TILE_HEIGHT_IN_PIXELS;
 	
@@ -67,15 +67,15 @@ static void render_background_line(u8 bg_line[], bool is_window) {
 		get_tile_line_data_for_bg_tilegrid_coord(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_y, tile_line_data);
 		
 		for (int pixel_x = 0; pixel_x < 8; pixel_x++) {
-			u8 bg_byte_index = tilegrid_x*2 + pixel_x/4; // 2 bytes per tile line, 4 pixels per byte
-			u8 bg_bit_index = (pixel_x % 4) * 2; // 4 pixels per byte, 2 bits per pixel
+			u8 bg_byte_index = tilegrid_x*2 + pixel_x/4; /* 2 bytes per tile line, 4 pixels per byte */
+			u8 bg_bit_index = (pixel_x % 4) * 2; /* 4 pixels per byte, 2 bits per pixel */
 			
 			u8 pixel_bit_index = 0x80 >> pixel_x;
 			
-			// lower bit of shade
+			/* lower bit of shade */
 			if (tile_line_data[0] & pixel_bit_index) bg_line[bg_byte_index] |= 0x01 << bg_bit_index;
 			
-			// upper bit of shade
+			/* upper bit of shade */
 			if (tile_line_data[1] & pixel_bit_index) bg_line[bg_byte_index] |= 0x02 << bg_bit_index;
 		}
 	}
@@ -88,14 +88,14 @@ static void get_object_data(int object_data_index, u8 object_data_out[]) {
 }
 
 static void set_screen_pixel(u8 x, u8 y, u8 doublebit_shade) {
-	u16 byte_index = x/4 + y*SCREEN_WIDTH_IN_BYTES; // 4 pixels per byte
-	u8 bit_index = (x % 4) * 2; // 2 bits per pixel
-	robingb_screen[byte_index] &= ~(0x03 << bit_index); // wipe the pixel
+	u16 byte_index = x/4 + y*SCREEN_WIDTH_IN_BYTES; /* 4 pixels per byte */
+	u8 bit_index = (x % 4) * 2; /* 2 bits per pixel */
+	robingb_screen[byte_index] &= ~(0x03 << bit_index); /* wipe the pixel */
 	robingb_screen[byte_index] |= doublebit_shade << bit_index;
 }
 
 static void render_objects_on_line() {
-	assert(((*lcdc) & bit(2)) == false); // not handling 8x16 objects yet
+	assert(((*lcdc) & bit(2)) == false); /* not handling 8x16 objects yet */
 	
 	for (int address = 0xfe00; address <= 0xfe9f; address += 4) {
 		u8 y = robingb_memory[address] - 16;
@@ -103,15 +103,15 @@ static void render_objects_on_line() {
 		if (*ly >= y && *ly < y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
 			u8 x = robingb_memory[address+1] - 8;
 			
-			// TODO: ignore the lower bit of this if in 8x16 mode.
+			/* TODO: ignore the lower bit of this if in 8x16 mode. */
 			u8 object_data_index = robingb_memory[address+2];
 			
-			u8 object_flags = robingb_memory[address+3]; // TODO: all the other flags
+			u8 object_flags = robingb_memory[address+3]; /* TODO: all the other flags */
 			bool flip_x = object_flags & bit(5);
 			bool flip_y = object_flags & bit(6);
 			
 			u8 object_data[NUM_BYTES_PER_TILE];
-			get_object_data(object_data_index, object_data); // TODO: don't need to get the full object
+			get_object_data(object_data_index, object_data); /* TODO: don't need to get the full object */
 			
 			u8 pixel_row[8];
 			if (flip_y) get_pixel_row_from_tile_line_data(&object_data[(y+7 - *ly)*2], pixel_row);
@@ -131,7 +131,7 @@ static void render_objects_on_line() {
 }
 
 void render_screen_line() {
-	if ((*lcdc) & 0x01) { // Check if the background is enabled. NOTE: bit 0 of lcdc has different meanings for Game Boy Color.
+	if ((*lcdc) & 0x01) { /* Check if the background is enabled. NOTE: bit 0 of lcdc has different meanings for Game Boy Color. */
 		
 		if ((*lcdc) & bit(5)) {
 			robingb_log("window enabled");
@@ -149,13 +149,13 @@ void render_screen_line() {
 			set_screen_pixel(s, *ly, pixel);
 		}
 	} else {
-		// Background is disabled, so just render white
+		/* Background is disabled, so just render white */
 		for (int x = 0; x < SCREEN_WIDTH_IN_BYTES; x++) {
 			robingb_screen[x + (*ly)*SCREEN_WIDTH_IN_BYTES] = 0x00;
 		}
 	}
 	
-	// check if object object drawing is enabled
+	/* check if object object drawing is enabled */
 	if ((*lcdc) & bit(1)) render_objects_on_line();
 	
 }

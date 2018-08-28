@@ -48,7 +48,7 @@ u16 make_u16(u8 least_sig, u8 most_sig) {
 }
 
 void init_registers() {
-	registers.af = 0x01b0; // NOTE: This is different for Game Boy Pocket, Color etc.
+	registers.af = 0x01b0; /* NOTE: This is different for Game Boy Pocket, Color etc. */
 	registers.bc = 0x0013;
 	registers.de = 0x00d8;
 	registers.hl = 0x014d;
@@ -84,7 +84,7 @@ void robingb_init(
 		robingb_log(buf);
 	}
 	
-	// barebones cart error check
+	/* barebones cart error check */
 	{
 		int sum = 0;
 		for (int addr = 0x0134; addr <= 0x014D; addr++) {

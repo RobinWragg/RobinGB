@@ -1,5 +1,5 @@
-// TODO: Prevent name clashes with user code (RobinGB prefixes, static definitions in .c files)
-// TODO: Almost all subsystems should access memory via robingb_memory[address] rather than mem_read()/mem_write()
+/* TODO: Prevent name clashes with user code (RobinGB prefixes, static definitions in .c files) */
+/* TODO: Almost all subsystems should access memory via robingb_memory[address] rather than mem_read()/mem_write() */
 
 #ifndef ROBINGB_INTERNAL_H
 #define ROBINGB_INTERNAL_H
@@ -21,10 +21,10 @@ typedef int32_t s32;
 
 #define CPU_CLOCK_FREQ (4194304)
 
-#define FLAG_Z (0x80) // Zero Flag
-#define FLAG_N (0x40) // Add/Sub-Flag (BCD)
-#define FLAG_H (0x20) // Half Carry Flag (BCD)
-#define FLAG_C (0x10) // Carry Flag
+#define FLAG_Z (0x80) /* Zero Flag */
+#define FLAG_N (0x40) /* Add/Sub-Flag (BCD) */
+#define FLAG_H (0x20) /* Half Carry Flag (BCD) */
+#define FLAG_C (0x10) /* Carry Flag */
 
 #define TIMER_DIV_ADDRESS (0xff04)
 

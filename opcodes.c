@@ -1,4 +1,4 @@
-// TODO: can we speed stuff up if we increment pc gradually instead of in one go as part of finish_instruction()?
+/* TODO: can we speed stuff up if we increment pc gradually instead of in one go as part of finish_instruction()? */
 
 #include "internal.h"
 #include <string.h>
@@ -76,7 +76,7 @@ INSTRUCTION void instruction_CP(u8 comparator, u16 pc_increment, u8 num_cycles) 
 	if (negate_produces_u8_full_carry(registers.a, comparator)) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
-	registers.f |= FLAG_N; // set the add/sub flag high, indicating subtraction
+	registers.f |= FLAG_N; /* set the add/sub flag high, indicating subtraction */
 	
 	u8 sub_result = registers.a - comparator;
 	
@@ -119,7 +119,7 @@ INSTRUCTION void instruction_ADC(u8 to_add, u16 pc_increment, int num_cycles) {
 	if (addition_produces_u8_half_carry(registers.a, to_add, true)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
-	// TODO: this might have an issue with it similar to the trouble I had with adding the carry for the half-carry calculation above.
+	/* TODO: this might have an issue with it similar to the trouble I had with adding the carry for the half-carry calculation above. */
 	if (addition_produces_u8_full_carry(registers.a, to_add + carry)) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
@@ -237,8 +237,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 	num_cycles_for_finish = num_cycles_out;
 	u8 opcode = mem_read(registers.pc);
 	
-	// printf("a:%x op:%x(%x) ", registers.pc, opcode, mem_read(registers.pc+1));
-	// printf("%s\n", get_opcode_name(registers.pc));
+	/* printf("a:%x op:%x(%x) ", registers.pc, opcode, mem_read(registers.pc+1)); */
+	/* printf("%s\n", get_opcode_name(registers.pc)); */
 	
 	switch (opcode) {
 		case 0x00: finish_instruction(1, 4); break;
@@ -248,7 +248,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x04: instruction_INC_u8(&registers.b, 4); break;
 		case 0x05: instruction_DEC_u8(&registers.b, 4); break;
 		case 0x06: registers.b = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x07: { // RLCA (different flag manipulation to RLC)
+		case 0x07: { /* RLCA (different flag manipulation to RLC) */
 			if (registers.a & bit(7)) {
 				registers.f |= FLAG_C;
 				registers.a <<= 1;
@@ -272,7 +272,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x0c: instruction_INC_u8(&registers.c, 4); break;
 		case 0x0d: instruction_DEC_u8(&registers.c, 4); break;
 		case 0x0e: registers.c = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x0f: { // RRCA (different flag manipulation to RRC)
+		case 0x0f: { /* RRCA (different flag manipulation to RRC) */
 			if (registers.a & bit(0)) {
 				registers.f |= FLAG_C;
 				registers.a >>= 1;
@@ -288,6 +288,14 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.f &= ~FLAG_H;
 			
 			finish_instruction(1, 4);
+		} break;
+		case 0x10: { /* STOP */
+			/* TODO: STOP is like HALT except the LCD is inoperational as well, and the "stopped" state is only exited when a button is pressed. */
+			/* assert(!stopped); */
+			/* if (registers.ime) { */
+			/* 	halted = true; */
+			/* 	finish_instruction(0, 4); */
+			/* } else finish_instruction(1, 4); */
 		} break;
 		case 0x11: registers.de = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
 		case 0x12: mem_write(registers.de, registers.a); finish_instruction(1, 8); break;
@@ -347,7 +355,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.h = mem_read(registers.pc+1);
 			finish_instruction(2, 8);
 		} break;
-		case 0x27: { // DAA
+		case 0x27: { /* DAA */
 			if ((registers.f & FLAG_N) == 0) {
 				u8 a_lower_nybble = registers.a & 0x0f;
 				
@@ -367,7 +375,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				if (registers.f & FLAG_H) registers.a -= 0x6;
 			}
 			
-			// these flags are always updated
+			/* these flags are always updated */
 			if (registers.a == 0) registers.f |= FLAG_Z;
 			else registers.f &= ~FLAG_Z;
 			
@@ -385,7 +393,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x2c: instruction_INC_u8(&registers.l, 4); break;
 		case 0x2d: instruction_DEC_u8(&registers.l, 4); break;
 		case 0x2e: registers.l = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x2f: { // CPL
+		case 0x2f: { /* CPL */
 			registers.a ^= 0xff;
 			registers.f |= FLAG_N;
 			registers.f |= FLAG_H;
@@ -409,13 +417,13 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			mem_write(registers.hl, hl_value);
 		} break;
 		case 0x36: mem_write(registers.hl, mem_read(registers.pc+1)); finish_instruction(2, 12); break;
-		case 0x37: { // SCF
+		case 0x37: { /* SCF */
 			registers.f &= ~FLAG_N;
 			registers.f &= ~FLAG_H;
 			registers.f |= FLAG_C;
 			finish_instruction(1, 4);
 		} break;
-		case 0x38: { // JR C,x
+		case 0x38: { /* JR C,x */
 			if (registers.f & FLAG_C) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
@@ -425,7 +433,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x3c: instruction_INC_u8(&registers.a, 4); break;
 		case 0x3d: instruction_DEC_u8(&registers.a, 4); break;
 		case 0x3e: registers.a = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x3f: { // CCF
+		case 0x3f: { /* CCF */
 			registers.f &= ~FLAG_N;
 			registers.f &= ~FLAG_H;
 			registers.f ^= FLAG_C;
@@ -485,8 +493,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x73: mem_write(registers.hl, registers.e); finish_instruction(1, 8); break;
 		case 0x74: mem_write(registers.hl, registers.h); finish_instruction(1, 8); break;
 		case 0x75: mem_write(registers.hl, registers.l); finish_instruction(1, 8); break;
-		case 0x76: { // HALT
-			assert(!halted); // Instructions shouldn't be getting executed while halted.
+		case 0x76: { /* HALT */
+			assert(!halted); /* Instructions shouldn't be getting executed while halted. */
 			
 			if (registers.ime) {
 				halted = true;
@@ -664,9 +672,9 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			} else finish_instruction(3, 12);
 		} break;
 		case 0xdc: instruction_CALL_cond_xx(registers.f & FLAG_C); break;
-		case 0xdb: assert(false); break; // Nothing at 0xdb
+		case 0xdb: assert(false); break; /* Nothing at 0xdb */
 		case 0xdf: instruction_RST(0x18); break;
-		case 0xdd: assert(false); break; // Nothing at 0xdd
+		case 0xdd: assert(false); break; /* Nothing at 0xdd */
 		case 0xde: instruction_SBC(mem_read(registers.pc+1), 2, 8); break;
 		case 0xe0: {
 			u8 byte_0 = mem_read(registers.pc+1);
@@ -734,7 +742,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0xf8: {
 			s8 signed_byte = mem_read(registers.pc+1);
 			
-			// TODO: really not sure about the carries for this operation.
+			/* TODO: really not sure about the carries for this operation. */
 			if (signed_byte >= 0) {
 				if (addition_produces_u8_half_carry(registers.sp, signed_byte, false)) registers.f |= FLAG_H;
 				else registers.f &= ~FLAG_H;
@@ -776,7 +784,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			if (negate_produces_u8_full_carry(registers.a, byte_0)) registers.f |= FLAG_C;
 			else registers.f &= ~FLAG_C;
 			
-			registers.f |= FLAG_N; // set the add/sub flag high, indicating subtraction
+			registers.f |= FLAG_N; /* set the add/sub flag high, indicating subtraction */
 			
 			u8 sub_result = registers.a - byte_0;
 			if (sub_result == 0) registers.f |= FLAG_Z;

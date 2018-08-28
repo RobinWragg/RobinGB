@@ -1,6 +1,6 @@
-// TODO: Add a print/log function
-// TODO: Remove assert()s
-// TODO: Add formatting cabability to robingb_log()
+/* TODO: Add a print/log function */
+/* TODO: Remove assert()s */
+/* TODO: Add formatting cabability to robingb_log() */
 
 #ifndef ROBINGB_H
 #define ROBINGB_H
@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define ROBINGB_CPU_CYCLES_PER_REFRESH (70224) // Approximately 59.7275Hz
+#define ROBINGB_CPU_CYCLES_PER_REFRESH (70224) /* Approximately 59.7275Hz */
 #define ROBINGB_AUDIO_SAMPLE_RATE (44100)
 
 typedef struct {
@@ -16,7 +16,7 @@ typedef struct {
 	bool start, select, a, b;
 } RobinGB_Input;
 
-// Set this to your logging function if you want to receive logs from RobinGB.
+/* Set this to your logging function if you want to receive logs from RobinGB. */
 extern void (*robingb_logging_function_ptr)(const char *text);
 
 void robingb_init(

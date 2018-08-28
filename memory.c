@@ -1,4 +1,4 @@
-// TODO: Overwrite the oldest cached ROM bank if there's no more room in the cache
+/* TODO: Overwrite the oldest cached ROM bank if there's no more room in the cache */
 
 #include "internal.h"
 #include <assert.h>
@@ -8,9 +8,9 @@
 #define GAME_BOY_TOTAL_MEMORY_SIZE 1024*64
 
 #define ROM_BANK_CACHE_ADDRESS GAME_BOY_TOTAL_MEMORY_SIZE
-#define ROM_BANK_SIZE 16384 // 16kB
+#define ROM_BANK_SIZE 16384 /* 16kB */
 #define MAX_NUM_CACHED_ROM_BANKS 4
-#define MAX_NUM_ROM_BANKS_IN_REAL_RAM (MAX_NUM_CACHED_ROM_BANKS+1) // plus one for bank slot 0
+#define MAX_NUM_ROM_BANKS_IN_REAL_RAM (MAX_NUM_CACHED_ROM_BANKS+1) /* plus one for bank slot 0 */
 
 u8 robingb_memory[GAME_BOY_TOTAL_MEMORY_SIZE + MAX_NUM_CACHED_ROM_BANKS*ROM_BANK_SIZE];
 
@@ -59,11 +59,11 @@ struct {
 	bool has_ram;
 } cart_attributes;
 
-//
-// cart control code
-//-----------------------------------------------
+/* ----------------------------------------------- */
+/* cart control code                               */
+/* ----------------------------------------------- */
 
-int active_switchable_rom_bank_index = 1; // 1 by default
+int active_switchable_rom_bank_index = 1; /* 1 by default */
 
 struct {
 	int bank_index;
@@ -112,7 +112,7 @@ static void load_rom_bank(int destination_slot_index, int file_bank_index) {
 	u16 source_address = file_bank_index * ROM_BANK_SIZE;
 	
 	if (file_bank_index > 1) {
-		// check the cache for the bank
+		/* check the cache for the bank */
 		bool found = false;
 		for (int i = 0; i < MAX_NUM_CACHED_ROM_BANKS; i++) {
 			if (rom_bank_addresses[i].bank_index == file_bank_index) {
@@ -122,7 +122,7 @@ static void load_rom_bank(int destination_slot_index, int file_bank_index) {
 		}
 		
 		if (!found) {
-			// store the bank in the cache
+			/* store the bank in the cache */
 			for (int i = 0; i < MAX_NUM_CACHED_ROM_BANKS; i++) {
 				if (rom_bank_addresses[i].bank_index == -1) {
 					rom_bank_addresses[i].bank_index = file_bank_index;
@@ -139,7 +139,7 @@ static void load_rom_bank(int destination_slot_index, int file_bank_index) {
 		
 		active_switchable_rom_bank_index = file_bank_index;
 	} else {
-		// store it in the appropriate place in standard Game Boy memory
+		/* store it in the appropriate place in standard Game Boy memory */
 		u16 destination_address = destination_slot_index == 0 ? 0x0000 : 0x4000;
 		char buf[128] = {0};
 		sprintf(buf, "Loading ROM bank %i (%iKB from file)", file_bank_index, ROM_BANK_SIZE/1024);
@@ -153,12 +153,12 @@ static void perform_rom_bank_control(int address, u8 value) {
 	
 	switch (cart_attributes.mbc_type) {
 		case MBC_NONE:
-		// no-op
+		/* no-op */
 		break;
 		case MBC_1: {
 			assert(value <= 0x1f);
-			u8 new_bank = active_switchable_rom_bank_index & ~0x1f; // wipe the lower 5 bits
-			new_bank |= value; // set the lower 5 bits to the new value
+			u8 new_bank = active_switchable_rom_bank_index & ~0x1f; /* wipe the lower 5 bits */
+			new_bank |= value; /* set the lower 5 bits to the new value */
 
 			if (new_bank == 0x00) new_bank++;
 			else if (new_bank == 0x20) new_bank++;
@@ -177,31 +177,31 @@ static void perform_rom_bank_control(int address, u8 value) {
 
 void perform_cart_control(int address, u8 value) {
 	if (address >= 0x0000 && address < 0x2000) {
-		// MBC1: external RAM control (at 0xa000 to 0xbfff)
+		/* MBC1: external RAM control (at 0xa000 to 0xbfff) */
 		assert(false);
 	} else if (address >= 0x2000 && address < 0x4000) {
 		
 		perform_rom_bank_control(address, value);
 		
 	} else if (address >= 0x4000 && address < 0x6000) {
-		assert(false); // MBC1: RAM bank control, or, upper bits of ROM bank number, depending on ROM/RAM mode
+		assert(false); /* MBC1: RAM bank control, or, upper bits of ROM bank number, depending on ROM/RAM mode */
 	} else if (address >= 0x6000 && address < 0x8000) {
-		assert(false); // MBC1: ROM/RAM mode select
+		assert(false); /* MBC1: ROM/RAM mode select */
 	} else assert(false);
 }
 
-//
-// General memory code
-//-----------------------------------------------
+/* ----------------------------------------------- */
+/* General memory code                             */
+/* ----------------------------------------------- */
 
 void set_cart_attributes(Cart_Type cart_type) {
 	
-	// mbc type
+	/* mbc type */
 	switch (cart_type) {
 		case CART_TYPE_ROM_ONLY:
 		case CART_TYPE_RAM:
 		case CART_TYPE_RAM_BATTERY:
-			// TODO: Not sure if this is a complete list of non-MBC cart types.
+			/* TODO: Not sure if this is a complete list of non-MBC cart types. */
 			robingb_log("Cart has no MBC");
 			assert(mem_read(0x0148) == 0x00);
 			cart_attributes.mbc_type = MBC_NONE;
@@ -228,7 +228,7 @@ void set_cart_attributes(Cart_Type cart_type) {
 		} break;
 	}
 	
-	// has RAM
+	/* has RAM */
 	switch (cart_type) {
 		case CART_TYPE_MBC1_RAM:
 		case CART_TYPE_MBC1_RAM_BATTERY:
@@ -262,7 +262,7 @@ void mem_init(const char *cart_file_path) {
 	
 	init_rom_cache();
 	
-	// TODO: Remove address names? LCD_STATUS_ADDRESS etc. don't need to be known by memory.c
+	/* TODO: Remove address names? LCD_STATUS_ADDRESS etc. don't need to be known by memory.c */
 	
 	mem_write(0xff10, 0x80);
 	mem_write(0xff11, 0xbf);
@@ -276,14 +276,14 @@ void mem_init(const char *cart_file_path) {
 	mem_write(0xff1c, 0x9f);
 	mem_write(0xff1e, 0xbf);
 	mem_write(0xff00, 0xff);
-	for (int i = 0xff10; i <= 0xff26; i++) mem_write(i, 0x00); // zero audio
+	for (int i = 0xff10; i <= 0xff26; i++) mem_write(i, 0x00); /* zero audio */
 	mem_write(0xff20, 0xff);
 	mem_write(0xff21, 0x00);
 	mem_write(0xff22, 0x00);
 	mem_write(0xff23, 0xbf);
 	mem_write(0xff24, 0x77);
 	mem_write(0xff25, 0xf3);
-	mem_write(0xff26, 0xf1); // NOTE: This is different for Game Boy Color etc.
+	mem_write(0xff26, 0xf1); /* NOTE: This is different for Game Boy Color etc. */
 	mem_write(LCD_CONTROL_ADDRESS, 0x91);
 	mem_write(LCD_STATUS_ADDRESS, 0x85);
 	mem_write(0xff42, 0x00);
@@ -294,7 +294,7 @@ void mem_init(const char *cart_file_path) {
 	mem_write(0xff49, 0xff);
 	mem_write(0xff4a, 0x00);
 	mem_write(0xff4b, 0x00);
-	mem_write(IF_ADDRESS, 0xe1); // TODO: Might be acceptable for this to be 0xe0
+	mem_write(IF_ADDRESS, 0xe1); /* TODO: Might be acceptable for this to be 0xe0 */
 	mem_write(IE_ADDRESS, 0x00);
 	
 	load_rom_bank(0, 0);
@@ -313,15 +313,15 @@ Mem_Address_Description mem_get_address_description(int address) {
 	else if (address >= 0x4000 && address <= 0x7fff) strcpy(desc.region, "Cart ROM, Switchable Bank");
 	else if (address >= 0x8000 && address <= 0x9fff) strcpy(desc.region, "VRAM");
 	else if (address >= 0xa000 && address <= 0xbfff) strcpy(desc.region, "External RAM");
-	else if (address >= 0xc000 && address <= 0xfdff) strcpy(desc.region, "WRAM"); // all WRAM including echo.
+	else if (address >= 0xc000 && address <= 0xfdff) strcpy(desc.region, "WRAM"); /* all WRAM including echo. */
 	else if (address >= 0xfe00 && address <= 0xfe9f) strcpy(desc.region, "OAM");
 	else if (address >= 0xfea0 && address <= 0xfeff) strcpy(desc.region, "Not Usable");
 	else if (address >= 0xff00 && address <= 0xff7f) {
 		if (address >= 0xff10 && address <= 0xff26) {
 			
-			// if (address == 0xff24) sprintf(buf, "%s, Sound L/R channel control (NR50)", full_prefix);
-			// else if (address == 0xff25) sprintf(buf, "%s, Sound output terminal selection (NR51)", full_prefix);
-			// else if (address == 0xff26) sprintf(buf, "%s, Sound on/off (NR52)", full_prefix);
+			/* if (address == 0xff24) sprintf(buf, "%s, Sound L/R channel control (NR50)", full_prefix); */
+			/* else if (address == 0xff25) sprintf(buf, "%s, Sound output terminal selection (NR51)", full_prefix); */
+			/* else if (address == 0xff26) sprintf(buf, "%s, Sound on/off (NR52)", full_prefix); */
 			strcpy(desc.region, "Sound");
 			
 		} else if (address >= 0xff40 && address <= 0xff49) {
@@ -346,10 +346,10 @@ Mem_Address_Description mem_get_address_description(int address) {
 	}
 	else if (address >= 0xff80 && address <= 0xfffe) {
 		strcpy(desc.region, "HRAM");
-	// } else if (address == 0xffff) {
-	// 	sprintf(buf, "%s, Interrupts Enable Register (IE)", full_prefix);
-	// } else {
-	// 	sprintf(buf, "%s", full_prefix);
+	/* } else if (address == 0xffff) { */
+	/* 	sprintf(buf, "%s, Interrupts Enable Register (IE)", full_prefix); */
+	/* } else { */
+	/* 	sprintf(buf, "%s", full_prefix); */
 	}
 	
 	return desc;
@@ -381,7 +381,7 @@ void mem_write(u16 address, u8 value) {
 	if (address < 0x8000) {
 		perform_cart_control(address, value);
 	} else if (address == 0xff46) {
-		memcpy(&robingb_memory[0xfe00], &robingb_memory[value * 0x100], 160); // OAM DMA transfer
+		memcpy(&robingb_memory[0xfe00], &robingb_memory[value * 0x100], 160); /* OAM DMA transfer */
 	} else {
 		robingb_memory[address] = value;
 		

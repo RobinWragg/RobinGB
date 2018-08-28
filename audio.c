@@ -1,13 +1,13 @@
 #include "internal.h"
 #include <assert.h>
 
-// DIV and AudioPU
-// - The APU uses the DIV to update sweep (channel 1), fade in/out and time out, the same way the timer uses it to update itself.
-// - In normal speed mode the APU updates when bit 5 of DIV goes from 1 to 0 (256 Hz). In double speed mode, bit 6.
-// - Writing to DIV every instruction, for example, will make the APU produce the same frequency with the same volume even if sweep and fade out are enabled.
-// - Writing to DIV doesn't affect the frequency itself. The waveform generation is driven by another timer.
+/* DIV and AudioPU */
+/* - The APU uses the DIV to update sweep (channel 1), fade in/out and time out, the same way the timer uses it to update itself. */
+/* - In normal speed mode the APU updates when bit 5 of DIV goes from 1 to 0 (256 Hz). In double speed mode, bit 6. */
+/* - Writing to DIV every instruction, for example, will make the APU produce the same frequency with the same volume even if sweep and fade out are enabled. */
+/* - Writing to DIV doesn't affect the frequency itself. The waveform generation is driven by another timer. */
 
-#define RING_SIZE (2048) // TODO: set this low to improve latency
+#define RING_SIZE (2048) /* TODO: set this low to improve latency */
 #define CHAN3_WAVE_PATTERN_LENGTH (32)
 
 struct {
@@ -31,7 +31,7 @@ void get_chan_volume_envelope(int channel, f32 *initial_volume, bool *direction_
 	*initial_volume = (envelope_byte >> 4) * (1.0/15);
 	*direction_is_increase = envelope_byte & 0x08;
 	f32 envelope_step_in_seconds = (envelope_byte & 0x07) * (1.0/64);
-	f32 envelope_length_in_seconds = envelope_step_in_seconds * 16; // 16 steps across an envelope
+	f32 envelope_length_in_seconds = envelope_step_in_seconds * 16; /* 16 steps across an envelope */
 	*envelope_length_in_samples = envelope_length_in_seconds * ROBINGB_AUDIO_SAMPLE_RATE;
 }
 
@@ -50,17 +50,17 @@ void get_chan_freq_and_restart_and_envelope_stop(int channel, s16 *freq, bool *s
 		upper_freq_bits_and_restart_and_stop_address = 0xff1e;
 	} else assert(false);
 	
-	u16 freq_specifier = mem_read(lower_freq_bits_address); // lower 8 bits of frequency
+	u16 freq_specifier = mem_read(lower_freq_bits_address); /* lower 8 bits of frequency */
 	u8 restart_and_stop_byte = mem_read(upper_freq_bits_and_restart_and_stop_address);
-	mem_write(upper_freq_bits_and_restart_and_stop_address, restart_and_stop_byte & ~0x80); // reset the restart flag
+	mem_write(upper_freq_bits_and_restart_and_stop_address, restart_and_stop_byte & ~0x80); /* reset the restart flag */
 	
-	freq_specifier |= (restart_and_stop_byte & 0x07) << 8; // upper 3 bits of frequency
+	freq_specifier |= (restart_and_stop_byte & 0x07) << 8; /* upper 3 bits of frequency */
 	
 	if (channel == 3) *freq = 65536.0 / (2048 - freq_specifier);
 	else *freq = 131072.0 / (2048 - freq_specifier);
 	
 	*should_restart = restart_and_stop_byte & 0x80;
-	*should_stop_at_envelope_end = restart_and_stop_byte & 0x40; // TODO: untested
+	*should_stop_at_envelope_end = restart_and_stop_byte & 0x40; /* TODO: untested */
 }
 
 bool chan3_is_enabled() {
@@ -97,7 +97,7 @@ void robingb_read_next_audio_sample(s16 *l, s16 *r) {
 	if (++ring_read_index >= RING_SIZE) ring_read_index = 0;
 }
 
-// TODO: use a step-based envelope instead of lerping
+/* TODO: use a step-based envelope instead of lerping */
 f32 lerp(f32 a, f32 b, f32 t) {
 	if (t > 1) t = 1;
 	if (t < 0) t = 0;
@@ -108,7 +108,7 @@ void write_next_sample() {
 	ring[ring_write_index].l = 0;
 	ring[ring_write_index].r = 0;
 	
-	// channel 1
+	/* channel 1 */
 	if (true) {
 		static f32 period_position = 0;
 		static f32 current_volume = 1;
@@ -145,7 +145,7 @@ void write_next_sample() {
 		while (period_position > 1.0) period_position -= 1.0;
 	}
 	
-	// channel 2
+	/* channel 2 */
 	if (true) {
 		static f32 period_position = 0;
 		static f32 current_volume = 1;
@@ -182,7 +182,7 @@ void write_next_sample() {
 		while (period_position > 1.0) period_position -= 1.0;
 	}
 	
-	// channel 3
+	/* channel 3 */
 	if (true) {
 		static f32 period_position = 0;
 		static u32 num_samples_since_restart = 0;
@@ -209,7 +209,7 @@ void write_next_sample() {
 		}
 	}
 	
-	// make sure we don't clip. 16 bit max / (8 bit max * number of channels)
+	/* make sure we don't clip. 16 bit max / (8 bit max * number of channels) */
 	ring[ring_write_index].l *= 32768.0 / (128*4);
 	ring[ring_write_index].r *= 32768.0 / (128*4);
 	

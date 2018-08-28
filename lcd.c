@@ -1,9 +1,9 @@
 #include "internal.h"
 #include <assert.h>
 
-// TODO: "Each bit is set to 1 automatically when an internal signal from that subsystem goes from '0' to '1', it doesn't matter if the corresponding bit in IE is set. This is specially important in the case of LCD STAT interrupt, as it will be explained in the video controller chapter."
+/* TODO: "Each bit is set to 1 automatically when an internal signal from that subsystem goes from '0' to '1', it doesn't matter if the corresponding bit in IE is set. This is specially important in the case of LCD STAT interrupt, as it will be explained in the video controller chapter." */
 
-// TODO: "When using a status interrupt in DMG or in CGB in DMG mode, register IF should be set to 0 after the value of the STAT register is set. (In DMG, setting the STAT register value changes the value of the IF register, and an interrupt is generated at the same time as interrupts are enabled.)"
+/* TODO: "When using a status interrupt in DMG or in CGB in DMG mode, register IF should be set to 0 after the value of the STAT register is set. (In DMG, setting the STAT register value changes the value of the IF register, and an interrupt is generated at the same time as interrupts are enabled.)" */
 
 /*
 TODO:
@@ -35,18 +35,18 @@ void update_mode_and_write_status(int elapsed_cycles) {
 		int row_draw_phase = elapsed_cycles % NUM_CYCLES_PER_LY_INCREMENT;
 		
 		if (row_draw_phase < MODE_2_CYCLE_DURATION) {
-			current_mode = 0x02; // The LCD is reading from OAM
+			current_mode = 0x02; /* The LCD is reading from OAM */
 		} else if (row_draw_phase < MODE_2_CYCLE_DURATION+MODE_3_CYCLE_DURATION) {
-			current_mode = 0x03; // The LCD is reading from both OAM and VRAM
+			current_mode = 0x03; /* The LCD is reading from both OAM and VRAM */
 		} else {
-			current_mode = 0x00; // H-blank
+			current_mode = 0x00; /* H-blank */
 		}
 	} else {
-		current_mode = 0x01; // V-blank
+		current_mode = 0x01; /* V-blank */
 	}
 	
-	const u8 prev_mode = (*status) & 0x03; // get lower 2 bits only
-	*status &= 0xfc; // wipe the old mode
+	const u8 prev_mode = (*status) & 0x03; /* get lower 2 bits only */
+	*status &= 0xfc; /* wipe the old mode */
 	
 	bool should_render = false;
 	if (prev_mode != current_mode) {
@@ -75,8 +75,8 @@ void update_mode_and_write_status(int elapsed_cycles) {
 
 void lcd_update(int num_cycles_delta) {
 	if (((*control) & 0x80) == 0) {
-		// Bit 7 of the LCD control register is 0, so the LCD is switched off.
-		// LY, the mode, and the LYC=LY flag should all be 0.
+		/* Bit 7 of the LCD control register is 0, so the LCD is switched off. */
+		/* LY, the mode, and the LYC=LY flag should all be 0. */
 		*ly = 0x00;
 		*status &= 0xf8;
 		return; 
@@ -86,10 +86,10 @@ void lcd_update(int num_cycles_delta) {
 	elapsed_cycles += num_cycles_delta;
 	if (elapsed_cycles >= ROBINGB_CPU_CYCLES_PER_REFRESH) elapsed_cycles -= ROBINGB_CPU_CYCLES_PER_REFRESH;
 	
-	// set LY
+	/* set LY */
 	*ly = elapsed_cycles / NUM_CYCLES_PER_LY_INCREMENT;
 	
-	// handle LYC
+	/* handle LYC */
 	if (*ly == *lyc) {
 		*status |= 0x04;
 		if ((*status) & 0x40) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
@@ -99,13 +99,13 @@ void lcd_update(int num_cycles_delta) {
 	
 	update_mode_and_write_status(elapsed_cycles);
 	
-	// assertions
-	// {
-	// 	u8 mode = (*status) & 0x03; // get lower 2 bits only
-	// 	assert(((*ly) < 144 && (mode == 0x02 || mode == 0x03 || mode == 0x00))
-	// 		|| ((*ly) >= 144 && mode == 0x01));
-	// 	assert((*ly) < 154);
-	// }
+	/* assertions */
+	/* { */
+		/* u8 mode = (*status) & 0x03; */ /* get lower 2 bits only */
+		/* assert(((*ly) < 144 && (mode == 0x02 || mode == 0x03 || mode == 0x00)) */
+			/* || ((*ly) >= 144 && mode == 0x01)); */
+		/* assert((*ly) < 154); */
+	/* } */
 }
 
 

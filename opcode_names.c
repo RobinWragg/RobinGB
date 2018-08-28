@@ -238,7 +238,7 @@ static const char * get_cb_opcode_name(u16 opcode_address) {
 		case 0xfd: return "SET 7,L";
 		case 0xfe: return "SET 7,(HL)";
 		case 0xff: return "SET 7,A";
-		default: assert(false); break; // no name
+		default: assert(false); break; /* no name */
 	}
 }
 
@@ -482,7 +482,7 @@ const char * get_opcode_name(u16 opcode_address) {
 		case 0xfb: return "IE";
 		case 0xfe: return "CP x";
 		case 0xff: return "RST 38H";
-		default: assert(false); break; // no name
+		default: assert(false); break; /* no name */
 	}
 }
 

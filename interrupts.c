@@ -30,14 +30,14 @@ void handle_interrupts() {
 			} else if (interrupts_to_handle & INTERRUPT_FLAG_JOYPAD) {
 				*requested_interrupts &= ~INTERRUPT_FLAG_JOYPAD;
 				registers.pc = 0x0060;
-			} else assert(false); // unexpected interrupts_to_handle value.
+			} else assert(false); /* unexpected interrupts_to_handle value. */
 		}
 	}
 }
 
 void request_interrupt(u8 interrupt_to_request) {
-	*requested_interrupts |= interrupt_to_request; // combine with the existing request flags
-	*requested_interrupts |= 0xe0; // top 3 bits are always 1.
+	*requested_interrupts |= interrupt_to_request; /* combine with the existing request flags */
+	*requested_interrupts |= 0xe0; /* top 3 bits are always 1. */
 }
 
 

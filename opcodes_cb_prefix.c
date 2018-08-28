@@ -88,7 +88,7 @@ INSTRUCTION void instruction_SLA(u8 *byte_to_shift) {
 	else registers.f &= ~FLAG_C;
 	
 	*byte_to_shift <<= 1;
-	*byte_to_shift &= ~bit(0); // bit 0 should become 0.
+	*byte_to_shift &= ~bit(0); /* bit 0 should become 0. */
 	
 	if ((*byte_to_shift) == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
@@ -104,7 +104,7 @@ INSTRUCTION void instruction_SRA(u8 *byte_to_shift, u8 num_cycles) {
 	else registers.f &= ~FLAG_C;
 	
 	*byte_to_shift >>= 1;
-	*byte_to_shift |= ((*byte_to_shift) & bit(6)) << 1; // bit 7 should stay the same.
+	*byte_to_shift |= ((*byte_to_shift) & bit(6)) << 1; /* bit 7 should stay the same. */
 	
 	if ((*byte_to_shift) == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
@@ -133,7 +133,7 @@ INSTRUCTION void instruction_SRL(u8 *byte_to_shift, u8 num_cycles) {
 	if ((*byte_to_shift) & bit(0)) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
-	*byte_to_shift >>= 1; // bit 7 becomes 0.
+	*byte_to_shift >>= 1; /* bit 7 becomes 0. */
 	assert(((*byte_to_shift) & bit(7)) == false);
 	
 	if ((*byte_to_shift) == 0) registers.f |= FLAG_Z;
