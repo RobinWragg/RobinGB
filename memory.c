@@ -71,17 +71,17 @@ struct {
 } rom_bank_addresses[MAX_NUM_ROM_BANKS_IN_REAL_RAM];
 
 static void init_rom_cache() {
-	for (int i = 0; i < MAX_NUM_ROM_BANKS_IN_REAL_RAM; i++) {
-		rom_bank_addresses[i].bank_index = -1;
-	}
-	
-	// bank slots 0 and 1 always contain banks 0 and 1
+	/* bank slots 0 and 1 always contain banks 0 and 1 */
 	rom_bank_addresses[0].bank_index = 0;
 	rom_bank_addresses[0].address = 0x0000;
 	rom_bank_addresses[1].bank_index = 1;
 	rom_bank_addresses[1].address = 0x4000;
 	
+	/* TODO: fill the cache with banks here, to reduce the
+	likelihood that they'll need to loaded from disk later. */
+	
 	for (int i = 2; i < MAX_NUM_ROM_BANKS_IN_REAL_RAM; i++) {
+		rom_bank_addresses[i].bank_index = -1;
 		rom_bank_addresses[i].address = ROM_BANK_CACHE_ADDRESS + ROM_BANK_SIZE * (i-2);
 	}
 }
