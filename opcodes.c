@@ -346,8 +346,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 4);
 		} break;
 		case 0x20: { /* JR NZ,r8 */
-			if ((registers.f & FLAG_Z) == 0) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
-			else finish_instruction(2, 8);
+			if (registers.f & FLAG_Z) finish_instruction(2, 8);
+			else finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 		} break;
 		case 0x21: registers.hl = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
 		case 0x22: mem_write(registers.hl++, registers.a); finish_instruction(1, 8); break;
@@ -741,9 +741,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(2, 4);
 		} break;
 		case 0xef: instruction_RST(0x28); break;
-		case 0xf0: {
-			u8 byte_0 = mem_read(registers.pc+1);
-			registers.a = mem_read(0xff00 + byte_0);
+		case 0xf0: { /* LDH A,(0xff00+x) */
+			registers.a = mem_read(0xff00 + mem_read(registers.pc+1));
 			finish_instruction(2, 12);
 		} break;
 		case 0xf1: {
