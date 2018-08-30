@@ -57,10 +57,6 @@ void init_registers() {
 	registers.ime = true;
 }
 
-void zero_unused_f_register_bits() {
-	registers.f &= 0xf0;
-}
-
 void (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]) = 0;
 
 void robingb_init(
@@ -110,10 +106,7 @@ void robingb_update(RobinGB_Input *input, u8 screen_out[], u8 *ly_out) {
 	while (*lcd_ly == prev_lcd_ly) {
 		u8 num_cycles = 4;
 		
-		if (!halted) {
-			execute_next_opcode(&num_cycles);
-			zero_unused_f_register_bits();
-		}
+		if (!halted) execute_next_opcode(&num_cycles);
 		
 		handle_interrupts();
 		lcd_update(num_cycles);
