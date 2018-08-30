@@ -44,11 +44,12 @@ void update_timer(u8 num_cycles) {
 	incrementer_every_cycle += num_cycles;
 	robingb_memory[TIMER_DIV_ADDRESS] = *div;
 	
-	/* Can we do this without having to increment one at a time? */
-	for (int i = 0; i < num_cycles; i++) {
-		if (timer_enabled && ++cycles_since_last_tima_increment >= cycles_per_tima_increment) {
-			u8 prev_tima = *tima;
-			(*tima)++;
+	/* Update TIMA and potentially request an interrupt. */
+	if (timer_enabled) {
+		cycles_since_last_tima_increment += num_cycles;
+		
+		if (cycles_since_last_tima_increment >= cycles_per_tima_increment) {
+			u8 prev_tima = (*tima)++;
 			
 			/* check for overflow */
 			if (prev_tima > *tima) {
@@ -56,7 +57,7 @@ void update_timer(u8 num_cycles) {
 				request_interrupt(INTERRUPT_FLAG_TIMER);
 			}
 			
-			cycles_since_last_tima_increment = 0;
+			cycles_since_last_tima_increment -= cycles_per_tima_increment;
 		}
 	}
 }
