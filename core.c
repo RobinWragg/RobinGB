@@ -123,6 +123,16 @@ void robingb_update(RobinGB_Input *input, u8 screen_out[], u8 *ly_out) {
 	}
 	
 	*ly_out = *lcd_ly;
+	
+	#if OPCODE_PROFILING
+	printf("Opcode counts:\n");
+	for (int o = 0; o < 256; o++) {
+		if (opcode_counts[o]) {
+			printf("%x: %lli times\n", o, opcode_counts[o]);
+			opcode_counts[o]--;
+		}
+	}
+	#endif
 }
 
 

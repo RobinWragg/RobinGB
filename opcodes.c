@@ -233,9 +233,17 @@ INSTRUCTION void instruction_SUB_u8(u8 subber, u16 pc_increment, int num_cycles)
 	finish_instruction(pc_increment, num_cycles);
 }
 
+#if OPCODE_PROFILING
+int64_t opcode_counts[256] = {0};
+#endif
+
 void execute_next_opcode(u8 *num_cycles_out) {
 	num_cycles_for_finish = num_cycles_out;
 	u8 opcode = mem_read(registers.pc);
+	
+	#if OPCODE_PROFILING
+	opcode_counts[opcode]++;
+	#endif
 	
 	/* printf("a:%x op:%x(%x) ", registers.pc, opcode, mem_read(registers.pc+1)); */
 	/* printf("%s\n", get_opcode_name(registers.pc)); */
@@ -337,7 +345,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			
 			finish_instruction(1, 4);
 		} break;
-		case 0x20: {
+		case 0x20: { /* JR NZ,r8 */
 			if ((registers.f & FLAG_Z) == 0) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
@@ -767,9 +775,9 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				if (addition_produces_u16_full_carry(registers.sp, signed_byte)) registers.f |= FLAG_C;
 				else registers.f &= ~FLAG_C;
 			} else {
-				if (negate_produces_u16_half_carry(registers.sp, -signed_byte)) registers.f |= FLAG_H;
+				if (negate_produces_u8_half_carry(registers.sp, -signed_byte, false)) registers.f |= FLAG_H;
 				else registers.f &= ~FLAG_H;
-				if (negate_produces_u16_full_carry(registers.sp, -signed_byte)) registers.f |= FLAG_C;
+				if (negate_produces_u8_full_carry(registers.sp, -signed_byte)) registers.f |= FLAG_C;
 				else registers.f &= ~FLAG_C;
 			}
 			
