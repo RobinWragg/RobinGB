@@ -40,8 +40,8 @@ static bool addition_produces_u8_full_carry(s16 a, s16 b) {
 }
 
 static bool addition_produces_u16_half_carry(u16 a, u16 b) {
-	u16 a_bit_11_and_under = a & 0xfff;
-	u16 b_bit_11_and_under = b & 0xfff;
+	u16 a_bit_11_and_under = a & 0x0fff;
+	u16 b_bit_11_and_under = b & 0x0fff;
 	if (a_bit_11_and_under + b_bit_11_and_under > 0x0fff) return true;
 	else return false;
 }
@@ -289,14 +289,9 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			
 			finish_instruction(1, 4);
 		} break;
-		case 0x10: { /* STOP */
-			/* TODO: STOP is like HALT except the LCD is inoperational as well, and the "stopped" state is only exited when a button is pressed. */
-			/* assert(!stopped); */
-			/* if (registers.ime) { */
-			/* 	halted = true; */
-			/* 	finish_instruction(0, 4); */
-			/* } else finish_instruction(1, 4); */
-		} break;
+		/* TODO: Apparently STOP is like HALT except the LCD is inoperational as well, and
+		the "stopped" state is only exited when a button is pressed. Look for better documentation
+		on it. */
 		case 0x11: registers.de = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
 		case 0x12: mem_write(registers.de, registers.a); finish_instruction(1, 8); break;
 		case 0x13: registers.de++; finish_instruction(1, 8); break;
@@ -647,6 +642,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				finish_instruction(3, 12);
 			}
 		} break;
+		case 0xd3: assert(false); break; /* Nothing at 0xd3 */
 		case 0xd4: instruction_CALL_cond_xx((registers.f & FLAG_C) == 0); break;
 		case 0xd5: {
 			stack_push(registers.de);
@@ -689,12 +685,30 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			mem_write(0xff00 + registers.c, registers.a);
 			finish_instruction(1, 8);
 		} break;
+		case 0xe3: assert(false); break; /* Nothing at 0xe3 */
+		case 0xe4: assert(false); break; /* Nothing at 0xe4 */
 		case 0xe5: {
 			stack_push(registers.hl);
 			finish_instruction(1, 16);
 		} break;
 		case 0xe6: instruction_AND(mem_read(registers.pc+1), 2, 8); break;
 		case 0xe7: instruction_RST(0x20); break;
+		case 0xe8: { /* ADD SP,x */
+			s8 signed_byte_to_add = mem_read(registers.pc+1);
+			
+			if (addition_produces_u16_half_carry(registers.sp, signed_byte_to_add)) registers.f |= FLAG_H;
+			else registers.f &= ~FLAG_H;
+			
+			if (addition_produces_u16_full_carry(registers.sp, signed_byte_to_add)) registers.f |= FLAG_C;
+			else registers.f &= ~FLAG_C;
+			
+			registers.sp += signed_byte_to_add;
+			
+			registers.f &= ~FLAG_Z;
+			registers.f &= ~FLAG_N;
+			
+			finish_instruction(2, 16);
+		} break;
 		case 0xe9: {
 			registers.pc = registers.hl;
 			finish_instruction(0, 4);
@@ -703,6 +717,9 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			mem_write(mem_read_u16(registers.pc+1), registers.a);
 			finish_instruction(3, 16);
 		} break;
+		case 0xeb: assert(false); break; /* Nothing at 0xeb */
+		case 0xec: assert(false); break; /* Nothing at 0xec */
+		case 0xed: assert(false); break; /* Nothing at 0xed */
 		case 0xee: {
 			u8 byte_0 = mem_read(registers.pc+1);
 			registers.a ^= byte_0;
@@ -733,6 +750,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.ime = false;
 			finish_instruction(1, 4);
 		} break;
+		case 0xf4: assert(false); break; /* Nothing at 0xf4 */
 		case 0xf5: {
 			stack_push(registers.af);
 			finish_instruction(1, 16);
@@ -744,14 +762,14 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			
 			/* TODO: really not sure about the carries for this operation. */
 			if (signed_byte >= 0) {
-				if (addition_produces_u8_half_carry(registers.sp, signed_byte, false)) registers.f |= FLAG_H;
+				if (addition_produces_u16_half_carry(registers.sp, signed_byte)) registers.f |= FLAG_H;
 				else registers.f &= ~FLAG_H;
-				if (addition_produces_u8_full_carry(registers.sp, signed_byte)) registers.f |= FLAG_C;
+				if (addition_produces_u16_full_carry(registers.sp, signed_byte)) registers.f |= FLAG_C;
 				else registers.f &= ~FLAG_C;
 			} else {
-				if (negate_produces_u8_half_carry(registers.sp, -signed_byte, false)) registers.f |= FLAG_H;
+				if (negate_produces_u16_half_carry(registers.sp, -signed_byte)) registers.f |= FLAG_H;
 				else registers.f &= ~FLAG_H;
-				if (negate_produces_u8_full_carry(registers.sp, -signed_byte)) registers.f |= FLAG_C;
+				if (negate_produces_u16_full_carry(registers.sp, -signed_byte)) registers.f |= FLAG_C;
 				else registers.f &= ~FLAG_C;
 			}
 			
@@ -775,6 +793,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.ime = true;
 			finish_instruction(1, 4);
 		} break;
+		case 0xfc: assert(false); break; /* Nothing at 0xfc */
+		case 0xfd: assert(false); break; /* Nothing at 0xfd */
 		case 0xfe: {
 			u8 byte_0 = mem_read(registers.pc+1);
 			
