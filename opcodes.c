@@ -16,14 +16,14 @@ void finish_instruction(s16 pc_increment, u8 num_cycles_param) {
 }
 
 static bool negate_produces_u8_half_carry(s16 a, s16 b, bool include_carry) {
-	int optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
+	u8 optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
 	
 	if ((a & 0x0f) - (b & 0x0f) - optional_carry < 0) return true;
 	else return false;
 }
 
 static bool addition_produces_u8_half_carry(s16 a, s16 b, bool include_carry) {
-	int optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
+	u8 optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
 	
 	if ((a & 0x0f) + (b & 0x0f) + optional_carry > 0x0f) return true;
 	else return false;
