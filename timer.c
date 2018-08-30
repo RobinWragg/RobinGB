@@ -29,24 +29,23 @@ u8 get_new_timer_div_value_on_write() {
 }
 
 void update_timer(u8 num_cycles) {
-	bool timer_enabled = (*tac) & 0x04; /* TODO: don't know if a disabled timer gets set to 0 or just pauses. */
-	
-	int cycles_per_tima_increment;
-	switch ((*tac) & 0x03) {
-		case 0x00: cycles_per_tima_increment = 1024; break;
-		case 0x01: cycles_per_tima_increment = 16; break;
-		case 0x02: cycles_per_tima_increment = 64; break;
-		case 0x03: cycles_per_tima_increment = 256; break;
-		default: assert(false); break;
-	}
 	
 	/* update incrementer and therefore DIV. */
 	incrementer_every_cycle += num_cycles;
 	robingb_memory[TIMER_DIV_ADDRESS] = *div;
 	
 	/* Update TIMA and potentially request an interrupt. */
-	if (timer_enabled) {
+	if ((*tac) & 0x04 /* check if timer is enabled */) {
 		cycles_since_last_tima_increment += num_cycles;
+		
+		int cycles_per_tima_increment;
+		switch ((*tac) & 0x03) {
+			case 0x00: cycles_per_tima_increment = 1024; break;
+			case 0x01: cycles_per_tima_increment = 16; break;
+			case 0x02: cycles_per_tima_increment = 64; break;
+			case 0x03: cycles_per_tima_increment = 256; break;
+			default: assert(false); break;
+		}
 		
 		if (cycles_since_last_tima_increment >= cycles_per_tima_increment) {
 			u8 prev_tima = (*tima)++;
