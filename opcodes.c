@@ -89,10 +89,8 @@ INSTRUCTION void instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
 	if (negate_produces_u8_half_carry(*value_to_decrement, 1, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
-	(*value_to_decrement)--;
-	
-	if (*value_to_decrement == 0) registers.f |= FLAG_Z;
-	else registers.f &= ~FLAG_Z;
+	if (--(*value_to_decrement)) registers.f &= ~FLAG_Z;
+	else registers.f |= FLAG_Z;
 	
 	registers.f |= FLAG_N;
 	
@@ -102,11 +100,9 @@ INSTRUCTION void instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
 INSTRUCTION void instruction_INC_u8(u8 *value_to_increment, u8 num_cycles) {
 	if (addition_produces_u8_half_carry(*value_to_increment, 1, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
-
-	(*value_to_increment)++;
-
-	if (*value_to_increment == 0) registers.f |= FLAG_Z;
-	else registers.f &= ~FLAG_Z;
+	
+	if (++(*value_to_increment)) registers.f &= ~FLAG_Z;
+	else registers.f |= FLAG_Z;
 
 	registers.f &= ~FLAG_N;
 
