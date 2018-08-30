@@ -40,11 +40,12 @@ void update_timer(u8 num_cycles) {
 		default: assert(false); break;
 	}
 	
+	/* update incrementer and therefore DIV. */
+	incrementer_every_cycle += num_cycles;
+	robingb_memory[TIMER_DIV_ADDRESS] = *div;
+	
 	/* Can we do this without having to increment one at a time? */
 	for (int i = 0; i < num_cycles; i++) {
-		/* update incrementer and therefore DIV. */
-		incrementer_every_cycle++;
-		
 		if (timer_enabled && ++cycles_since_last_tima_increment >= cycles_per_tima_increment) {
 			u8 prev_tima = *tima;
 			(*tima)++;
@@ -58,8 +59,6 @@ void update_timer(u8 num_cycles) {
 			cycles_since_last_tima_increment = 0;
 		}
 	}
-	
-	robingb_memory[TIMER_DIV_ADDRESS] = *div;
 }
 
 
