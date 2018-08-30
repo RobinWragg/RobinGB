@@ -94,7 +94,7 @@ void stack_push(u16 value);
 u16 stack_pop();
 void execute_next_opcode(u8 *num_cycles_out);
 void execute_cb_opcode();
-void finish_instruction(u16 pc_increment, u8 num_cycles_param);
+void finish_instruction(s16 pc_increment, u8 num_cycles_param);
 Mem_Address_Description mem_get_address_description(int address);
 
 extern u8 robingb_memory[];

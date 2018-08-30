@@ -9,7 +9,7 @@
 
 u8 *num_cycles_for_finish = 0;
 
-void finish_instruction(u16 pc_increment, u8 num_cycles_param) {
+void finish_instruction(s16 pc_increment, u8 num_cycles_param) {
 	assert(num_cycles_for_finish);
 	registers.pc += pc_increment;
 	*num_cycles_for_finish = num_cycles_param;
