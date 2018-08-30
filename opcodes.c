@@ -650,7 +650,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				finish_instruction(3, 12);
 			}
 		} break;
-		case 0xd3: assert(false); break; /* Nothing at 0xd3 */
+		/* case 0xd3: Nothing at 0xd3 */
 		case 0xd4: instruction_CALL_cond_xx((registers.f & FLAG_C) == 0); break;
 		case 0xd5: {
 			stack_push(registers.de);
@@ -676,9 +676,9 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			} else finish_instruction(3, 12);
 		} break;
 		case 0xdc: instruction_CALL_cond_xx(registers.f & FLAG_C); break;
-		case 0xdb: assert(false); break; /* Nothing at 0xdb */
+		/* case 0xdb: Nothing at 0xdb */
 		case 0xdf: instruction_RST(0x18); break;
-		case 0xdd: assert(false); break; /* Nothing at 0xdd */
+		/* case 0xdd: Nothing at 0xdd */
 		case 0xde: instruction_SBC(mem_read(registers.pc+1), 2, 8); break;
 		case 0xe0: {
 			u8 byte_0 = mem_read(registers.pc+1);
@@ -693,8 +693,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			mem_write(0xff00 + registers.c, registers.a);
 			finish_instruction(1, 8);
 		} break;
-		case 0xe3: assert(false); break; /* Nothing at 0xe3 */
-		case 0xe4: assert(false); break; /* Nothing at 0xe4 */
+		/* case 0xe3: Nothing at 0xe3 */
+		/* case 0xe4: Nothing at 0xe4 */
 		case 0xe5: {
 			stack_push(registers.hl);
 			finish_instruction(1, 16);
@@ -725,9 +725,9 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			mem_write(mem_read_u16(registers.pc+1), registers.a);
 			finish_instruction(3, 16);
 		} break;
-		case 0xeb: assert(false); break; /* Nothing at 0xeb */
-		case 0xec: assert(false); break; /* Nothing at 0xec */
-		case 0xed: assert(false); break; /* Nothing at 0xed */
+		/* case 0xeb: Nothing at 0xeb */
+		/* case 0xec: Nothing at 0xec */
+		/* case 0xed: Nothing at 0xed */
 		case 0xee: {
 			u8 byte_0 = mem_read(registers.pc+1);
 			registers.a ^= byte_0;
@@ -757,7 +757,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.ime = false;
 			finish_instruction(1, 4);
 		} break;
-		case 0xf4: assert(false); break; /* Nothing at 0xf4 */
+		/* case 0xf4: Nothing at 0xf4 */
 		case 0xf5: {
 			stack_push(registers.af);
 			finish_instruction(1, 16);
@@ -800,8 +800,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.ime = true;
 			finish_instruction(1, 4);
 		} break;
-		case 0xfc: assert(false); break; /* Nothing at 0xfc */
-		case 0xfd: assert(false); break; /* Nothing at 0xfd */
+		/* case 0xfc: Nothing at 0xfc */
+		/* case 0xfd: Nothing at 0xfd */
 		case 0xfe: {
 			u8 byte_0 = mem_read(registers.pc+1);
 			
