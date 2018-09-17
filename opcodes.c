@@ -16,14 +16,14 @@ void finish_instruction(s16 pc_increment, u8 num_cycles_param) {
 }
 
 static bool negate_produces_u8_half_carry(s16 a, s16 b, bool include_carry) {
-	int optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
+	u8 optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
 	
 	if ((a & 0x0f) - (b & 0x0f) - optional_carry < 0) return true;
 	else return false;
 }
 
 static bool addition_produces_u8_half_carry(s16 a, s16 b, bool include_carry) {
-	int optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
+	u8 optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
 	
 	if ((a & 0x0f) + (b & 0x0f) + optional_carry > 0x0f) return true;
 	else return false;
@@ -89,10 +89,8 @@ INSTRUCTION void instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
 	if (negate_produces_u8_half_carry(*value_to_decrement, 1, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
-	(*value_to_decrement)--;
-	
-	if (*value_to_decrement == 0) registers.f |= FLAG_Z;
-	else registers.f &= ~FLAG_Z;
+	if (--(*value_to_decrement)) registers.f &= ~FLAG_Z;
+	else registers.f |= FLAG_Z;
 	
 	registers.f |= FLAG_N;
 	
@@ -102,11 +100,9 @@ INSTRUCTION void instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
 INSTRUCTION void instruction_INC_u8(u8 *value_to_increment, u8 num_cycles) {
 	if (addition_produces_u8_half_carry(*value_to_increment, 1, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
-
-	(*value_to_increment)++;
-
-	if (*value_to_increment == 0) registers.f |= FLAG_Z;
-	else registers.f &= ~FLAG_Z;
+	
+	if (++(*value_to_increment)) registers.f &= ~FLAG_Z;
+	else registers.f |= FLAG_Z;
 
 	registers.f &= ~FLAG_N;
 
