@@ -11,8 +11,18 @@
 #define ROBINGB_CPU_CYCLES_PER_REFRESH (70224) /* Approximately 59.7275Hz */
 #define ROBINGB_AUDIO_SAMPLE_RATE (44100)
 
+#define ROBINGB_DPAD_NONE 0
+#define ROBINGB_DPAD_RIGHT 1
+#define ROBINGB_DPAD_UPRIGHT 2
+#define ROBINGB_DPAD_UP 3
+#define ROBINGB_DPAD_UPLEFT 4
+#define ROBINGB_DPAD_LEFT 5
+#define ROBINGB_DPAD_DOWNLEFT 6
+#define ROBINGB_DPAD_DOWN 7
+#define ROBINGB_DPAD_DOWNRIGHT 8
+
 typedef struct {
-	bool up, left, right, down;
+	uint16_t dpad;
 	bool start, select, a, b;
 } RobinGB_Input;
 

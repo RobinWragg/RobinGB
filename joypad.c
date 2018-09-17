@@ -33,22 +33,44 @@ void joypad_update(RobinGB_Input *input) {
 	}
 	
 	if (((*joypad_register) & DIRECTION_BUTTON_REQUEST) == false) {
-		if (input->down) {
-			*joypad_register &= ~DOWN_OR_START;
-			request_interrupt(INTERRUPT_FLAG_JOYPAD);
-		}
-		if (input->up) {
-			*joypad_register &= ~UP_OR_SELECT;
-			request_interrupt(INTERRUPT_FLAG_JOYPAD);
-		}
-		if (input->left) {
-			*joypad_register &= ~LEFT_OR_B;
-			request_interrupt(INTERRUPT_FLAG_JOYPAD);
-		}
-		if (input->right) {
-			*joypad_register &= ~RIGHT_OR_A;
-			request_interrupt(INTERRUPT_FLAG_JOYPAD);
-		}
+		switch (input->dpad) {
+			case ROBINGB_DPAD_UPRIGHT: {
+				*joypad_register &= ~UP_OR_SELECT;
+				*joypad_register &= ~RIGHT_OR_A;
+				request_interrupt(INTERRUPT_FLAG_JOYPAD);
+			} break;
+			case ROBINGB_DPAD_UP: {
+				*joypad_register &= ~UP_OR_SELECT;
+				request_interrupt(INTERRUPT_FLAG_JOYPAD);
+			} break;
+			case ROBINGB_DPAD_RIGHT: {
+				*joypad_register &= ~RIGHT_OR_A;
+				request_interrupt(INTERRUPT_FLAG_JOYPAD);
+			} break;			
+			case ROBINGB_DPAD_UPLEFT: {
+				*joypad_register &= ~UP_OR_SELECT;
+				*joypad_register &= ~LEFT_OR_B;
+				request_interrupt(INTERRUPT_FLAG_JOYPAD);
+			} break;
+			case ROBINGB_DPAD_LEFT: {
+				*joypad_register &= ~LEFT_OR_B;
+				request_interrupt(INTERRUPT_FLAG_JOYPAD);
+			} break;
+			case ROBINGB_DPAD_DOWNLEFT: {
+				*joypad_register &= ~DOWN_OR_START;
+				*joypad_register &= ~LEFT_OR_B;
+				request_interrupt(INTERRUPT_FLAG_JOYPAD);
+			} break;
+			case ROBINGB_DPAD_DOWN: {
+				*joypad_register &= ~DOWN_OR_START;
+				request_interrupt(INTERRUPT_FLAG_JOYPAD);
+			} break;
+			case ROBINGB_DPAD_DOWNRIGHT: {
+				*joypad_register &= ~DOWN_OR_START;
+				*joypad_register &= ~RIGHT_OR_A;
+				request_interrupt(INTERRUPT_FLAG_JOYPAD);
+			} break;
+		};
 	}
 }
 
