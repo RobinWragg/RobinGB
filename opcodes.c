@@ -234,15 +234,14 @@ void execute_next_opcode(u8 *num_cycles_out) {
 	u8 opcode = mem_read(registers.pc);
 	
 	switch (opcode) {
-		case 0x00: DEBUG_OPCODE_NAME("NOP"); finish_instruction(1, 4); break;
-		case 0x01: DEBUG_OPCODE_NAME("LD BC,xx"); registers.bc = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
-		case 0x02: DEBUG_OPCODE_NAME("LD (BC),A"); mem_write(registers.bc, registers.a); finish_instruction(1, 8); break;
-		case 0x03: DEBUG_OPCODE_NAME("INC BC"); registers.bc++; finish_instruction(1, 8); break;
-		case 0x04: DEBUG_OPCODE_NAME("INC b"); instruction_INC_u8(&registers.b, 4); break;
-		case 0x05: DEBUG_OPCODE_NAME("DEC B"); instruction_DEC_u8(&registers.b, 4); break;
-		case 0x06: DEBUG_OPCODE_NAME("LD B,x"); registers.b = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x07: { /* RLCA (different flag manipulation to RLC) */
-			DEBUG_OPCODE_NAME("RLCA");
+		case 0x00: DEBUG_set_opcode_name("NOP"); finish_instruction(1, 4); break;
+		case 0x01: DEBUG_set_opcode_name("LD BC,xx"); registers.bc = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
+		case 0x02: DEBUG_set_opcode_name("LD (BC),A"); mem_write(registers.bc, registers.a); finish_instruction(1, 8); break;
+		case 0x03: DEBUG_set_opcode_name("INC BC"); registers.bc++; finish_instruction(1, 8); break;
+		case 0x04: DEBUG_set_opcode_name("INC b"); instruction_INC_u8(&registers.b, 4); break;
+		case 0x05: DEBUG_set_opcode_name("DEC B"); instruction_DEC_u8(&registers.b, 4); break;
+		case 0x06: DEBUG_set_opcode_name("LD B,x"); registers.b = mem_read(registers.pc+1); finish_instruction(2, 8); break;
+		case 0x07: { DEBUG_set_opcode_name("RLCA");
 			if (registers.a & bit(7)) {
 				registers.f |= FLAG_C;
 				registers.a <<= 1;
@@ -259,15 +258,15 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			
 			finish_instruction(1, 4);
 		} break;
-		case 0x08: DEBUG_OPCODE_NAME("LD (xx),SP"); mem_write_u16(mem_read_u16(registers.pc+1), registers.sp); finish_instruction(3, 20); break;
-		case 0x09: DEBUG_OPCODE_NAME("ADD HL,BC"); instruction_ADD_HL_u16(registers.bc, 1, 8); break;
-		case 0x0a: DEBUG_OPCODE_NAME("LD A,(BC)"); registers.a = mem_read(registers.bc); finish_instruction(1, 8); break;
-		case 0x0b: DEBUG_OPCODE_NAME("DEC BC"); registers.bc--; finish_instruction(1, 8); break;
-		case 0x0c: DEBUG_OPCODE_NAME("INC C"); instruction_INC_u8(&registers.c, 4); break;
-		case 0x0d: DEBUG_OPCODE_NAME("DEC C"); instruction_DEC_u8(&registers.c, 4); break;
-		case 0x0e: DEBUG_OPCODE_NAME("LD C,x"); registers.c = mem_read(registers.pc+1); finish_instruction(2, 8); break;
+		case 0x08: DEBUG_set_opcode_name("LD (xx),SP"); mem_write_u16(mem_read_u16(registers.pc+1), registers.sp); finish_instruction(3, 20); break;
+		case 0x09: DEBUG_set_opcode_name("ADD HL,BC"); instruction_ADD_HL_u16(registers.bc, 1, 8); break;
+		case 0x0a: DEBUG_set_opcode_name("LD A,(BC)"); registers.a = mem_read(registers.bc); finish_instruction(1, 8); break;
+		case 0x0b: DEBUG_set_opcode_name("DEC BC"); registers.bc--; finish_instruction(1, 8); break;
+		case 0x0c: DEBUG_set_opcode_name("INC C"); instruction_INC_u8(&registers.c, 4); break;
+		case 0x0d: DEBUG_set_opcode_name("DEC C"); instruction_DEC_u8(&registers.c, 4); break;
+		case 0x0e: DEBUG_set_opcode_name("LD C,x"); registers.c = mem_read(registers.pc+1); finish_instruction(2, 8); break;
 		case 0x0f: { /* RRCA (different flag manipulation to RRC) */
-			DEBUG_OPCODE_NAME("RRCA");
+			DEBUG_set_opcode_name("RRCA");
 			if (registers.a & bit(0)) {
 				registers.f |= FLAG_C;
 				registers.a >>= 1;
@@ -287,14 +286,13 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		/* TODO: Apparently STOP is like HALT except the LCD is inoperational as well, and
 		the "stopped" state is only exited when a button is pressed. Look for better documentation
 		on it. */
-		case 0x11: DEBUG_OPCODE_NAME("LD DE,xx"); registers.de = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
-		case 0x12: DEBUG_OPCODE_NAME("LD (DE),A"); mem_write(registers.de, registers.a); finish_instruction(1, 8); break;
-		case 0x13: DEBUG_OPCODE_NAME("INC DE"); registers.de++; finish_instruction(1, 8); break;
-		case 0x14: DEBUG_OPCODE_NAME("INC D"); instruction_INC_u8(&registers.d, 4); break;
-		case 0x15: DEBUG_OPCODE_NAME("DEC D"); instruction_DEC_u8(&registers.d, 4); break;
-		case 0x16: DEBUG_OPCODE_NAME("LD D,x"); registers.d = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x17: {
-			DEBUG_OPCODE_NAME("RLA");
+		case 0x11: DEBUG_set_opcode_name("LD DE,xx"); registers.de = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
+		case 0x12: DEBUG_set_opcode_name("LD (DE),A"); mem_write(registers.de, registers.a); finish_instruction(1, 8); break;
+		case 0x13: DEBUG_set_opcode_name("INC DE"); registers.de++; finish_instruction(1, 8); break;
+		case 0x14: DEBUG_set_opcode_name("INC D"); instruction_INC_u8(&registers.d, 4); break;
+		case 0x15: DEBUG_set_opcode_name("DEC D"); instruction_DEC_u8(&registers.d, 4); break;
+		case 0x16: DEBUG_set_opcode_name("LD D,x"); registers.d = mem_read(registers.pc+1); finish_instruction(2, 8); break;
+		case 0x17: { DEBUG_set_opcode_name("RLA");
 			bool prev_carry = registers.f & FLAG_C;
 			
 			if (registers.a & bit(7)) registers.f |= FLAG_C;

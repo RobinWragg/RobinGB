@@ -15,7 +15,7 @@ typedef int16_t s16;
 typedef uint32_t u32;
 typedef int32_t s32;
 
-#define DEBUG_OPCODE_NAME(x) /* robingb_log(x) */
+#define DEBUG_set_opcode_name(x) /* robingb_log(x) */
 
 #define robingb_log(x) robingb_log_with_prefix(__func__, x)
 
