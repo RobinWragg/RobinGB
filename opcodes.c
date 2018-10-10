@@ -649,14 +649,14 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 16);
 		} break;
 		case 0xd6: instruction_SUB_u8(mem_read(registers.pc+1), 2, 8); break;
-		case 0xd7: instruction_RST(0x10); break;
-		case 0xd8: {
+		case 0xd7: DEBUG_set_opcode_name("RST 10h"); instruction_RST(0x10); break;
+		case 0xd8: { DEBUG_set_opcode_name("RET C");
 			if (registers.f & FLAG_C) {
 				registers.pc = stack_pop();
 				finish_instruction(0, 20);
 			} else finish_instruction(1, 8);
 		} break;
-		case 0xd9: {
+		case 0xd9: { DEBUG_set_opcode_name("RETI");
 			registers.pc = stack_pop();
 			registers.ime = true;
 			finish_instruction(0, 16);
