@@ -229,17 +229,9 @@ INSTRUCTION static void instruction_SUB_u8(u8 subber, u16 pc_increment, int num_
 	finish_instruction(pc_increment, num_cycles);
 }
 
-#if OPCODE_PROFILING
-int64_t opcode_counts[256] = {0};
-#endif
-
 void execute_next_opcode(u8 *num_cycles_out) {
 	num_cycles_for_finish = num_cycles_out;
 	u8 opcode = mem_read(registers.pc);
-	
-	#if OPCODE_PROFILING
-	opcode_counts[opcode]++;
-	#endif
 	
 	switch (opcode) {
 		case 0x00: DEBUG_OPCODE_NAME("NOP"); finish_instruction(1, 4); break;

@@ -15,7 +15,6 @@ typedef int16_t s16;
 typedef uint32_t u32;
 typedef int32_t s32;
 
-#define OPCODE_PROFILING 0
 #define DEBUG_OPCODE_NAME(x) /* robingb_log(x) */
 
 #define robingb_log(x) robingb_log_with_prefix(__func__, x)
@@ -114,9 +113,5 @@ void update_timer(u8 num_cycles_delta);
 void update_audio(int num_cycles);
 void render_screen_line();
 const char * get_opcode_name(u16 opcode_address);
-
-#if OPCODE_PROFILING
-extern int64_t opcode_counts[256];
-#endif
 
 #endif
