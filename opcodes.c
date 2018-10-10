@@ -411,14 +411,16 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			instruction_DEC_u8(&hl_value, 12);
 			mem_write(registers.hl, hl_value);
 		} break;
-		case 0x36: mem_write(registers.hl, mem_read(registers.pc+1)); finish_instruction(2, 12); break;
+		case 0x36: DEBUG_set_opcode_name("LD (HL),x"); mem_write(registers.hl, mem_read(registers.pc+1)); finish_instruction(2, 12); break;
 		case 0x37: { /* SCF */
+			DEBUG_set_opcode_name("SCF");
 			registers.f &= ~FLAG_N;
 			registers.f &= ~FLAG_H;
 			registers.f |= FLAG_C;
 			finish_instruction(1, 4);
 		} break;
 		case 0x38: { /* JR C,x */
+			DEBUG_set_opcode_name("JR C,s");
 			if (registers.f & FLAG_C) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
@@ -429,6 +431,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x3d: instruction_DEC_u8(&registers.a, 4); break;
 		case 0x3e: registers.a = mem_read(registers.pc+1); finish_instruction(2, 8); break;
 		case 0x3f: { /* CCF */
+			DEBUG_set_opcode_name("CCF");
 			registers.f &= ~FLAG_N;
 			registers.f &= ~FLAG_H;
 			registers.f ^= FLAG_C;
@@ -489,6 +492,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x74: mem_write(registers.hl, registers.h); finish_instruction(1, 8); break;
 		case 0x75: mem_write(registers.hl, registers.l); finish_instruction(1, 8); break;
 		case 0x76: { /* HALT */
+			DEBUG_set_opcode_name("HALT");
 			assert(!halted); /* Instructions shouldn't be getting executed while halted. */
 			
 			if (registers.ime) {
