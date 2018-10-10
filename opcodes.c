@@ -592,14 +592,14 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.pc = mem_read_u16(registers.pc+1);
 			finish_instruction(0, 16);
 		} break;
-		case 0xc4: instruction_CALL_cond_xx((registers.f & FLAG_Z) == 0); break;
-		case 0xc5: {
+		case 0xc4: DEBUG_set_opcode_name("CALL NZ,xx"); instruction_CALL_cond_xx((registers.f & FLAG_Z) == 0); break;
+		case 0xc5: { DEBUG_set_opcode_name("PUSH BC");
 			stack_push(registers.bc);
 			finish_instruction(1, 16);
 		} break;
-		case 0xc6: instruction_ADD_A_u8(mem_read(registers.pc+1), 2, 8); break;
-		case 0xc7: instruction_RST(0x00); break;
-		case 0xc8: {
+		case 0xc6: DEBUG_set_opcode_name("ADD A,x"); instruction_ADD_A_u8(mem_read(registers.pc+1), 2, 8); break;
+		case 0xc7: DEBUG_set_opcode_name("RST 00h"); instruction_RST(0x00); break;
+		case 0xc8: { DEBUG_set_opcode_name("RET Z");
 			if (registers.f & FLAG_Z) {
 				registers.pc = stack_pop();
 				finish_instruction(0, 20);
