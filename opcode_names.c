@@ -433,6 +433,7 @@ const char * get_opcode_name(u16 opcode_address) {
 		case 0xbc: return "CP H";
 		case 0xbd: return "CP L";
 		case 0xbe: return "CP (HL)";
+		case 0xbf: return "CP A";
 		case 0xc0: return "RET NZ";
 		case 0xc1: return "POP BC";
 		case 0xc2: return "JP NZ,xx";
@@ -452,6 +453,7 @@ const char * get_opcode_name(u16 opcode_address) {
 		case 0xd0: return "RET NC";
 		case 0xd1: return "POP DE";
 		case 0xd2: return "JP NC,xx";
+		case 0xd3: return "(invalid)";
 		case 0xd4: return "CALL NC,xx";
 		case 0xd5: return "PUSH DE";
 		case 0xd6: return "SUB x";
