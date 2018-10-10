@@ -576,11 +576,11 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				finish_instruction(0, 20);
 			}
 		} break;
-		case 0xc1: {
+		case 0xc1: { DEBUG_set_opcode_name("POP BC");
 			registers.bc = stack_pop();
 			finish_instruction(1, 12);
 		} break;
-		case 0xc2: {
+		case 0xc2: { DEBUG_set_opcode_name("JP NZ,xx");
 			if ((registers.f & FLAG_Z) == 0) {
 				registers.pc = mem_read_u16(registers.pc+1);
 				finish_instruction(0, 16);
@@ -588,7 +588,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				finish_instruction(3, 12);
 			}
 		} break;
-		case 0xc3: {
+		case 0xc3: { DEBUG_set_opcode_name("JP xx");
 			registers.pc = mem_read_u16(registers.pc+1);
 			finish_instruction(0, 16);
 		} break;
@@ -605,11 +605,11 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				finish_instruction(0, 20);
 			} else finish_instruction(1, 8);
 		} break;
-		case 0xc9: {
+		case 0xc9: { DEBUG_set_opcode_name("RET");
 			registers.pc = stack_pop();
 			finish_instruction(0, 16);
 		} break;
-		case 0xca: {
+		case 0xca: { DEBUG_set_opcode_name("JP Z,xx");
 			if (registers.f & FLAG_Z) {
 				registers.pc = mem_read_u16(registers.pc+1);
 				finish_instruction(0, 16);
@@ -630,11 +630,11 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				finish_instruction(0, 20);
 			} else finish_instruction(1, 8);
 		} break;
-		case 0xd1: {
+		case 0xd1: { DEBUG_set_opcode_name("POP DE");
 			registers.de = stack_pop();
 			finish_instruction(1, 12);
 		} break;
-		case 0xd2: {
+		case 0xd2: { DEBUG_set_opcode_name("JP NC,xx");
 			if ((registers.f & FLAG_C) == 0) {
 				registers.pc = mem_read_u16(registers.pc+1);
 				finish_instruction(0, 16);
