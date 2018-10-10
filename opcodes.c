@@ -308,15 +308,15 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			
 			finish_instruction(1, 4);
 		} break;
-		case 0x18: DEBUG_OPCODE_NAME("JR %i(d)"); finish_instruction(2 + (s8)mem_read(registers.pc+1), 12); break;
-		case 0x19: DEBUG_OPCODE_NAME("ADD HL,DE"); instruction_ADD_HL_u16(registers.de, 1, 8); break;
-		case 0x1a: DEBUG_OPCODE_NAME("LD A,(DE)"); registers.a = mem_read(registers.de); finish_instruction(1, 8); break;
-		case 0x1b: DEBUG_OPCODE_NAME("DEC DE"); registers.de--; finish_instruction(1, 8); break;
-		case 0x1c: DEBUG_OPCODE_NAME("INC E"); instruction_INC_u8(&registers.e, 4); break;
-		case 0x1d: DEBUG_OPCODE_NAME("DEC E"); instruction_DEC_u8(&registers.e, 4); break;
-		case 0x1e: DEBUG_OPCODE_NAME("LD E,x"); registers.e = mem_read(registers.pc+1); finish_instruction(2, 8); break;
+		case 0x18: DEBUG_set_opcode_name("JR %i(d)"); finish_instruction(2 + (s8)mem_read(registers.pc+1), 12); break;
+		case 0x19: DEBUG_set_opcode_name("ADD HL,DE"); instruction_ADD_HL_u16(registers.de, 1, 8); break;
+		case 0x1a: DEBUG_set_opcode_name("LD A,(DE)"); registers.a = mem_read(registers.de); finish_instruction(1, 8); break;
+		case 0x1b: DEBUG_set_opcode_name("DEC DE"); registers.de--; finish_instruction(1, 8); break;
+		case 0x1c: DEBUG_set_opcode_name("INC E"); instruction_INC_u8(&registers.e, 4); break;
+		case 0x1d: DEBUG_set_opcode_name("DEC E"); instruction_DEC_u8(&registers.e, 4); break;
+		case 0x1e: DEBUG_set_opcode_name("LD E,x"); registers.e = mem_read(registers.pc+1); finish_instruction(2, 8); break;
 		case 0x1f: {
-			DEBUG_OPCODE_NAME("RRA");
+			DEBUG_set_opcode_name("RRA");
 			bool prev_carry = registers.f & FLAG_C;
 			
 			if (registers.a & bit(0)) registers.f |= FLAG_C;
@@ -333,22 +333,22 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 4);
 		} break;
 		case 0x20: { /* JR NZ,r8 */
-			DEBUG_OPCODE_NAME("JR NZ,s");
+			DEBUG_set_opcode_name("JR NZ,s");
 			if (registers.f & FLAG_Z) finish_instruction(2, 8);
 			else finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 		} break;
-		case 0x21: DEBUG_OPCODE_NAME("LD HL,xx"); registers.hl = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
-		case 0x22: DEBUG_OPCODE_NAME("LD (HL+),A"); mem_write(registers.hl++, registers.a); finish_instruction(1, 8); break;
-		case 0x23: DEBUG_OPCODE_NAME("INC HL");  registers.hl++; finish_instruction(1, 8); break;
-		case 0x24: DEBUG_OPCODE_NAME("INC H"); instruction_INC_u8(&registers.h, 4); break;
-		case 0x25: DEBUG_OPCODE_NAME("DEC H"); instruction_DEC_u8(&registers.h, 4); break;
+		case 0x21: DEBUG_set_opcode_name("LD HL,xx"); registers.hl = mem_read_u16(registers.pc+1); finish_instruction(3, 12); break;
+		case 0x22: DEBUG_set_opcode_name("LD (HL+),A"); mem_write(registers.hl++, registers.a); finish_instruction(1, 8); break;
+		case 0x23: DEBUG_set_opcode_name("INC HL");  registers.hl++; finish_instruction(1, 8); break;
+		case 0x24: DEBUG_set_opcode_name("INC H"); instruction_INC_u8(&registers.h, 4); break;
+		case 0x25: DEBUG_set_opcode_name("DEC H"); instruction_DEC_u8(&registers.h, 4); break;
 		case 0x26: {
-			DEBUG_OPCODE_NAME("LD H,x");
+			DEBUG_set_opcode_name("LD H,x");
 			registers.h = mem_read(registers.pc+1);
 			finish_instruction(2, 8);
 		} break;
 		case 0x27: { /* DAA */
-			DEBUG_OPCODE_NAME("DAA");
+			DEBUG_set_opcode_name("DAA");
 			if ((registers.f & FLAG_N) == 0) {
 				u8 a_lower_nybble = registers.a & 0x0f;
 				
@@ -377,18 +377,18 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 4);
 		} break;
 		case 0x28: {
-			DEBUG_OPCODE_NAME("JR Z,s");
+			DEBUG_set_opcode_name("JR Z,s");
 			if (registers.f & FLAG_Z) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
-		case 0x29: DEBUG_OPCODE_NAME("ADD HL,HL"); instruction_ADD_HL_u16(registers.hl, 1, 8); break;
-		case 0x2a: DEBUG_OPCODE_NAME("LD A,(HL+)"); registers.a = mem_read(registers.hl++); finish_instruction(1, 8); break;
-		case 0x2b: DEBUG_OPCODE_NAME("DEC HL"); registers.hl--; finish_instruction(1, 8); break;
-		case 0x2c: DEBUG_OPCODE_NAME("INC L"); instruction_INC_u8(&registers.l, 4); break;
-		case 0x2d: DEBUG_OPCODE_NAME("DEC L"); instruction_DEC_u8(&registers.l, 4); break;
-		case 0x2e: DEBUG_OPCODE_NAME("LD L,x"); registers.l = mem_read(registers.pc+1); finish_instruction(2, 8); break;
+		case 0x29: DEBUG_set_opcode_name("ADD HL,HL"); instruction_ADD_HL_u16(registers.hl, 1, 8); break;
+		case 0x2a: DEBUG_set_opcode_name("LD A,(HL+)"); registers.a = mem_read(registers.hl++); finish_instruction(1, 8); break;
+		case 0x2b: DEBUG_set_opcode_name("DEC HL"); registers.hl--; finish_instruction(1, 8); break;
+		case 0x2c: DEBUG_set_opcode_name("INC L"); instruction_INC_u8(&registers.l, 4); break;
+		case 0x2d: DEBUG_set_opcode_name("DEC L"); instruction_DEC_u8(&registers.l, 4); break;
+		case 0x2e: DEBUG_set_opcode_name("LD L,x"); registers.l = mem_read(registers.pc+1); finish_instruction(2, 8); break;
 		case 0x2f: { /* CPL */
-			DEBUG_OPCODE_NAME("CPL");
+			DEBUG_set_opcode_name("CPL");
 			registers.a ^= 0xff;
 			registers.f |= FLAG_N;
 			registers.f |= FLAG_H;

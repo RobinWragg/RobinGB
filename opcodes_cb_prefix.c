@@ -170,12 +170,12 @@ void execute_cb_opcode() {
 	u8 opcode = mem_read(++registers.pc);
 	
 	switch (opcode) {
-		case 0x00: DEBUG_OPCODE_NAME("RLC B"); instruction_RLC(&registers.b, 8); break;
-		case 0x01: DEBUG_OPCODE_NAME("RLC C"); instruction_RLC(&registers.c, 8); break;
-		case 0x02: DEBUG_OPCODE_NAME("RLC D"); instruction_RLC(&registers.d, 8); break;
-		case 0x03: DEBUG_OPCODE_NAME("RLC E"); instruction_RLC(&registers.e, 8); break;
-		case 0x04: DEBUG_OPCODE_NAME("RLC H"); instruction_RLC(&registers.h, 8); break;
-		case 0x05: DEBUG_OPCODE_NAME("RLC L"); instruction_RLC(&registers.l, 8); break;
+		case 0x00: DEBUG_set_opcode_name("RLC B"); instruction_RLC(&registers.b, 8); break;
+		case 0x01: DEBUG_set_opcode_name("RLC C"); instruction_RLC(&registers.c, 8); break;
+		case 0x02: DEBUG_set_opcode_name("RLC D"); instruction_RLC(&registers.d, 8); break;
+		case 0x03: DEBUG_set_opcode_name("RLC E"); instruction_RLC(&registers.e, 8); break;
+		case 0x04: DEBUG_set_opcode_name("RLC H"); instruction_RLC(&registers.h, 8); break;
+		case 0x05: DEBUG_set_opcode_name("RLC L"); instruction_RLC(&registers.l, 8); break;
 		case 0x06: {
 			u8 hl_value = mem_read(registers.hl);
 			instruction_RLC(&hl_value, 16);
