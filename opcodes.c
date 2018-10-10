@@ -640,8 +640,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 				finish_instruction(3, 12);
 			}
 		} break;
-		/* case 0xd3: Nothing at 0xd3 */
-		case 0xd4: instruction_CALL_cond_xx((registers.f & FLAG_C) == 0); break;
+		case 0xd3: DEBUG_set_opcode_name("(invalid)"); break;
+		case 0xd4: DEBUG_set_opcode_name("CALL NC,xx"); instruction_CALL_cond_xx((registers.f & FLAG_C) == 0); break;
 		case 0xd5: { DEBUG_set_opcode_name("PUSH DE");
 			stack_push(registers.de);
 			finish_instruction(1, 16);
