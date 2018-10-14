@@ -659,32 +659,32 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.ime = true;
 			finish_instruction(0, 16);
 		} break;
-		case 0xda: {
+		case 0xda: { DEBUG_set_opcode_name("JP C,xx");
 			if (registers.f & FLAG_C) {
 				registers.pc = mem_read_u16(registers.pc+1);
 				finish_instruction(0, 16);
 			} else finish_instruction(3, 12);
 		} break;
-		case 0xdc: instruction_CALL_cond_xx(registers.f & FLAG_C); break;
-		/* case 0xdb: Nothing at 0xdb */
-		case 0xdf: instruction_RST(0x18); break;
-		/* case 0xdd: Nothing at 0xdd */
-		case 0xde: instruction_SBC(mem_read(registers.pc+1), 2, 8); break;
-		case 0xe0: {
+		case 0xdb: DEBUG_set_opcode_name("(invalid)"); assert(false); break;
+		case 0xdc: DEBUG_set_opcode_name("CALL C,xx"); instruction_CALL_cond_xx(registers.f & FLAG_C); break;
+		case 0xdd: DEBUG_set_opcode_name("(invalid)"); assert(false); break;
+		case 0xde: DEBUG_set_opcode_name("SBC A,x"); instruction_SBC(mem_read(registers.pc+1), 2, 8); break;
+		case 0xdf: DEBUG_set_opcode_name("RST 18H"); instruction_RST(0x18); break;
+		case 0xe0: { DEBUG_set_opcode_name("LDH (ff00+x),A");
 			u8 byte_0 = mem_read(registers.pc+1);
 			mem_write(0xff00 + byte_0, registers.a);
 			finish_instruction(2, 12);
 		} break;
-		case 0xe1: {
+		case 0xe1: { DEBUG_set_opcode_name("POP HL");
 			registers.hl = stack_pop();
 			finish_instruction(1, 12);
 		} break;
-		case 0xe2: {
+		case 0xe2: { DEBUG_set_opcode_name("LD (ff00+C),A");
 			mem_write(0xff00 + registers.c, registers.a);
 			finish_instruction(1, 8);
 		} break;
-		/* case 0xe3: Nothing at 0xe3 */
-		/* case 0xe4: Nothing at 0xe4 */
+		case 0xe3: DEBUG_set_opcode_name("(invalid)"); assert(false); break;
+		case 0xe4: DEBUG_set_opcode_name("(invalid)"); assert(false); break;
 		case 0xe5: {
 			stack_push(registers.hl);
 			finish_instruction(1, 16);
