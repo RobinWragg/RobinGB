@@ -316,6 +316,7 @@ void execute_cb_opcode() {
 		case 0x6b: instruction_BIT(5, registers.e, 8); break;
 		case 0x6c: instruction_BIT(5, registers.h, 8); break;
 		case 0x6d: instruction_BIT(5, registers.l, 8); break;
+		case 0x6e: instruction_BIT(5, mem_read(registers.hl), 16); break;
 		case 0x6f: instruction_BIT(5, registers.a, 8); break;
 		case 0x70: instruction_BIT(6, registers.b, 8); break;
 		case 0x71: instruction_BIT(6, registers.c, 8); break;
@@ -399,6 +400,11 @@ void execute_cb_opcode() {
 		case 0xab: instruction_RES(5, &registers.e, 8); break;
 		case 0xac: instruction_RES(5, &registers.h, 8); break;
 		case 0xad: instruction_RES(5, &registers.l, 8); break;
+		case 0xae: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_RES(5, &hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0xaf: instruction_RES(5, &registers.a, 8); break;
 		case 0xb0: instruction_RES(6, &registers.b, 8); break;
 		case 0xb1: instruction_RES(6, &registers.c, 8); break;
@@ -442,6 +448,11 @@ void execute_cb_opcode() {
 		case 0xcb: instruction_SET(1, &registers.e, 8); break;
 		case 0xcc: instruction_SET(1, &registers.h, 8); break;
 		case 0xcd: instruction_SET(1, &registers.l, 8); break;
+		case 0xce: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_SET(1, &hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0xcf: instruction_SET(1, &registers.a, 8); break;
 		case 0xd0: instruction_SET(2, &registers.b, 8); break;
 		case 0xd1: instruction_SET(2, &registers.c, 8); break;
@@ -449,6 +460,11 @@ void execute_cb_opcode() {
 		case 0xd3: instruction_SET(2, &registers.e, 8); break;
 		case 0xd4: instruction_SET(2, &registers.h, 8); break;
 		case 0xd5: instruction_SET(2, &registers.l, 8); break;
+		case 0xd6: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_SET(2, &hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0xd7: instruction_SET(2, &registers.a, 8); break;
 		case 0xd8: instruction_SET(3, &registers.b, 8); break;
 		case 0xd9: instruction_SET(3, &registers.c, 8); break;
@@ -468,6 +484,11 @@ void execute_cb_opcode() {
 		case 0xe3: instruction_SET(4, &registers.e, 8); break;
 		case 0xe4: instruction_SET(4, &registers.h, 8); break;
 		case 0xe5: instruction_SET(4, &registers.l, 8); break;
+		case 0xe6: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_SET(4, &hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0xe7: instruction_SET(4, &registers.a, 8); break;
 		case 0xe8: instruction_SET(5, &registers.b, 8); break;
 		case 0xe9: instruction_SET(5, &registers.c, 8); break;
@@ -475,6 +496,11 @@ void execute_cb_opcode() {
 		case 0xeb: instruction_SET(5, &registers.e, 8); break;
 		case 0xec: instruction_SET(5, &registers.h, 8); break;
 		case 0xed: instruction_SET(5, &registers.l, 8); break;
+		case 0xee: {
+			u8 hl_value = mem_read(registers.hl);
+			instruction_SET(5, &hl_value, 16);
+			mem_write(registers.hl, hl_value);
+		} break;
 		case 0xef: instruction_SET(5, &registers.a, 8); break;
 		case 0xf0: instruction_SET(6, &registers.b, 8); break;
 		case 0xf1: instruction_SET(6, &registers.c, 8); break;
