@@ -685,13 +685,13 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		} break;
 		case 0xe3: DEBUG_set_opcode_name("(invalid)"); assert(false); break;
 		case 0xe4: DEBUG_set_opcode_name("(invalid)"); assert(false); break;
-		case 0xe5: {
+		case 0xe5: { DEBUG_set_opcode_name("PUSH HL");
 			stack_push(registers.hl);
 			finish_instruction(1, 16);
 		} break;
-		case 0xe6: instruction_AND(mem_read(registers.pc+1), 2, 8); break;
-		case 0xe7: instruction_RST(0x20); break;
-		case 0xe8: { /* ADD SP,x */
+		case 0xe6: DEBUG_set_opcode_name("AND x"); instruction_AND(mem_read(registers.pc+1), 2, 8); break;
+		case 0xe7: DEBUG_set_opcode_name("RST 20H"); instruction_RST(0x20); break;
+		case 0xe8: { DEBUG_set_opcode_name("ADD SP,s");
 			s8 signed_byte_to_add = mem_read(registers.pc+1);
 			
 			if (addition_produces_u16_half_carry(registers.sp, signed_byte_to_add)) registers.f |= FLAG_H;
@@ -707,18 +707,18 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			
 			finish_instruction(2, 16);
 		} break;
-		case 0xe9: {
+		case 0xe9: { DEBUG_set_opcode_name("JP (HL)");
 			registers.pc = registers.hl;
 			finish_instruction(0, 4);
 		} break;
-		case 0xea: {
+		case 0xea: { DEBUG_set_opcode_name("LD (x),A");
 			mem_write(mem_read_u16(registers.pc+1), registers.a);
 			finish_instruction(3, 16);
 		} break;
-		/* case 0xeb: Nothing at 0xeb */
-		/* case 0xec: Nothing at 0xec */
-		/* case 0xed: Nothing at 0xed */
-		case 0xee: {
+		case 0xeb: DEBUG_set_opcode_name("(invalid)"); break;
+		case 0xec: DEBUG_set_opcode_name("(invalid)"); break;
+		case 0xed: DEBUG_set_opcode_name("(invalid)"); break;
+		case 0xee: { DEBUG_set_opcode_name("XOR x");
 			u8 byte_0 = mem_read(registers.pc+1);
 			registers.a ^= byte_0;
 			
@@ -730,31 +730,31 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.f &= ~FLAG_C;
 			finish_instruction(2, 4);
 		} break;
-		case 0xef: instruction_RST(0x28); break;
-		case 0xf0: { /* LDH A,(0xff00+x) */
+		case 0xef: DEBUG_set_opcode_name("RST 28H"); instruction_RST(0x28); break;
+		case 0xf0: { DEBUG_set_opcode_name("LDH A,(0xff00+x)");
 			registers.a = mem_read(0xff00 + mem_read(registers.pc+1));
 			finish_instruction(2, 12);
 		} break;
-		case 0xf1: {
+		case 0xf1: { DEBUG_set_opcode_name("POP AF");
 			registers.af = stack_pop();
 			finish_instruction(1, 12);
 		} break;
-		case 0xf2: {
+		case 0xf2: { DEBUG_set_opcode_name("LD A,(ff00+C)");
 			registers.a = mem_read(0xff00 + registers.c);
 			finish_instruction(1, 8);
 		} break;
-		case 0xf3: {
+		case 0xf3: { DEBUG_set_opcode_name("DI");
 			registers.ime = false;
 			finish_instruction(1, 4);
 		} break;
-		/* case 0xf4: Nothing at 0xf4 */
-		case 0xf5: {
+		case 0xf4: DEBUG_set_opcode_name("(invalid)"); break;
+		case 0xf5: { DEBUG_set_opcode_name("PUSH AF");
 			stack_push(registers.af);
 			finish_instruction(1, 16);
 		} break;
-		case 0xf6: instruction_OR(mem_read(registers.pc+1), 2, 8); break;
-		case 0xf7: instruction_RST(0x30); break;
-		case 0xf8: {
+		case 0xf6: DEBUG_set_opcode_name("OR x"); instruction_OR(mem_read(registers.pc+1), 2, 8); break;
+		case 0xf7: DEBUG_set_opcode_name("RST 30H"); instruction_RST(0x30); break;
+		case 0xf8: { DEBUG_set_opcode_name("LDHL SP,s");
 			s8 signed_byte = mem_read(registers.pc+1);
 			
 			/* TODO: really not sure about the carries for this operation. */
@@ -777,22 +777,22 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			
 			finish_instruction(2, 12);
 		} break;
-		case 0xf9: {
+		case 0xf9: { DEBUG_set_opcode_name("LD SP,HL");
 			registers.sp = registers.hl;
 			finish_instruction(1, 8);
 		} break;
-		case 0xfa: {
+		case 0xfa: { DEBUG_set_opcode_name("LD A,(xx)");
 			u16 address = mem_read_u16(registers.pc+1);
 			registers.a = mem_read(address);
 			finish_instruction(3, 16);
 		} break;
-		case 0xfb: {
+		case 0xfb: { DEBUG_set_opcode_name("IE");
 			registers.ime = true;
 			finish_instruction(1, 4);
 		} break;
-		/* case 0xfc: Nothing at 0xfc */
-		/* case 0xfd: Nothing at 0xfd */
-		case 0xfe: {
+		case 0xfc: DEBUG_set_opcode_name("(invalid)"); break;
+		case 0xfd: DEBUG_set_opcode_name("(invalid)"); break;
+		case 0xfe: { DEBUG_set_opcode_name("CP x");
 			u8 byte_0 = mem_read(registers.pc+1);
 			
 			if (negate_produces_u8_half_carry(registers.a, byte_0, false)) registers.f |= FLAG_H;
@@ -808,7 +808,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			else registers.f &= ~FLAG_Z;
 			finish_instruction(2, 8);
 		} break;
-		case 0xff: instruction_RST(0x38); break;
+		case 0xff: DEBUG_set_opcode_name("RST 38H"); instruction_RST(0x38); break;
 		default: {
 			char buf[128] = {0};
 			sprintf(buf, "Unknown opcode %x at address %x\n", opcode, registers.pc);
