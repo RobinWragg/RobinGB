@@ -346,33 +346,26 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(2, 8);
 		} break;
 		case 0x27: { DEBUG_set_opcode_name("DAA");
+			u16 register_a_new = registers.a;
+			
 			if ((registers.f & FLAG_N) == 0) {
-				u8 a_lower_nybble = registers.a & 0x0f;
-				
-				if (a_lower_nybble > 0x09) {
-					registers.a += 0x06;
-					registers.f |= FLAG_H;
-				}
-				
-				u8 a_upper_nybble = (registers.a & 0xf0) >> 4;
-				
-				if (a_upper_nybble > 0x09 || registers.f & FLAG_C) {
-					registers.a += 0x60;
-					registers.f |= FLAG_C;
-				}
+				if ((registers.f & FLAG_H) || (register_a_new & 0x0f) > 0x09) register_a_new += 0x06;
+				if ((registers.f & FLAG_C) || register_a_new > 0x9f) register_a_new += 0x60;
 			} else {
-				if (registers.f & FLAG_C) registers.a -= 0x60;
-				if (registers.f & FLAG_H) registers.a -= 0x6;
+				if (registers.f & FLAG_H) {
+					register_a_new -= 0x06;
+					if ((registers.f & FLAG_C) == 0) register_a_new &= 0xff;
+				}
+				
+				if (registers.f & FLAG_C) register_a_new -= 0x60;
 			}
 			
-			/* these flags are always updated */
+			registers.a = register_a_new & 0xff;
+			
+			registers.f &= ~(FLAG_H | FLAG_Z);
+			if (register_a_new & 0x100) registers.f |= FLAG_C;
 			if (registers.a == 0) registers.f |= FLAG_Z;
-			else registers.f &= ~FLAG_Z;
-			
-			registers.f &= ~FLAG_H;
-			
-			assert(registers.a <= 0x99);
-			
+			          
 			finish_instruction(1, 4);
 		} break;
 		case 0x28: { DEBUG_set_opcode_name("JR Z,s");
@@ -691,6 +684,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0xe8: { DEBUG_set_opcode_name("ADD SP,s");
 			s8 signed_byte_to_add = mem_read(registers.pc+1);
 			
+			/* TODO: really not sure about the carries for this operation. */
 			if (addition_produces_u16_half_carry(registers.sp, signed_byte_to_add)) registers.f |= FLAG_H;
 			else registers.f &= ~FLAG_H;
 			
