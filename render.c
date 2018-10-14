@@ -15,6 +15,7 @@
 
 static u8 *lcdc = &robingb_memory[LCD_CONTROL_ADDRESS];
 static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
+static u8 *bg_scroll_y = &robingb_memory[0xff42];
 static u8 *bg_scroll_x = &robingb_memory[0xff43];
 
 u8 *robingb_screen;
@@ -45,7 +46,7 @@ static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u16 tile_map_ad
 static void render_background_line(u8 bg_line[], bool is_window) {
 	const u8 bg_y = *ly; /* TODO: temp. This won't work for vertical scrolling. */
 	const u8 tilegrid_y = bg_y / TILE_HEIGHT_IN_PIXELS;
-	const u8 tile_y = (*ly) - tilegrid_y*TILE_HEIGHT_IN_PIXELS;
+	const u8 tile_y = bg_y - tilegrid_y*TILE_HEIGHT_IN_PIXELS;
 	
 	u8 tile_map_control_bit = is_window ? bit(6) : bit(3);
 	u16 tile_map_address_space = ((*lcdc) & tile_map_control_bit) ? 0x9c00 : 0x9800;
