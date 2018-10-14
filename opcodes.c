@@ -371,6 +371,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			
 			registers.f &= ~FLAG_H;
 			
+			assert(registers.a <= 0x99);
+			
 			finish_instruction(1, 4);
 		} break;
 		case 0x28: { DEBUG_set_opcode_name("JR Z,s");
