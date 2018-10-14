@@ -736,7 +736,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(2, 12);
 		} break;
 		case 0xf1: { DEBUG_set_opcode_name("POP AF");
-			registers.af = stack_pop();
+			registers.af = stack_pop() & 0xfff0; /* lower nybble of F must stay 0 */
 			finish_instruction(1, 12);
 		} break;
 		case 0xf2: { DEBUG_set_opcode_name("LD A,(ff00+C)");
@@ -816,6 +816,8 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			assert(false);
 		} break;
 	}
+	
+	assert((registers.f & 0x0f) == 0);
 }
 
 
