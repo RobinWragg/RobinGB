@@ -265,8 +265,9 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x0c: DEBUG_set_opcode_name("INC C"); instruction_INC_u8(&registers.c, 4); break;
 		case 0x0d: DEBUG_set_opcode_name("DEC C"); instruction_DEC_u8(&registers.c, 4); break;
 		case 0x0e: DEBUG_set_opcode_name("LD C,x"); registers.c = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x0f: { /* RRCA (different flag manipulation to RRC) */
-			DEBUG_set_opcode_name("RRCA");
+		case 0x0f: { DEBUG_set_opcode_name("RRCA");
+			
+			/* different flag manipulation to RRC!!! */
 			if (registers.a & bit(0)) {
 				registers.f |= FLAG_C;
 				registers.a >>= 1;
@@ -331,8 +332,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			
 			finish_instruction(1, 4);
 		} break;
-		case 0x20: { /* JR NZ,r8 */
-			DEBUG_set_opcode_name("JR NZ,s");
+		case 0x20: { DEBUG_set_opcode_name("JR NZ,s");
 			if (registers.f & FLAG_Z) finish_instruction(2, 8);
 			else finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 		} break;
@@ -345,8 +345,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			registers.h = mem_read(registers.pc+1);
 			finish_instruction(2, 8);
 		} break;
-		case 0x27: { /* DAA */
-			DEBUG_set_opcode_name("DAA");
+		case 0x27: { DEBUG_set_opcode_name("DAA");
 			if ((registers.f & FLAG_N) == 0) {
 				u8 a_lower_nybble = registers.a & 0x0f;
 				
@@ -408,15 +407,13 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			mem_write(registers.hl, hl_value);
 		} break;
 		case 0x36: DEBUG_set_opcode_name("LD (HL),x"); mem_write(registers.hl, mem_read(registers.pc+1)); finish_instruction(2, 12); break;
-		case 0x37: { /* SCF */
-			DEBUG_set_opcode_name("SCF");
+		case 0x37: { DEBUG_set_opcode_name("SCF");
 			registers.f &= ~FLAG_N;
 			registers.f &= ~FLAG_H;
 			registers.f |= FLAG_C;
 			finish_instruction(1, 4);
 		} break;
-		case 0x38: { /* JR C,x */
-			DEBUG_set_opcode_name("JR C,s");
+		case 0x38: { DEBUG_set_opcode_name("JR C,s");
 			if (registers.f & FLAG_C) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
@@ -426,8 +423,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x3c: DEBUG_set_opcode_name("INC A"); instruction_INC_u8(&registers.a, 4); break;
 		case 0x3d: DEBUG_set_opcode_name("DEC A"); instruction_DEC_u8(&registers.a, 4); break;
 		case 0x3e: DEBUG_set_opcode_name("LD A,x"); registers.a = mem_read(registers.pc+1); finish_instruction(2, 8); break;
-		case 0x3f: { /* CCF */
-			DEBUG_set_opcode_name("CCF");
+		case 0x3f: { DEBUG_set_opcode_name("CCF");
 			registers.f &= ~FLAG_N;
 			registers.f &= ~FLAG_H;
 			registers.f ^= FLAG_C;
@@ -487,8 +483,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0x73: DEBUG_set_opcode_name("LD (HL),E"); mem_write(registers.hl, registers.e); finish_instruction(1, 8); break;
 		case 0x74: DEBUG_set_opcode_name("LD (HL),H"); mem_write(registers.hl, registers.h); finish_instruction(1, 8); break;
 		case 0x75: DEBUG_set_opcode_name("LD (HL),L"); mem_write(registers.hl, registers.l); finish_instruction(1, 8); break;
-		case 0x76: { /* HALT */
-			DEBUG_set_opcode_name("HALT");
+		case 0x76: { DEBUG_set_opcode_name("HALT");
 			assert(!halted); /* Instructions shouldn't be getting executed while halted. */
 			
 			if (registers.ime) {
@@ -646,7 +641,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			stack_push(registers.de);
 			finish_instruction(1, 16);
 		} break;
-		case 0xd6: instruction_SUB_u8(mem_read(registers.pc+1), 2, 8); break;
+		case 0xd6: DEBUG_set_opcode_name("SUB x"); instruction_SUB_u8(mem_read(registers.pc+1), 2, 8); break;
 		case 0xd7: DEBUG_set_opcode_name("RST 10h"); instruction_RST(0x10); break;
 		case 0xd8: { DEBUG_set_opcode_name("RET C");
 			if (registers.f & FLAG_C) {
