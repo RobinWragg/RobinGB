@@ -82,16 +82,16 @@ static void set_screen_pixel(u8 x_position, u8 doublebit_shade) {
 static void render_objects_on_line() {
 	assert(((*lcdc) & bit(2)) == false); /* not handling 8x16 objects yet */
 	
-	for (int address = 0xfe00; address <= 0xfe9f; address += 4) {
-		u8 y = robingb_memory[address] - 16;
+	for (u16 object_address = 0xfe00; object_address <= 0xfe9f; object_address += 4) {
+		u8 obj_y = robingb_memory[object_address] - 16;
 		
-		if (*ly >= y && *ly < y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
-			u8 x = robingb_memory[address+1] - 8;
+		if (*ly >= obj_y && *ly < obj_y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
+			u8 obj_x = robingb_memory[object_address+1] - 8;
 			
 			/* TODO: ignore the lower bit of this if in 8x16 mode. */
-			u8 object_data_index = robingb_memory[address+2];
+			u8 object_data_index = robingb_memory[object_address+2];
 			
-			u8 object_flags = robingb_memory[address+3]; /* TODO: all the other flags */
+			u8 object_flags = robingb_memory[object_address+3]; /* TODO: all the other flags */
 			bool flip_x = object_flags & bit(5);
 			bool flip_y = object_flags & bit(6);
 			
@@ -99,16 +99,16 @@ static void render_objects_on_line() {
 			get_object_data(object_data_index, object_data); /* TODO: don't need to get the full object */
 			
 			u8 pixel_row[8];
-			if (flip_y) get_pixel_row_from_tile_line_data(&object_data[(y+7 - *ly)*2], pixel_row);
-			else get_pixel_row_from_tile_line_data(&object_data[(*ly - y)*2], pixel_row);
+			if (flip_y) get_pixel_row_from_tile_line_data(&object_data[(obj_y+7 - *ly)*2], pixel_row);
+			else get_pixel_row_from_tile_line_data(&object_data[(*ly - obj_y)*2], pixel_row);
 			
 			if (flip_x) {
 				for (int i = 0; i < 8; i++) {
-					if (pixel_row[i]) set_screen_pixel(x+7-i, pixel_row[i]);
+					if (pixel_row[i]) set_screen_pixel(obj_x + 7-i, pixel_row[i]);
 				}
 			} else {
 				for (int i = 0; i < 8; i++) {
-					if (pixel_row[i]) set_screen_pixel(x+i, pixel_row[i]);
+					if (pixel_row[i]) set_screen_pixel(obj_x + i, pixel_row[i]);
 				}
 			}
 		}
@@ -116,7 +116,9 @@ static void render_objects_on_line() {
 }
 
 void render_screen_line() {
-	if ((*lcdc) & 0x01) { /* Check if the background is enabled. NOTE: bit 0 of lcdc has different meanings for Game Boy Color. */
+	
+	/* Check if the background is enabled */
+	if ((*lcdc) & 0x01) {
 		
 		if ((*lcdc) & bit(5)) {
 			robingb_log("window enabled");
