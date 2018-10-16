@@ -41,6 +41,11 @@ static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u16 tile_map_ad
 	tile_line_data_out[1] = robingb_memory[tile_line_address+1];
 }
 
+static void get_object_row_data(int object_data_index, u8 row_index, u8 row_data_out[]) {
+	row_data_out[0] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + row_index*NUM_BYTES_PER_TILE_LINE];
+	row_data_out[1] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + row_index*NUM_BYTES_PER_TILE_LINE+1];
+}
+
 static void render_background_line(u8 bg_line[], bool is_window) {
 	s16 bg_y = (*bg_scroll_y) + *ly;
 	assert(bg_y < 256); /* not handling vertical wraparound yet. Could I leverage u8 overflow like bg_scroll_x does? */
@@ -57,11 +62,6 @@ static void render_background_line(u8 bg_line[], bool is_window) {
 		get_tile_line_data_for_bg_tilegrid_coord(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_pixel_y, tile_line_data);
 		get_pixel_row_from_tile_line_data(tile_line_data, &bg_line[tilegrid_x*TILE_WIDTH]);
 	}
-}
-
-static void get_object_row_data(int object_data_index, u8 row_index, u8 row_data_out[]) {
-	row_data_out[0] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + row_index*NUM_BYTES_PER_TILE_LINE];
-	row_data_out[1] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + row_index*NUM_BYTES_PER_TILE_LINE+1];
 }
 
 static void render_objects() {
@@ -101,6 +101,7 @@ static void render_objects() {
 }
 
 void render_screen_line() {
+	/* TODO: double check lcdc usage. */
 	
 	/* Check if the background is enabled */
 	if ((*lcdc) & 0x01) {
