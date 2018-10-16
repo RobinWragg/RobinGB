@@ -75,8 +75,8 @@ static void get_object_data(int object_data_index, u8 object_data_out[]) {
 	}
 }
 
-static void set_screen_pixel(u8 x, u8 y, u8 doublebit_shade) {
-	robingb_screen[x + y*SCREEN_WIDTH] = doublebit_shade*85;
+static void set_screen_pixel(u8 x_position, u8 doublebit_shade) {
+	robingb_screen[x_position + (*ly)*SCREEN_WIDTH] = (doublebit_shade - 3) * -85;
 }
 
 static void render_objects_on_line() {
@@ -104,11 +104,11 @@ static void render_objects_on_line() {
 			
 			if (flip_x) {
 				for (int i = 0; i < 8; i++) {
-					if (pixel_row[i]) set_screen_pixel(x+7-i, *ly, pixel_row[i]);
+					if (pixel_row[i]) set_screen_pixel(x+7-i, pixel_row[i]);
 				}
 			} else {
 				for (int i = 0; i < 8; i++) {
-					if (pixel_row[i]) set_screen_pixel(x+i, *ly, pixel_row[i]);
+					if (pixel_row[i]) set_screen_pixel(x+i, pixel_row[i]);
 				}
 			}
 		}
@@ -130,16 +130,16 @@ void render_screen_line() {
 			
 			while (bg_x >= BG_WIDTH) bg_x -= BG_WIDTH;
 			
-			set_screen_pixel(s, *ly, bg_line[bg_x]);
+			set_screen_pixel(s, bg_line[bg_x]);
 		}
 	} else {
 		/* Background is disabled, so just render white */
 		for (u8 x = 0; x < SCREEN_WIDTH; x++) {
-			robingb_screen[x + (*ly)*SCREEN_WIDTH] = 0x00;
+			set_screen_pixel(x, 0x00);
 		}
 	}
 	
-	/* check if object object drawing is enabled */
+	/* check if object drawing is enabled */
 	if ((*lcdc) & bit(1)) render_objects_on_line();
 }
 
