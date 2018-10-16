@@ -65,14 +65,16 @@ static void get_object_data(int object_data_index, u8 object_data_out[]) {
 	}
 }
 
-static void render_objects_on_line() {
-	assert(((*lcdc) & bit(2)) == false); /* not handling 8x16 objects yet */
+static void render_objects() {
+	/* assert(((*lcdc) & bit(2)) == false); // not handling 8x16 objects yet */
 	
 	for (u16 object_address = 0xfe00; object_address <= 0xfe9f; object_address += 4) {
-		u8 obj_y = robingb_memory[object_address] - 16;
+		u8 translation_y = robingb_memory[object_address] - 16;
 		
-		if (*ly >= obj_y && *ly < obj_y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
-			u8 obj_x = robingb_memory[object_address+1] - TILE_WIDTH;
+		int tile_height = ((*lcdc) & bit(2)) ? 16 : 8;
+		
+		if (*ly >= translation_y && *ly < translation_y+tile_height /* TODO: 8 should be 16 in 8x16 mode.*/) {
+			u8 translation_x = robingb_memory[object_address+1] - TILE_WIDTH;
 			
 			/* TODO: ignore the lower bit of this if in 8x16 mode. */
 			u8 object_data_index = robingb_memory[object_address+2];
@@ -85,16 +87,16 @@ static void render_objects_on_line() {
 			get_object_data(object_data_index, object_data); /* TODO: don't need to get the full object */
 			
 			u8 pixel_row[TILE_WIDTH];
-			if (flip_y) get_pixel_row_from_tile_line_data(&object_data[(obj_y+7 - *ly)*2], pixel_row);
-			else get_pixel_row_from_tile_line_data(&object_data[(*ly - obj_y)*2], pixel_row);
+			if (flip_y) get_pixel_row_from_tile_line_data(&object_data[(translation_y+7 - *ly)*2], pixel_row);
+			else get_pixel_row_from_tile_line_data(&object_data[(*ly - translation_y)*2], pixel_row);
 			
 			if (flip_x) {
 				for (int i = 0; i < TILE_WIDTH; i++) {
-					if (pixel_row[i]) robingb_screen[obj_x + 7-i + (*ly)*SCREEN_WIDTH] = pixel_row[i];
+					if (pixel_row[i]) robingb_screen[translation_x + 7-i + (*ly)*SCREEN_WIDTH] = pixel_row[i];
 				}
 			} else {
 				for (int i = 0; i < TILE_WIDTH; i++) {
-					if (pixel_row[i]) robingb_screen[obj_x + i + (*ly)*SCREEN_WIDTH] = pixel_row[i];
+					if (pixel_row[i]) robingb_screen[translation_x + i + (*ly)*SCREEN_WIDTH] = pixel_row[i];
 				}
 			}
 		}
@@ -123,7 +125,7 @@ void render_screen_line() {
 	}
 	
 	/* check if object drawing is enabled */
-	if ((*lcdc) & bit(1)) render_objects_on_line();
+	if ((*lcdc) & bit(1)) render_objects();
 	
 	/* convert from game boy 2-bit to target 8-bit */
 	int line_index_start = (*ly)*SCREEN_WIDTH;
