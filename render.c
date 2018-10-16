@@ -28,26 +28,24 @@ static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[])
 	}
 }
 
-static void get_bg_tile_line_data(u8 coord_x, u8 coord_y, u16 tile_map_address_space, u16 tile_data_bank_address, u8 tile_line_index, u8 tile_line_data_out[]) {
-	u16 tile_map_index = coord_x + coord_y*NUM_TILES_PER_BG_LINE;
-	
-	u16 tile_data_index = robingb_memory[tile_map_address_space + tile_map_index];
-	if (tile_data_bank_address == 0x9000) tile_data_index = (s8)tile_data_index;
-	
-	u16 tile_data_address = tile_data_bank_address + tile_data_index*NUM_BYTES_PER_TILE;
-	u16 line_data_address = tile_data_address + tile_line_index*NUM_BYTES_PER_TILE_LINE;
-	
-	tile_line_data_out[0] = robingb_memory[line_data_address];
-	tile_line_data_out[1] = robingb_memory[line_data_address+1];
-}
-
-static void get_tile_line_data(u16 tile_bank_address, u16 tile_index, u8 tile_line_index, u8 line_data_out[]) {
+static void get_tile_line_data(u16 tile_bank_address, s16 tile_index, u8 tile_line_index, u8 line_data_out[]) {
 	u16 tile_address = tile_bank_address + tile_index*NUM_BYTES_PER_TILE;
 	u16 tile_line_address = tile_address + tile_line_index*NUM_BYTES_PER_TILE_LINE;
 	
 	/* each tile line is 2 bytes */
 	line_data_out[0] = robingb_memory[tile_line_address];
 	line_data_out[1] = robingb_memory[tile_line_address+1];
+}
+
+static void get_bg_tile_line_data(u8 coord_x, u8 coord_y, u16 tile_map_address_space, u16 tile_data_bank_address, u8 tile_line_index, u8 tile_line_data_out[]) {
+	u16 tile_map_index = coord_x + coord_y*NUM_TILES_PER_BG_LINE;
+	s16 tile_data_index = robingb_memory[tile_map_address_space + tile_map_index];
+	
+	if (tile_data_bank_address == 0x9000) { /* bank 0x9000 uses signed addressing */
+		get_tile_line_data(tile_data_bank_address, (s8)tile_data_index, tile_line_index, tile_line_data_out);
+	} else {
+		get_tile_line_data(tile_data_bank_address, tile_data_index, tile_line_index, tile_line_data_out);
+	}
 }
 
 static void render_background_line(u8 bg_line[], bool is_window) {
