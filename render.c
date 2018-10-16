@@ -25,7 +25,8 @@ static u8 *lcdc = &robingb_memory[LCD_CONTROL_ADDRESS];
 static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
 static u8 *bg_scroll_y = &robingb_memory[0xff42];
 static u8 *bg_scroll_x = &robingb_memory[0xff43];
-static u8 *window_offset_x = &robingb_memory[0xff4b];
+static u8 *window_offset_y = &robingb_memory[0xff4a];
+static u8 *window_offset_x_plus_7 = &robingb_memory[0xff4b];
 
 u8 *robingb_screen;
 
@@ -61,35 +62,59 @@ static void render_background_line(u8 bg_line[]) {
 	s16 bg_y = (*bg_scroll_y) + *ly;
 	assert(bg_y < 256); /* not handling vertical wraparound yet. Could I leverage u8 overflow like bg_scroll_x does? */
 	
-	const u8 tilegrid_y = bg_y / TILE_HEIGHT;
-	const u8 tile_pixel_y = bg_y - tilegrid_y*TILE_HEIGHT;
+	u8 tilegrid_y = bg_y / TILE_HEIGHT;
+	u8 tile_line_index = bg_y - tilegrid_y*TILE_HEIGHT;
 	
 	u16 tile_map_address_space = ((*lcdc) & LCDC_BG_TILE_MAP_SELECT) ? 0x9c00 : 0x9800;
 	u16 tile_data_address_space = ((*lcdc) & LCDC_BG_AND_WINDOW_TILE_DATA_SELECT) ? 0x8000 : 0x9000;
 	
 	for (int tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
 		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
-		get_bg_tile_line_data(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_pixel_y, tile_line_data);
+		get_bg_tile_line_data(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line_data);
 		get_pixel_row_from_tile_line_data(tile_line_data, &bg_line[tilegrid_x*TILE_WIDTH]);
 	}
 }
 
-static void render_window_line(u8 bg_line[]) {
-	const u8 tilegrid_y = (*ly) / TILE_HEIGHT;
-	const u8 tile_pixel_y = (*ly) - tilegrid_y*TILE_HEIGHT;
+static void render_window_line() {
+	s16 window_line_to_render = (*ly) - (*window_offset_y);
+	if (window_line_to_render < 0) return;
+	
+	u8 tilegrid_y = window_line_to_render / TILE_HEIGHT;
+	u8 tile_line_index = window_line_to_render - tilegrid_y*TILE_HEIGHT;
 	
 	u16 tile_map_address_space = ((*lcdc) & LCDC_WINDOW_TILE_MAP_SELECT) ? 0x9c00 : 0x9800;
 	u16 tile_data_address_space = ((*lcdc) & LCDC_BG_AND_WINDOW_TILE_DATA_SELECT) ? 0x8000 : 0x9000;
 	
-	for (int tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
+	s16 window_offset_x = (*window_offset_x_plus_7) - 7;
+	s16 num_pixels_to_render = SCREEN_WIDTH - window_offset_x;
+	s8 num_tiles_to_render = num_pixels_to_render / TILE_WIDTH;
+	
+	u8 *screen_with_offset = &robingb_screen[window_offset_x + (*ly)*SCREEN_WIDTH];
+	
+	for (u8 tilegrid_x = 0; tilegrid_x < num_tiles_to_render; tilegrid_x++) {
 		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
-		get_bg_tile_line_data(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_pixel_y, tile_line_data);
-		get_pixel_row_from_tile_line_data(tile_line_data, &bg_line[tilegrid_x*TILE_WIDTH]);
+		get_bg_tile_line_data(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line_data);
+		get_pixel_row_from_tile_line_data(tile_line_data, &screen_with_offset[tilegrid_x*TILE_WIDTH]);	
+	}
+	
+	/* if a tile is overlapping the edge, copy it to the screen one byte at a time. */
+	s16 num_pixels_rendered = num_tiles_to_render*TILE_WIDTH;
+	if (num_pixels_rendered < num_pixels_to_render) {
+		
+		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
+		get_bg_tile_line_data(num_tiles_to_render, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line_data);
+		
+		u8 tile_pixels[TILE_WIDTH];
+		get_pixel_row_from_tile_line_data(tile_line_data, tile_pixels);
+		
+		for (s16 screen_x = num_pixels_rendered; screen_x < num_pixels_to_render; screen_x++) {
+			screen_with_offset[screen_x] = tile_pixels[screen_x - num_pixels_rendered];
+		}
 	}
 }
 
 static void render_objects() {
-	assert(((*lcdc) & LCDC_DOUBLE_HEIGHT_OBJECTS) == false); // not handling 8x16 objects yet
+	assert(((*lcdc) & LCDC_DOUBLE_HEIGHT_OBJECTS) == false); /* not handling 8x16 objects yet */
 	
 	for (u16 object_address = 0xfe00; object_address <= 0xfe9f; object_address += 4) {
 		u8 translation_y = robingb_memory[object_address] - 16;
@@ -125,6 +150,7 @@ static void render_objects() {
 }
 
 void render_screen_line() {
+	/* TODO: bg should render to the screen buffer directly. */
 	
 	if ((*lcdc) & LCDC_BG_AND_WINDOW_ENABLED) {
 		u8 bg_buffer[BG_WIDTH] = {0};
@@ -135,14 +161,7 @@ void render_screen_line() {
 			robingb_screen[screen_x + (*ly)*SCREEN_WIDTH] = bg_buffer[bg_x];
 		}
 		
-		if (*lcdc & LCDC_WINDOW_ENABLED) {
-			render_window_line(bg_buffer); /* reusing the bg buffer because why not */
-			
-			for (u8 screen_x = 0; screen_x < SCREEN_WIDTH; screen_x++) {
-				u8 window_x = screen_x - ((*window_offset_x) - 7);
-				robingb_screen[screen_x + (*ly)*SCREEN_WIDTH] = bg_buffer[window_x];
-			}
-		}
+		if ((*lcdc) & LCDC_WINDOW_ENABLED) render_window_line();
 	} else {
 		/* Background is disabled, so just render white */
 		memset(&robingb_screen[(*ly)*SCREEN_WIDTH], 0x00, SCREEN_WIDTH);
