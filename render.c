@@ -23,10 +23,8 @@ u8 *robingb_screen;
 static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[]) {
 	for (int r = 0; r < TILE_WIDTH; r++) {
 		u8 relevant_bit = 0x80 >> r;
-		u8 lower_bit = (tile_line_data[0] & relevant_bit) ? 0x01 : 0x00;
-		u8 upper_bit = (tile_line_data[1] & relevant_bit) ? 0x02 : 0x00;
-		
-		row_out[r] = lower_bit | upper_bit;
+		row_out[r] = (tile_line_data[0] & relevant_bit) ? 0x01 : 0x00;
+		row_out[r] |= (tile_line_data[1] & relevant_bit) ? 0x02 : 0x00;
 	}
 }
 
@@ -54,19 +52,8 @@ static void render_background_line(u8 bg_line[], bool is_window) {
 	
 	for (int tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
 		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
-		get_tile_line_data_for_bg_tilegrid_coord(
-			tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_pixel_y, tile_line_data);
-		
-		for (int tile_pixel_x = 0; tile_pixel_x < TILE_WIDTH; tile_pixel_x++) {
-			u8 bg_line_x = tilegrid_x*TILE_WIDTH + tile_pixel_x;
-			u8 pixel_bit_index = 0x80 >> tile_pixel_x;
-			
-			/* lower bit of shade */
-			if (tile_line_data[0] & pixel_bit_index) bg_line[bg_line_x] += 0x01;
-			
-			/* upper bit of shade */
-			if (tile_line_data[1] & pixel_bit_index) bg_line[bg_line_x] += 0x02;
-		}
+		get_tile_line_data_for_bg_tilegrid_coord(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_pixel_y, tile_line_data);
+		get_pixel_row_from_tile_line_data(tile_line_data, &bg_line[tilegrid_x*TILE_WIDTH]);
 	}
 }
 
@@ -87,7 +74,7 @@ static void render_objects_on_line() {
 		u8 obj_y = robingb_memory[object_address] - 16;
 		
 		if (*ly >= obj_y && *ly < obj_y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
-			u8 obj_x = robingb_memory[object_address+1] - 8;
+			u8 obj_x = robingb_memory[object_address+1] - TILE_WIDTH;
 			
 			/* TODO: ignore the lower bit of this if in 8x16 mode. */
 			u8 object_data_index = robingb_memory[object_address+2];
