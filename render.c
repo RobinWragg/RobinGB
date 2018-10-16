@@ -63,10 +63,6 @@ static void get_object_data(int object_data_index, u8 object_data_out[]) {
 	}
 }
 
-static void set_screen_pixel(u8 x_position, u8 doublebit_shade) {
-	robingb_screen[x_position + (*ly)*SCREEN_WIDTH] = (doublebit_shade - 3) * -85;
-}
-
 static void render_objects_on_line() {
 	assert(((*lcdc) & bit(2)) == false); /* not handling 8x16 objects yet */
 	
@@ -86,17 +82,17 @@ static void render_objects_on_line() {
 			u8 object_data[NUM_BYTES_PER_TILE];
 			get_object_data(object_data_index, object_data); /* TODO: don't need to get the full object */
 			
-			u8 pixel_row[8];
+			u8 pixel_row[TILE_WIDTH];
 			if (flip_y) get_pixel_row_from_tile_line_data(&object_data[(obj_y+7 - *ly)*2], pixel_row);
 			else get_pixel_row_from_tile_line_data(&object_data[(*ly - obj_y)*2], pixel_row);
 			
 			if (flip_x) {
-				for (int i = 0; i < 8; i++) {
-					if (pixel_row[i]) set_screen_pixel(obj_x + 7-i, pixel_row[i]);
+				for (int i = 0; i < TILE_WIDTH; i++) {
+					if (pixel_row[i]) robingb_screen[obj_x + 7-i + (*ly)*SCREEN_WIDTH] = pixel_row[i];
 				}
 			} else {
-				for (int i = 0; i < 8; i++) {
-					if (pixel_row[i]) set_screen_pixel(obj_x + i, pixel_row[i]);
+				for (int i = 0; i < TILE_WIDTH; i++) {
+					if (pixel_row[i]) robingb_screen[obj_x + i + (*ly)*SCREEN_WIDTH] = pixel_row[i];
 				}
 			}
 		}
@@ -115,22 +111,26 @@ void render_screen_line() {
 		u8 bg_line[BG_WIDTH] = {0};
 		render_background_line(bg_line, false);
 		
-		for (u8 s = 0; s < SCREEN_WIDTH; s++) {
-			u16 bg_x = (*bg_scroll_x) + s;
+		for (u8 screen_x = 0; screen_x < SCREEN_WIDTH; screen_x++) {
+			u16 bg_x = (*bg_scroll_x) + screen_x;
 			
 			while (bg_x >= BG_WIDTH) bg_x -= BG_WIDTH;
 			
-			set_screen_pixel(s, bg_line[bg_x]);
+			robingb_screen[screen_x + (*ly)*SCREEN_WIDTH] = bg_line[bg_x];
 		}
 	} else {
 		/* Background is disabled, so just render white */
-		for (u8 x = 0; x < SCREEN_WIDTH; x++) {
-			set_screen_pixel(x, 0x00);
-		}
+		memset(&robingb_screen[(*ly)*SCREEN_WIDTH], 0x00, SCREEN_WIDTH);
 	}
 	
 	/* check if object drawing is enabled */
 	if ((*lcdc) & bit(1)) render_objects_on_line();
+	
+	/* convert from game boy 2-bit to target 8-bit */
+	int line_index_start = (*ly)*SCREEN_WIDTH;
+	for (int x = 0; x < SCREEN_WIDTH; x++) {
+		robingb_screen[x + line_index_start] = (robingb_screen[x + line_index_start] - 3) * -85;
+	}
 }
 
 
