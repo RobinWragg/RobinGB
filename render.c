@@ -10,8 +10,8 @@
 #define NUM_TILES_PER_BG_LINE 32
 #define NUM_BYTES_PER_TILE 16
 #define NUM_BYTES_PER_TILE_LINE 2
-#define TILE_WIDTH_IN_PIXELS 8
-#define TILE_HEIGHT_IN_PIXELS 8
+#define TILE_WIDTH 8
+#define TILE_HEIGHT 8
 
 static u8 *lcdc = &robingb_memory[LCD_CONTROL_ADDRESS];
 static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
@@ -21,7 +21,7 @@ static u8 *bg_scroll_x = &robingb_memory[0xff43];
 u8 *robingb_screen;
 
 static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[]) {
-	for (int r = 0; r < 8; r++) {
+	for (int r = 0; r < TILE_WIDTH; r++) {
 		u8 relevant_bit = 0x80 >> r;
 		u8 lower_bit = (tile_line_data[0] & relevant_bit) ? 0x01 : 0x00;
 		u8 upper_bit = (tile_line_data[1] & relevant_bit) ? 0x02 : 0x00;
@@ -30,14 +30,14 @@ static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[])
 	}
 }
 
-static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u16 tile_map_address_space, u16 tile_data_address_space, u8 tile_line_index, u8 tile_line_data_out[]) {
+static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u16 tile_map_address_space, u16 tile_data_address_space, u8 tile_pixel_y, u8 tile_line_data_out[]) {
 	int bg_tile_map_index = x + y*NUM_TILES_PER_BG_LINE;
 	
 	int tile_data_index = robingb_memory[tile_map_address_space + bg_tile_map_index];
 	if (tile_data_address_space == 0x9000) tile_data_index = (s8)tile_data_index;
 	
 	int tile_data_address = tile_data_address_space + tile_data_index*NUM_BYTES_PER_TILE;
-	int tile_line_address = tile_data_address + tile_line_index*NUM_BYTES_PER_TILE_LINE;
+	int tile_line_address = tile_data_address + tile_pixel_y*NUM_BYTES_PER_TILE_LINE;
 	
 	tile_line_data_out[0] = robingb_memory[tile_line_address];
 	tile_line_data_out[1] = robingb_memory[tile_line_address+1];
@@ -45,8 +45,8 @@ static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u16 tile_map_ad
 
 static void render_background_line(u8 bg_line[], bool is_window) {
 	const u8 bg_y = *ly; /* TODO: temp. This won't work for vertical scrolling. */
-	const u8 tilegrid_y = bg_y / TILE_HEIGHT_IN_PIXELS;
-	const u8 tile_pixel_y = bg_y - tilegrid_y*TILE_HEIGHT_IN_PIXELS;
+	const u8 tilegrid_y = bg_y / TILE_HEIGHT;
+	const u8 tile_pixel_y = bg_y - tilegrid_y*TILE_HEIGHT;
 	
 	u8 tile_map_control_bit = is_window ? bit(6) : bit(3);
 	u16 tile_map_address_space = ((*lcdc) & tile_map_control_bit) ? 0x9c00 : 0x9800;
@@ -57,8 +57,8 @@ static void render_background_line(u8 bg_line[], bool is_window) {
 		get_tile_line_data_for_bg_tilegrid_coord(
 			tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_pixel_y, tile_line_data);
 		
-		for (int tile_pixel_x = 0; tile_pixel_x < TILE_WIDTH_IN_PIXELS; tile_pixel_x++) {
-			u8 bg_line_x = tilegrid_x*TILE_WIDTH_IN_PIXELS + tile_pixel_x;
+		for (int tile_pixel_x = 0; tile_pixel_x < TILE_WIDTH; tile_pixel_x++) {
+			u8 bg_line_x = tilegrid_x*TILE_WIDTH + tile_pixel_x;
 			u8 pixel_bit_index = 0x80 >> tile_pixel_x;
 			
 			/* lower bit of shade */
