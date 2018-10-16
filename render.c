@@ -59,10 +59,9 @@ static void render_background_line(u8 bg_line[], bool is_window) {
 	}
 }
 
-static void get_object_data(int object_data_index, u8 object_data_out[]) {
-	for (int b =  0; b < NUM_BYTES_PER_TILE; b++) {
-		object_data_out[b] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + b];
-	}
+static void get_object_row_data(int object_data_index, u8 row_index, u8 row_data_out[]) {
+	row_data_out[0] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + row_index*NUM_BYTES_PER_TILE_LINE];
+	row_data_out[1] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + row_index*NUM_BYTES_PER_TILE_LINE+1];
 }
 
 static void render_objects() {
@@ -81,12 +80,12 @@ static void render_objects() {
 			bool flip_x = object_flags & bit(5);
 			bool flip_y = object_flags & bit(6);
 			
-			u8 object_data[NUM_BYTES_PER_TILE];
-			get_object_data(object_data_index, object_data); /* TODO: don't need to get the full object */
+			u8 tile_row_index = flip_y ? (translation_y+7 - *ly) : *ly - translation_y;
+			u8 object_data[NUM_BYTES_PER_TILE_LINE];
+			get_object_row_data(object_data_index, tile_row_index, object_data);
 			
 			u8 pixel_row[TILE_WIDTH];
-			if (flip_y) get_pixel_row_from_tile_line_data(&object_data[(translation_y+7 - *ly)*2], pixel_row);
-			else get_pixel_row_from_tile_line_data(&object_data[(*ly - translation_y)*2], pixel_row);
+			get_pixel_row_from_tile_line_data(object_data, pixel_row);
 			
 			if (flip_x) {
 				for (int i = 0; i < TILE_WIDTH; i++) {
@@ -126,9 +125,9 @@ void render_screen_line() {
 	if ((*lcdc) & bit(1)) render_objects();
 	
 	/* convert from game boy 2-bit to target 8-bit */
-	int line_index_start = (*ly)*SCREEN_WIDTH;
+	int line_start_index = (*ly)*SCREEN_WIDTH;
 	for (int x = 0; x < SCREEN_WIDTH; x++) {
-		robingb_screen[x + line_index_start] = (robingb_screen[x + line_index_start] - 3) * -85;
+		robingb_screen[x + line_start_index] = (robingb_screen[x + line_start_index] - 3) * -85;
 	}
 }
 
