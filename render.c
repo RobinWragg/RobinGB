@@ -71,9 +71,7 @@ static void render_objects() {
 	for (u16 object_address = 0xfe00; object_address <= 0xfe9f; object_address += 4) {
 		u8 translation_y = robingb_memory[object_address] - 16;
 		
-		int tile_height = ((*lcdc) & bit(2)) ? 16 : 8;
-		
-		if (*ly >= translation_y && *ly < translation_y+tile_height /* TODO: 8 should be 16 in 8x16 mode.*/) {
+		if (*ly >= translation_y && *ly < translation_y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
 			u8 translation_x = robingb_memory[object_address+1] - TILE_WIDTH;
 			
 			/* TODO: ignore the lower bit of this if in 8x16 mode. */
