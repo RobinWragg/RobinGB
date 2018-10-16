@@ -42,7 +42,9 @@ static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u16 tile_map_ad
 }
 
 static void render_background_line(u8 bg_line[], bool is_window) {
-	const u8 bg_y = *ly; /* TODO: temp. This won't work for vertical scrolling. */
+	s16 bg_y = (*bg_scroll_y) + *ly;
+	assert(bg_y < 256); /* not handling vertical wraparound yet. Could I leverage u8 overflow like bg_scroll_x does? */
+	
 	const u8 tilegrid_y = bg_y / TILE_HEIGHT;
 	const u8 tile_pixel_y = bg_y - tilegrid_y*TILE_HEIGHT;
 	
@@ -112,10 +114,7 @@ void render_screen_line() {
 		render_background_line(bg_line, false);
 		
 		for (u8 screen_x = 0; screen_x < SCREEN_WIDTH; screen_x++) {
-			u16 bg_x = (*bg_scroll_x) + screen_x;
-			
-			while (bg_x >= BG_WIDTH) bg_x -= BG_WIDTH;
-			
+			u8 bg_x = (*bg_scroll_x) + screen_x;
 			robingb_screen[screen_x + (*ly)*SCREEN_WIDTH] = bg_line[bg_x];
 		}
 	} else {
