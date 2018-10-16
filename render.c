@@ -28,22 +28,26 @@ static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[])
 	}
 }
 
-static void get_tile_line_data_for_bg_tilegrid_coord(u8 x, u8 y, u16 tile_map_address_space, u16 tile_data_address_space, u8 tile_pixel_y, u8 tile_line_data_out[]) {
-	int bg_tile_map_index = x + y*NUM_TILES_PER_BG_LINE;
+static void get_bg_tile_line_data(u8 coord_x, u8 coord_y, u16 tile_map_address_space, u16 tile_data_address_space, u8 tile_line_index, u8 tile_line_data_out[]) {
+	u16 tile_map_index = coord_x + coord_y*NUM_TILES_PER_BG_LINE;
 	
-	int tile_data_index = robingb_memory[tile_map_address_space + bg_tile_map_index];
+	u16 tile_data_index = robingb_memory[tile_map_address_space + tile_map_index];
 	if (tile_data_address_space == 0x9000) tile_data_index = (s8)tile_data_index;
 	
-	int tile_data_address = tile_data_address_space + tile_data_index*NUM_BYTES_PER_TILE;
-	int tile_line_address = tile_data_address + tile_pixel_y*NUM_BYTES_PER_TILE_LINE;
+	u16 tile_data_address = tile_data_address_space + tile_data_index*NUM_BYTES_PER_TILE;
+	u16 line_data_address = tile_data_address + tile_line_index*NUM_BYTES_PER_TILE_LINE;
 	
-	tile_line_data_out[0] = robingb_memory[tile_line_address];
-	tile_line_data_out[1] = robingb_memory[tile_line_address+1];
+	tile_line_data_out[0] = robingb_memory[line_data_address];
+	tile_line_data_out[1] = robingb_memory[line_data_address+1];
 }
 
-static void get_object_row_data(int object_data_index, u8 row_index, u8 row_data_out[]) {
-	row_data_out[0] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + row_index*NUM_BYTES_PER_TILE_LINE];
-	row_data_out[1] = robingb_memory[0x8000 + object_data_index*NUM_BYTES_PER_TILE + row_index*NUM_BYTES_PER_TILE_LINE+1];
+static void get_tile_line_data(u16 tile_bank_address, u16 tile_index, u8 tile_line_index, u8 line_data_out[]) {
+	u16 tile_address = tile_bank_address + tile_index*NUM_BYTES_PER_TILE;
+	u16 tile_line_address = tile_address + tile_line_index*NUM_BYTES_PER_TILE_LINE;
+	
+	/* each tile line is 2 bytes */
+	line_data_out[0] = robingb_memory[tile_line_address];
+	line_data_out[1] = robingb_memory[tile_line_address+1];
 }
 
 static void render_background_line(u8 bg_line[], bool is_window) {
@@ -59,7 +63,7 @@ static void render_background_line(u8 bg_line[], bool is_window) {
 	
 	for (int tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
 		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
-		get_tile_line_data_for_bg_tilegrid_coord(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_pixel_y, tile_line_data);
+		get_bg_tile_line_data(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_pixel_y, tile_line_data);
 		get_pixel_row_from_tile_line_data(tile_line_data, &bg_line[tilegrid_x*TILE_WIDTH]);
 	}
 }
@@ -74,18 +78,18 @@ static void render_objects() {
 			u8 translation_x = robingb_memory[object_address+1] - TILE_WIDTH;
 			
 			/* TODO: ignore the lower bit of this if in 8x16 mode. */
-			u8 object_data_index = robingb_memory[object_address+2];
+			u8 tile_data_index = robingb_memory[object_address+2];
 			
 			u8 object_flags = robingb_memory[object_address+3]; /* TODO: all the other flags */
 			bool flip_x = object_flags & bit(5);
 			bool flip_y = object_flags & bit(6);
 			
-			u8 tile_row_index = flip_y ? (translation_y+7 - *ly) : *ly - translation_y;
-			u8 object_data[NUM_BYTES_PER_TILE_LINE];
-			get_object_row_data(object_data_index, tile_row_index, object_data);
+			u8 tile_line_index = flip_y ? (translation_y+7 - *ly) : *ly - translation_y;
+			u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
+			get_tile_line_data(0x8000, tile_data_index, tile_line_index, tile_line_data);
 			
 			u8 pixel_row[TILE_WIDTH];
-			get_pixel_row_from_tile_line_data(object_data, pixel_row);
+			get_pixel_row_from_tile_line_data(tile_line_data, pixel_row);
 			
 			if (flip_x) {
 				for (int i = 0; i < TILE_WIDTH; i++) {
