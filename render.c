@@ -28,13 +28,13 @@ static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[])
 	}
 }
 
-static void get_bg_tile_line_data(u8 coord_x, u8 coord_y, u16 tile_map_address_space, u16 tile_data_address_space, u8 tile_line_index, u8 tile_line_data_out[]) {
+static void get_bg_tile_line_data(u8 coord_x, u8 coord_y, u16 tile_map_address_space, u16 tile_data_bank_address, u8 tile_line_index, u8 tile_line_data_out[]) {
 	u16 tile_map_index = coord_x + coord_y*NUM_TILES_PER_BG_LINE;
 	
 	u16 tile_data_index = robingb_memory[tile_map_address_space + tile_map_index];
-	if (tile_data_address_space == 0x9000) tile_data_index = (s8)tile_data_index;
+	if (tile_data_bank_address == 0x9000) tile_data_index = (s8)tile_data_index;
 	
-	u16 tile_data_address = tile_data_address_space + tile_data_index*NUM_BYTES_PER_TILE;
+	u16 tile_data_address = tile_data_bank_address + tile_data_index*NUM_BYTES_PER_TILE;
 	u16 line_data_address = tile_data_address + tile_line_index*NUM_BYTES_PER_TILE_LINE;
 	
 	tile_line_data_out[0] = robingb_memory[line_data_address];
