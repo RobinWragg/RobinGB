@@ -19,6 +19,8 @@ This signal is set to 1 if:
 -It seems that this interrupt needs less time to execute in DMG than in CGB? -DMG bug?"
 */
 
+#define LCDC_ENABLED_BIT (0x01 << 7)
+
 #define NUM_CYCLES_PER_LY_INCREMENT 456
 #define MODE_2_CYCLE_DURATION 77
 #define MODE_3_CYCLE_DURATION 169
@@ -74,7 +76,7 @@ void update_mode_and_write_status(int elapsed_cycles) {
 }
 
 void lcd_update(int num_cycles_delta) {
-	if (((*control) & 0x80) == 0) {
+	if (((*control) & LCDC_ENABLED_BIT) == 0) {
 		/* Bit 7 of the LCD control register is 0, so the LCD is switched off. */
 		/* LY, the mode, and the LYC=LY flag should all be 0. */
 		*ly = 0x00;
