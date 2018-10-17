@@ -128,7 +128,7 @@ static void load_rom_bank(int destination_slot_index, int file_bank_index) {
 					rom_bank_addresses[i].bank_index = file_bank_index;
 					
 					char buf[128] = {0};
-					sprintf(buf, "Loading ROM bank %i (%iKB from %s)", file_bank_index, ROM_BANK_SIZE/1024, cart_attributes.file_path);
+					sprintf(buf, "Loading ROM bank %i (%iKB from file)", file_bank_index, ROM_BANK_SIZE/1024);
 					robingb_log(buf);
 					
 					robingb_read_file(cart_attributes.file_path, source_address, ROM_BANK_SIZE, &robingb_memory[rom_bank_addresses[i].address]);
