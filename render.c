@@ -60,7 +60,7 @@ static void get_bg_tile_line_data(u8 coord_x, u8 coord_y, u16 tile_map_address_s
 
 static void render_background_line(u8 bg_line[]) {
 	s16 bg_y = (*bg_scroll_y) + *ly;
-	assert(bg_y < 256); /* not handling vertical wraparound yet. Could I leverage u8 overflow like bg_scroll_x does? */
+	assert(bg_y < 256); /* TODO: not handling vertical wraparound yet. Could I leverage u8 overflow like bg_scroll_x does? */
 	
 	u8 tilegrid_y = bg_y / TILE_HEIGHT;
 	u8 tile_line_index = bg_y - tilegrid_y*TILE_HEIGHT;
