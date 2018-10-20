@@ -39,12 +39,71 @@ static u8 apply_palette_to_shade(u8 shade, u8 palette) {
 	return masked_palette_data >> (shade * 2);
 }
 
+/* IMPORTANT: This function assumes row_out is zero'd. */
+/* TODO: Refactor this file so that tile_line_data[] is a u16. */
 static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[]) {
+	u16 line_data_as_u16 = *(u16*)tile_line_data;
 	
-	for (int r = 0; r < TILE_WIDTH; r++) {
-		u8 relevant_bit = 0x80 >> r;
-		row_out[r] = (tile_line_data[0] & relevant_bit) ? 0x01 : 0x00;
-		row_out[r] |= (tile_line_data[1] & relevant_bit) ? 0x02 : 0x00;
+	/* TODO: assert that row_out is zero'd. */
+	
+	/* TODO: memset() if line_data_as_u16 is a block colour. */
+	
+	if (!line_data_as_u16) return;
+	
+	switch (line_data_as_u16 & 0x8080) {
+		case 0x0000: row_out[0] = 0x00; break;
+		case 0x0080: row_out[0] = 0x01; break;
+		case 0x8000: row_out[0] = 0x02; break;
+		default: row_out[0] = 0x03; break;
+	}
+	
+	switch (line_data_as_u16 & 0x4040) {
+		case 0x0000: row_out[1] = 0x00; break;
+		case 0x0040: row_out[1] = 0x01; break;
+		case 0x4000: row_out[1] = 0x02; break;
+		default: row_out[1] = 0x03; break;
+	}
+	
+	switch (line_data_as_u16 & 0x2020) {
+		case 0x0000: row_out[2] = 0x00; break;
+		case 0x0020: row_out[2] = 0x01; break;
+		case 0x2000: row_out[2] = 0x02; break;
+		default: row_out[2] = 0x03; break;
+	}
+	
+	switch (line_data_as_u16 & 0x1010) {
+		case 0x0000: row_out[3] = 0x00; break;
+		case 0x0010: row_out[3] = 0x01; break;
+		case 0x1000: row_out[3] = 0x02; break;
+		default: row_out[3] = 0x03; break;
+	}
+	
+	switch (line_data_as_u16 & 0x0808) {
+		case 0x0000: row_out[4] = 0x00; break;
+		case 0x0008: row_out[4] = 0x01; break;
+		case 0x0800: row_out[4] = 0x02; break;
+		default: row_out[4] = 0x03; break;
+	}
+	
+	switch (line_data_as_u16 & 0x0404) {
+		case 0x0000: row_out[5] = 0x00; break;
+		case 0x0004: row_out[5] = 0x01; break;
+		case 0x0400: row_out[5] = 0x02; break;
+		default: row_out[5] = 0x03; break;
+	}
+	
+	switch (line_data_as_u16 & 0x0202) {
+		case 0x0000: row_out[6] = 0x00; break;
+		case 0x0002: row_out[6] = 0x01; break;
+		case 0x0200: row_out[6] = 0x02; break;
+		default: row_out[6] = 0x03; break;
+	}
+	
+	switch (line_data_as_u16 & 0x0101) {
+		case 0x0000: row_out[7] = 0x00; break;
+		case 0x0100: row_out[7] = 0x02; break;
+		case 0x0001: row_out[7] = 0x01; break;
+		default: row_out[7] = 0x03; break;
 	}
 }
 
@@ -100,6 +159,7 @@ static void render_window_line() {
 	s8 num_tiles_to_render = num_pixels_to_render / TILE_WIDTH;
 	
 	u8 *screen_with_offset = &robingb_screen[window_offset_x + (*ly)*SCREEN_WIDTH];
+	memset(screen_with_offset, 0, num_pixels_to_render);
 	
 	for (u8 tilegrid_x = 0; tilegrid_x < num_tiles_to_render; tilegrid_x++) {
 		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
@@ -114,7 +174,7 @@ static void render_window_line() {
 		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
 		get_bg_tile_line_data(num_tiles_to_render, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line_data);
 		
-		u8 tile_pixels[TILE_WIDTH];
+		u8 tile_pixels[TILE_WIDTH] = {0};
 		get_pixel_row_from_tile_line_data(tile_line_data, tile_pixels);
 		
 		for (s16 screen_x = num_pixels_rendered; screen_x < num_pixels_to_render; screen_x++) {
@@ -143,7 +203,7 @@ static void render_objects() {
 			u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
 			get_tile_line_data(0x8000, tile_data_index, tile_line_index, tile_line_data);
 			
-			u8 pixel_row[TILE_WIDTH];
+			u8 pixel_row[TILE_WIDTH] = {0};
 			get_pixel_row_from_tile_line_data(tile_line_data, pixel_row);
 			
 			if (flip_x) {
