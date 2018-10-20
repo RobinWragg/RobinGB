@@ -23,14 +23,24 @@
 
 static u8 *lcdc = &robingb_memory[LCD_CONTROL_ADDRESS];
 static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
+static u8 *bg_palette = &robingb_memory[0xff47];
+
 static u8 *bg_scroll_y = &robingb_memory[0xff42];
 static u8 *bg_scroll_x = &robingb_memory[0xff43];
+
 static u8 *window_offset_y = &robingb_memory[0xff4a];
 static u8 *window_offset_x_plus_7 = &robingb_memory[0xff4b];
 
 u8 *robingb_screen;
 
+static u8 apply_palette_to_shade(u8 shade, u8 palette) {
+	u8 palette_mask = 0x03 << (shade * 2);
+	u8 masked_palette_data = palette & palette_mask;
+	return masked_palette_data >> (shade * 2);
+}
+
 static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[]) {
+	
 	for (int r = 0; r < TILE_WIDTH; r++) {
 		u8 relevant_bit = 0x80 >> r;
 		row_out[r] = (tile_line_data[0] & relevant_bit) ? 0x01 : 0x00;
