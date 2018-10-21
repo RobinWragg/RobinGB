@@ -101,23 +101,20 @@ static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[])
 	}
 }
 
-static void get_tile_line_data(u16 tile_bank_address, s16 tile_index, u8 tile_line_index, u8 line_data_out[]) {
+static u16 get_tile_line_data(u16 tile_bank_address, s16 tile_index, u8 tile_line_index) {
 	u16 tile_address = tile_bank_address + tile_index*NUM_BYTES_PER_TILE;
 	u16 tile_line_address = tile_address + tile_line_index*NUM_BYTES_PER_TILE_LINE;
-	
-	/* each tile line is 2 bytes */
-	line_data_out[0] = robingb_memory[tile_line_address];
-	line_data_out[1] = robingb_memory[tile_line_address+1];
+	return *(u16*)&robingb_memory[tile_line_address];
 }
 
-static void get_bg_tile_line_data(u8 coord_x, u8 coord_y, u16 tile_map_address_space, u16 tile_data_bank_address, u8 tile_line_index, u8 tile_line_data_out[]) {
+static u16 get_bg_tile_line_data(u8 coord_x, u8 coord_y, u16 tile_map_address_space, u16 tile_data_bank_address, u8 tile_line_index) {
 	u16 tile_map_index = coord_x + coord_y*NUM_TILES_PER_BG_LINE;
 	s16 tile_data_index = robingb_memory[tile_map_address_space + tile_map_index];
 	
 	if (tile_data_bank_address == 0x9000) { /* bank 0x9000 uses signed addressing */
-		get_tile_line_data(tile_data_bank_address, (s8)tile_data_index, tile_line_index, tile_line_data_out);
+		return get_tile_line_data(tile_data_bank_address, (s8)tile_data_index, tile_line_index);
 	} else {
-		get_tile_line_data(tile_data_bank_address, tile_data_index, tile_line_index, tile_line_data_out);
+		return get_tile_line_data(tile_data_bank_address, tile_data_index, tile_line_index);
 	}
 }
 
@@ -132,9 +129,8 @@ static void render_background_line(u8 bg_line[]) {
 	u16 tile_data_address_space = ((*lcdc) & LCDC_BG_AND_WINDOW_TILE_DATA_SELECT) ? 0x8000 : 0x9000;
 	
 	for (int tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
-		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
-		get_bg_tile_line_data(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line_data);
-		get_pixel_row_from_tile_line_data(tile_line_data, &bg_line[tilegrid_x*TILE_WIDTH]);
+		u16 tile_line_data = get_bg_tile_line_data(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index);
+		get_pixel_row_from_tile_line_data((u8*)&tile_line_data, &bg_line[tilegrid_x*TILE_WIDTH]);
 	}
 }
 
@@ -155,20 +151,18 @@ static void render_window_line() {
 	u8 *screen_with_offset = &robingb_screen[window_offset_x + (*ly)*SCREEN_WIDTH];
 	
 	for (u8 tilegrid_x = 0; tilegrid_x < num_tiles_to_render; tilegrid_x++) {
-		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
-		get_bg_tile_line_data(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line_data);
-		get_pixel_row_from_tile_line_data(tile_line_data, &screen_with_offset[tilegrid_x*TILE_WIDTH]);	
+		u16 tile_line_data = get_bg_tile_line_data(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index);
+		get_pixel_row_from_tile_line_data((u8*)&tile_line_data, &screen_with_offset[tilegrid_x*TILE_WIDTH]);	
 	}
 	
 	/* if a tile is overlapping the edge, copy it to the screen one byte at a time. */
 	s16 num_pixels_rendered = num_tiles_to_render*TILE_WIDTH;
 	if (num_pixels_rendered < num_pixels_to_render) {
 		
-		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
-		get_bg_tile_line_data(num_tiles_to_render, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line_data);
+		u16 tile_line_data = get_bg_tile_line_data(num_tiles_to_render, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index);
 		
 		u8 tile_pixels[TILE_WIDTH];
-		get_pixel_row_from_tile_line_data(tile_line_data, tile_pixels);
+		get_pixel_row_from_tile_line_data((u8*)&tile_line_data, tile_pixels);
 		
 		for (s16 screen_x = num_pixels_rendered; screen_x < num_pixels_to_render; screen_x++) {
 			screen_with_offset[screen_x] = tile_pixels[screen_x - num_pixels_rendered];
@@ -193,11 +187,10 @@ static void render_objects() {
 			bool flip_y = object_flags & bit(6);
 			
 			u8 tile_line_index = flip_y ? (translation_y+7 - *ly) : *ly - translation_y;
-			u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
-			get_tile_line_data(0x8000, tile_data_index, tile_line_index, tile_line_data);
+			u16 tile_line_data = get_tile_line_data(0x8000, tile_data_index, tile_line_index);
 			
 			u8 pixel_row[TILE_WIDTH];
-			get_pixel_row_from_tile_line_data(tile_line_data, pixel_row);
+			get_pixel_row_from_tile_line_data((u8*)&tile_line_data, pixel_row);
 			
 			if (flip_x) {
 				for (int i = 0; i < TILE_WIDTH; i++) {
