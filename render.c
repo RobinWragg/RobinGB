@@ -44,12 +44,6 @@ static u8 apply_palette_to_shade(u8 shade, u8 palette) {
 static void get_pixel_row_from_tile_line_data(u8 tile_line_data[], u8 row_out[]) {
 	u16 line_data_as_u16 = *(u16*)tile_line_data;
 	
-	/* TODO: assert that row_out is zero'd. */
-	
-	/* TODO: memset() if line_data_as_u16 is a block colour. */
-	
-	if (!line_data_as_u16) return;
-	
 	switch (line_data_as_u16 & 0x8080) {
 		case 0x0000: row_out[0] = 0x00; break;
 		case 0x0080: row_out[0] = 0x01; break;
@@ -159,7 +153,6 @@ static void render_window_line() {
 	s8 num_tiles_to_render = num_pixels_to_render / TILE_WIDTH;
 	
 	u8 *screen_with_offset = &robingb_screen[window_offset_x + (*ly)*SCREEN_WIDTH];
-	memset(screen_with_offset, 0, num_pixels_to_render);
 	
 	for (u8 tilegrid_x = 0; tilegrid_x < num_tiles_to_render; tilegrid_x++) {
 		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
@@ -174,7 +167,7 @@ static void render_window_line() {
 		u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
 		get_bg_tile_line_data(num_tiles_to_render, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line_data);
 		
-		u8 tile_pixels[TILE_WIDTH] = {0};
+		u8 tile_pixels[TILE_WIDTH];
 		get_pixel_row_from_tile_line_data(tile_line_data, tile_pixels);
 		
 		for (s16 screen_x = num_pixels_rendered; screen_x < num_pixels_to_render; screen_x++) {
@@ -203,7 +196,7 @@ static void render_objects() {
 			u8 tile_line_data[NUM_BYTES_PER_TILE_LINE];
 			get_tile_line_data(0x8000, tile_data_index, tile_line_index, tile_line_data);
 			
-			u8 pixel_row[TILE_WIDTH] = {0};
+			u8 pixel_row[TILE_WIDTH];
 			get_pixel_row_from_tile_line_data(tile_line_data, pixel_row);
 			
 			if (flip_x) {
@@ -223,7 +216,7 @@ void render_screen_line() {
 	/* TODO: bg should render to the screen buffer directly. */
 	
 	if ((*lcdc) & LCDC_BG_AND_WINDOW_ENABLED) {
-		u8 bg_buffer[BG_WIDTH] = {0};
+		u8 bg_buffer[BG_WIDTH];
 		render_background_line(bg_buffer);
 		
 		for (u8 screen_x = 0; screen_x < SCREEN_WIDTH; screen_x++) {
