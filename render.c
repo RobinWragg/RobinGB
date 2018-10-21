@@ -24,6 +24,8 @@
 static u8 *lcdc = &robingb_memory[LCD_CONTROL_ADDRESS];
 static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
 static u8 *bg_palette = &robingb_memory[0xff47];
+static u8 *object_palette_0 = &robingb_memory[0xff48];
+static u8 *object_palette_1 = &robingb_memory[0xff49];
 
 static u8 *bg_scroll_y = &robingb_memory[0xff42];
 static u8 *bg_scroll_x = &robingb_memory[0xff43];
@@ -31,74 +33,80 @@ static u8 *bg_scroll_x = &robingb_memory[0xff43];
 static u8 *window_offset_y = &robingb_memory[0xff4a];
 static u8 *window_offset_x_plus_7 = &robingb_memory[0xff4b];
 
+static u8 shade_0;
+static u8 shade_1;
+static u8 shade_2;
+static u8 shade_3;
+
 u8 *robingb_screen;
 
-static u8 apply_palette_to_shade(u8 shade, u8 palette) {
-	u8 palette_mask = 0x03 << (shade * 2);
-	u8 masked_palette_data = palette & palette_mask;
-	return masked_palette_data >> (shade * 2);
+static void set_palette(u8 palette) {
+	shade_0 = palette & 0x03;
+	shade_1 = (palette & 0x0c) >> 2;
+	shade_2 = (palette & 0x30) >> 4;
+	shade_3 = (palette & 0xc0) >> 6;
 }
 
 static void get_tile_line(u16 tile_bank_address, s16 tile_index, u8 tile_line_index, u8 line_out[]) {
+	
 	u16 tile_address = tile_bank_address + tile_index*NUM_BYTES_PER_TILE;
 	u16 tile_line_address = tile_address + tile_line_index*NUM_BYTES_PER_TILE_LINE;
-	
 	u16 *line_data = (u16*)&robingb_memory[tile_line_address];
 	
 	switch (*line_data & 0x8080) {
-		case 0x0000: line_out[0] = 0x00; break;
-		case 0x0080: line_out[0] = 0x01; break;
-		case 0x8000: line_out[0] = 0x02; break;
-		default: line_out[0] = 0x03; break;
+		case 0x0000: line_out[0] = shade_0; break;
+		case 0x0080: line_out[0] = shade_1; break;
+		case 0x8000: line_out[0] = shade_2; break;
+		default: line_out[0] = shade_3; break;
 	}
 	
 	switch (*line_data & 0x4040) {
-		case 0x0000: line_out[1] = 0x00; break;
-		case 0x0040: line_out[1] = 0x01; break;
-		case 0x4000: line_out[1] = 0x02; break;
-		default: line_out[1] = 0x03; break;
+		case 0x0000: line_out[1] = shade_0; break;
+		case 0x0040: line_out[1] = shade_1; break;
+		case 0x4000: line_out[1] = shade_2; break;
+		default: line_out[1] = shade_3; break;
 	}
 	
 	switch (*line_data & 0x2020) {
-		case 0x0000: line_out[2] = 0x00; break;
-		case 0x0020: line_out[2] = 0x01; break;
-		case 0x2000: line_out[2] = 0x02; break;
-		default: line_out[2] = 0x03; break;
+		case 0x0000: line_out[2] = shade_0; break;
+		case 0x0020: line_out[2] = shade_1; break;
+		case 0x2000: line_out[2] = shade_2; break;
+		default: line_out[2] = shade_3; break;
 	}
 	
 	switch (*line_data & 0x1010) {
-		case 0x0000: line_out[3] = 0x00; break;
-		case 0x0010: line_out[3] = 0x01; break;
-		case 0x1000: line_out[3] = 0x02; break;
-		default: line_out[3] = 0x03; break;
+		case 0x0000: line_out[3] = shade_0; break;
+		case 0x0010: line_out[3] = shade_1; break;
+		case 0x1000: line_out[3] = shade_2; break;
+		default: line_out[3] = shade_3; break;
 	}
 	
 	switch (*line_data & 0x0808) {
-		case 0x0000: line_out[4] = 0x00; break;
-		case 0x0008: line_out[4] = 0x01; break;
-		case 0x0800: line_out[4] = 0x02; break;
-		default: line_out[4] = 0x03; break;
+		case 0x0000: line_out[4] = shade_0; break;
+		case 0x0008: line_out[4] = shade_1; break;
+		case 0x0800: line_out[4] = shade_2; break;
+		default: line_out[4] = shade_3; break;
 	}
 	
 	switch (*line_data & 0x0404) {
-		case 0x0000: line_out[5] = 0x00; break;
-		case 0x0004: line_out[5] = 0x01; break;
-		case 0x0400: line_out[5] = 0x02; break;
-		default: line_out[5] = 0x03; break;
+		case 0x0000: line_out[5] = shade_0; break;
+		case 0x0004: line_out[5] = shade_1; break;
+		case 0x0400: line_out[5] = shade_2; break;
+		default: line_out[5] = shade_3; break;
 	}
 	
 	switch (*line_data & 0x0202) {
-		case 0x0000: line_out[6] = 0x00; break;
-		case 0x0002: line_out[6] = 0x01; break;
-		case 0x0200: line_out[6] = 0x02; break;
-		default: line_out[6] = 0x03; break;
+		case 0x0000: line_out[6] = shade_0; break;
+		case 0x0002: line_out[6] = shade_1; break;
+		case 0x0200: line_out[6] = shade_2; break;
+		default: line_out[6] = shade_3; break;
 	}
 	
 	switch (*line_data & 0x0101) {
-		case 0x0000: line_out[7] = 0x00; break;
-		case 0x0100: line_out[7] = 0x02; break;
-		case 0x0001: line_out[7] = 0x01; break;
-		default: line_out[7] = 0x03; break;
+		case 0x0000: line_out[7] = shade_0; break;
+		case 0x0001: line_out[7] = shade_1; break;
+		case 0x0100: line_out[7] = shade_2; break;
+		default: line_out[7] = shade_3; break;
 	}
 }
 
@@ -173,9 +181,14 @@ static void render_objects() {
 			/* TODO: ignore the lower bit of this if in 8x16 mode. */
 			u8 tile_data_index = robingb_memory[object_address+2];
 			
-			u8 object_flags = robingb_memory[object_address+3]; /* TODO: all the other flags */
+			u8 object_flags = robingb_memory[object_address+3]; /* TODO: all the other object flags */
+			bool choose_palette_1 = object_flags & bit(4);
 			bool flip_x = object_flags & bit(5);
 			bool flip_y = object_flags & bit(6);
+			
+			/* TODO: there's a paletting bug when a palette contains white that is not in slot 0. It causes transparency when it should be white. */
+			if (choose_palette_1) set_palette(*object_palette_1);
+			else set_palette(*object_palette_0);
 			
 			u8 tile_line_index = flip_y ? (translation_y+7 - *ly) : *ly - translation_y;
 			u8 tile_line[TILE_WIDTH];
@@ -183,11 +196,11 @@ static void render_objects() {
 			
 			if (flip_x) {
 				for (int i = 0; i < TILE_WIDTH; i++) {
-					if (tile_line[i]) robingb_screen[translation_x + 7-i + (*ly)*SCREEN_WIDTH] = tile_line[i];
+					if (tile_line[i] != shade_0) robingb_screen[translation_x + 7-i + (*ly)*SCREEN_WIDTH] = tile_line[i];
 				}
 			} else {
 				for (int i = 0; i < TILE_WIDTH; i++) {
-					if (tile_line[i]) robingb_screen[translation_x + i + (*ly)*SCREEN_WIDTH] = tile_line[i];
+					if (tile_line[i] != shade_0) robingb_screen[translation_x + i + (*ly)*SCREEN_WIDTH] = tile_line[i];
 				}
 			}
 		}
@@ -198,6 +211,8 @@ void render_screen_line() {
 	/* TODO: bg should render to the screen buffer directly. */
 	
 	if ((*lcdc) & LCDC_BG_AND_WINDOW_ENABLED) {
+		set_palette(*bg_palette);
+		
 		u8 bg_buffer[BG_WIDTH];
 		render_background_line(bg_buffer);
 		
