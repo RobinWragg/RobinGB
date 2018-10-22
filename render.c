@@ -219,9 +219,11 @@ void render_screen_line() {
 		u8 bg_buffer[BG_WIDTH];
 		render_background_line(bg_buffer);
 		
-		for (u8 screen_x = 0; screen_x < SCREEN_WIDTH; screen_x++) {
-			u8 bg_x = (*bg_scroll_x) + screen_x;
-			robingb_screen[screen_x + (*ly)*SCREEN_WIDTH] = bg_buffer[bg_x];
+		u8 bg_x = *bg_scroll_x;
+		u16 screen_render_start = (*ly) * SCREEN_WIDTH;
+		u16 screen_render_end = (*ly) * SCREEN_WIDTH + SCREEN_WIDTH;
+		for (u16 screen_index = screen_render_start; screen_index < screen_render_end; screen_index++) {
+			robingb_screen[screen_index] = bg_buffer[bg_x++]; /* bg_x overflows deliberately */
 		}
 		
 		if ((*lcdc) & LCDC_WINDOW_ENABLED) render_window_line();
