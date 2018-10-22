@@ -33,6 +33,8 @@ static u8 *bg_scroll_x = &robingb_memory[0xff43];
 static u8 *window_offset_y = &robingb_memory[0xff4a];
 static u8 *window_offset_x_plus_7 = &robingb_memory[0xff4b];
 
+#define SHADE_0_FLAG 0x04
+
 static u8 shade_0;
 static u8 shade_1;
 static u8 shade_2;
@@ -41,7 +43,9 @@ static u8 shade_3;
 u8 *robingb_screen;
 
 static void set_palette(u8 palette) {
-	shade_0 = palette & 0x03;
+	/* SHADE_0_FLAG ensures shade_0 is unique, which streamlines the process of shade-0-dependent
+	blitting. The flag is discarded in the final step of the render. */
+	shade_0 = (palette & 0x03) | SHADE_0_FLAG;
 	shade_1 = (palette & 0x0c) >> 2;
 	shade_2 = (palette & 0x30) >> 4;
 	shade_3 = (palette & 0xc0) >> 6;
@@ -186,7 +190,6 @@ static void render_objects() {
 			bool flip_x = object_flags & bit(5);
 			bool flip_y = object_flags & bit(6);
 			
-			/* TODO: there's a paletting bug when a palette contains white that is not in slot 0. It causes transparency when it should be white. */
 			if (choose_palette_1) set_palette(*object_palette_1);
 			else set_palette(*object_palette_0);
 			
@@ -233,7 +236,9 @@ void render_screen_line() {
 	/* convert from game boy 2-bit to target 8-bit */
 	int line_start_index = (*ly)*SCREEN_WIDTH;
 	for (int x = 0; x < SCREEN_WIDTH; x++) {
-		robingb_screen[x + line_start_index] = (robingb_screen[x + line_start_index] - 3) * -85;
+		/* The "& 0x03" below is to discard the SHADE_0_FLAG bit,
+		which has already served its purpose in render_objects(). */
+		robingb_screen[x + line_start_index] = ((robingb_screen[x + line_start_index] & 0x03) - 3) * -85;
 	}
 }
 

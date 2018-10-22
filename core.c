@@ -111,7 +111,7 @@ void robingb_update(RobinGB_Input *input, u8 screen_out[], u8 *ly_out) {
 		handle_interrupts();
 		lcd_update(num_cycles);
 		joypad_update(input);
-		update_audio(num_cycles);
+		/* update_audio(num_cycles); */
 		update_timer(num_cycles);
 	}
 	
