@@ -39,15 +39,16 @@ void update_mode_and_write_status(int elapsed_cycles) {
 	u8 current_mode;
 	
 	if (elapsed_cycles < NUM_CYCLES_PER_FULL_SCREEN_REFRESH - MODE_1_CYCLE_DURATION) {
-		int row_draw_phase = elapsed_cycles % NUM_CYCLES_PER_LY_INCREMENT;
+		s32 row_draw_phase = elapsed_cycles % NUM_CYCLES_PER_LY_INCREMENT;
 		
-		if (row_draw_phase < MODE_2_CYCLE_DURATION) {
-			current_mode = 0x02; /* The LCD is reading from OAM */
-		} else if (row_draw_phase < MODE_2_CYCLE_DURATION+MODE_3_CYCLE_DURATION) {
-			current_mode = 0x03; /* The LCD is reading from both OAM and VRAM */
+		if (row_draw_phase >= MODE_2_CYCLE_DURATION + MODE_3_CYCLE_DURATION) {
+			current_mode = 0x00;
+		} else if (row_draw_phase >= MODE_2_CYCLE_DURATION) {
+			current_mode = 0x03;
 		} else {
-			current_mode = 0x00; /* H-blank */
+			current_mode = 0x02;
 		}
+		
 	} else {
 		current_mode = 0x01; /* V-blank */
 	}
