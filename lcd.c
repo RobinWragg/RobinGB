@@ -41,12 +41,20 @@ void update_mode_and_write_status(int elapsed_cycles) {
 	if (elapsed_cycles < NUM_CYCLES_PER_FULL_SCREEN_REFRESH - MODE_1_CYCLE_DURATION) {
 		s32 row_draw_phase = elapsed_cycles % NUM_CYCLES_PER_LY_INCREMENT;
 		
+		/*
+		Approx mode graph:
+		Mode 2  2_____2_____2_____2_____2_____2___________________2____
+		Mode 3  _33____33____33____33____33____33__________________3___
+		Mode 0  ___000___000___000___000___000___000________________000
+		Mode 1  ____________________________________11111111111111_____
+		*/
+		
 		if (row_draw_phase >= MODE_2_CYCLE_DURATION + MODE_3_CYCLE_DURATION) {
-			current_mode = 0x00;
+			current_mode = 0x00; /* H-blank */
 		} else if (row_draw_phase >= MODE_2_CYCLE_DURATION) {
-			current_mode = 0x03;
+			current_mode = 0x03; /* The LCD is reading from both OAM and VRAM */
 		} else {
-			current_mode = 0x02;
+			current_mode = 0x02; /* The LCD is reading from OAM */
 		}
 		
 	} else {
@@ -55,8 +63,8 @@ void update_mode_and_write_status(int elapsed_cycles) {
 	
 	const u8 prev_mode = (*status) & 0x03; /* get lower 2 bits only */
 	*status &= 0xfc; /* wipe the old mode */
+	*status |= current_mode;
 	
-	bool should_render = false;
 	if (prev_mode != current_mode) {
 		switch (current_mode) {
 			case 0x00: {
@@ -70,15 +78,10 @@ void update_mode_and_write_status(int elapsed_cycles) {
 				if ((*status) & 0x20) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 			} break;
 			case 0x03: {
-				should_render = true;
+				render_screen_line();
 			} break;
 		}
 	}
-	
-	*status &= 0xfc;
-	*status |= current_mode;
-	
-	if (should_render) render_screen_line();
 }
 
 void lcd_update(int num_cycles_delta) {
