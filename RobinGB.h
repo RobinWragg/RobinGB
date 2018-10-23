@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define ROBINGB_CPU_CYCLES_PER_REFRESH (70224) /* Approximately 59.7275Hz */
 #define ROBINGB_AUDIO_SAMPLE_RATE (44100)
 
 #define ROBINGB_DPAD_NONE 0

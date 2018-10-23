@@ -19,11 +19,16 @@ This signal is set to 1 if:
 -It seems that this interrupt needs less time to execute in DMG than in CGB? -DMG bug?"
 */
 
+/* TODO: can the game change LY? */
+
 #define LCDC_ENABLED_BIT (0x01 << 7)
 
+#define NUM_CYCLES_PER_FULL_SCREEN_REFRESH 70224 /* Approximately 59.7275Hz */
 #define NUM_CYCLES_PER_LY_INCREMENT 456
-#define MODE_2_CYCLE_DURATION 77
-#define MODE_3_CYCLE_DURATION 169
+#define MODE_0_CYCLE_DURATION 204
+#define MODE_1_CYCLE_DURATION 4560
+#define MODE_2_CYCLE_DURATION 80
+#define MODE_3_CYCLE_DURATION 172
 
 static u8 *control = &robingb_memory[LCD_CONTROL_ADDRESS];
 static u8 *status = &robingb_memory[LCD_STATUS_ADDRESS];
@@ -33,7 +38,7 @@ static u8 *lyc = &robingb_memory[LCD_LYC_ADDRESS];
 void update_mode_and_write_status(int elapsed_cycles) {
 	u8 current_mode;
 	
-	if (elapsed_cycles < 65664) {
+	if (elapsed_cycles < NUM_CYCLES_PER_FULL_SCREEN_REFRESH - MODE_1_CYCLE_DURATION) {
 		int row_draw_phase = elapsed_cycles % NUM_CYCLES_PER_LY_INCREMENT;
 		
 		if (row_draw_phase < MODE_2_CYCLE_DURATION) {
@@ -84,9 +89,11 @@ void lcd_update(int num_cycles_delta) {
 		return; 
 	}
 	
-	static int elapsed_cycles = 0;
+	static s32 elapsed_cycles = 0;
 	elapsed_cycles += num_cycles_delta;
-	if (elapsed_cycles >= ROBINGB_CPU_CYCLES_PER_REFRESH) elapsed_cycles -= ROBINGB_CPU_CYCLES_PER_REFRESH;
+	if (elapsed_cycles >= NUM_CYCLES_PER_FULL_SCREEN_REFRESH) {
+		elapsed_cycles -= NUM_CYCLES_PER_FULL_SCREEN_REFRESH;
+	}
 	
 	/* set LY */
 	*ly = elapsed_cycles / NUM_CYCLES_PER_LY_INCREMENT;
@@ -100,14 +107,6 @@ void lcd_update(int num_cycles_delta) {
 	}
 	
 	update_mode_and_write_status(elapsed_cycles);
-	
-	/* assertions */
-	/* { */
-		/* u8 mode = (*status) & 0x03; */ /* get lower 2 bits only */
-		/* assert(((*ly) < 144 && (mode == 0x02 || mode == 0x03 || mode == 0x00)) */
-			/* || ((*ly) >= 144 && mode == 0x01)); */
-		/* assert((*ly) < 154); */
-	/* } */
 }
 
 
