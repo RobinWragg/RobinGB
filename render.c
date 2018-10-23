@@ -219,10 +219,11 @@ void render_screen_line() {
 		u8 bg_buffer[BG_WIDTH];
 		render_background_line(bg_buffer);
 		
+		/* copy bg to screen */
 		u8 bg_x = *bg_scroll_x;
-		u16 screen_render_start = (*ly) * SCREEN_WIDTH;
-		u16 screen_render_end = (*ly) * SCREEN_WIDTH + SCREEN_WIDTH;
-		for (u16 screen_index = screen_render_start; screen_index < screen_render_end; screen_index++) {
+		u16 screen_line_start = (*ly) * SCREEN_WIDTH;
+		u16 screen_line_end = screen_line_start + SCREEN_WIDTH;
+		for (u16 screen_index = screen_line_start; screen_index < screen_line_end; screen_index++) {
 			robingb_screen[screen_index] = bg_buffer[bg_x++]; /* bg_x overflows deliberately */
 		}
 		
@@ -236,13 +237,16 @@ void render_screen_line() {
 	if ((*lcdc) & LCDC_OBJECTS_ENABLED) render_objects();
 	
 	/* convert from game boy 2-bit to target 8-bit */
-	int line_start_index = (*ly)*SCREEN_WIDTH;
-	for (int x = 0; x < SCREEN_WIDTH; x++) {
+	u16 screen_line_start = (*ly)*SCREEN_WIDTH;
+	u16 screen_line_end = screen_line_start + SCREEN_WIDTH;
+	for (u16 i = screen_line_start; i < screen_line_end; i++) {
 		/* The "& 0x03" below is to discard the SHADE_0_FLAG bit,
 		which has already served its purpose in render_objects(). */
-		robingb_screen[x + line_start_index] = ((robingb_screen[x + line_start_index] & 0x03) - 3) * -85;
+		robingb_screen[i] = ((robingb_screen[i] & 0x03) - 3) * -85;
 	}
 }
+
+
 
 
 
