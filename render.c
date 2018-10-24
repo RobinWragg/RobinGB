@@ -54,59 +54,65 @@ static void set_palette(u8 palette) {
 static void get_tile_line(u16 tile_bank_address, s16 tile_index, u8 tile_line_index, u8 line_out[]) {
 	
 	u16 tile_address = tile_bank_address + tile_index*NUM_BYTES_PER_TILE;
-	u16 tile_line_address = tile_address + tile_line_index*NUM_BYTES_PER_TILE_LINE;
-	u16 *line_data = (u16*)&robingb_memory[tile_line_address];
+	u16 line_data = *(u16*)&robingb_memory[tile_address + tile_line_index*NUM_BYTES_PER_TILE_LINE];
 	
-	switch (*line_data & 0x8080) {
+	switch (line_data) {
+		case 0x0000: memset(line_out, shade_0, TILE_WIDTH); return; break;
+		case 0x00ff: memset(line_out, shade_1, TILE_WIDTH); return; break;
+		case 0xff00: memset(line_out, shade_2, TILE_WIDTH); return; break;
+		case 0xffff: memset(line_out, shade_3, TILE_WIDTH); return; break;
+	}
+	
+	switch (line_data & 0x8080) {
 		case 0x0000: line_out[0] = shade_0; break;
 		case 0x0080: line_out[0] = shade_1; break;
 		case 0x8000: line_out[0] = shade_2; break;
 		default: line_out[0] = shade_3; break;
 	}
 	
-	switch (*line_data & 0x4040) {
+	switch (line_data & 0x4040) {
 		case 0x0000: line_out[1] = shade_0; break;
 		case 0x0040: line_out[1] = shade_1; break;
 		case 0x4000: line_out[1] = shade_2; break;
 		default: line_out[1] = shade_3; break;
 	}
 	
-	switch (*line_data & 0x2020) {
+	switch (line_data & 0x2020) {
 		case 0x0000: line_out[2] = shade_0; break;
 		case 0x0020: line_out[2] = shade_1; break;
 		case 0x2000: line_out[2] = shade_2; break;
 		default: line_out[2] = shade_3; break;
 	}
 	
-	switch (*line_data & 0x1010) {
+	switch (line_data & 0x1010) {
 		case 0x0000: line_out[3] = shade_0; break;
 		case 0x0010: line_out[3] = shade_1; break;
 		case 0x1000: line_out[3] = shade_2; break;
 		default: line_out[3] = shade_3; break;
 	}
 	
-	switch (*line_data & 0x0808) {
+	switch (line_data & 0x0808) {
 		case 0x0000: line_out[4] = shade_0; break;
 		case 0x0008: line_out[4] = shade_1; break;
 		case 0x0800: line_out[4] = shade_2; break;
 		default: line_out[4] = shade_3; break;
 	}
 	
-	switch (*line_data & 0x0404) {
+	switch (line_data & 0x0404) {
 		case 0x0000: line_out[5] = shade_0; break;
 		case 0x0004: line_out[5] = shade_1; break;
 		case 0x0400: line_out[5] = shade_2; break;
 		default: line_out[5] = shade_3; break;
 	}
 	
-	switch (*line_data & 0x0202) {
+	switch (line_data & 0x0202) {
 		case 0x0000: line_out[6] = shade_0; break;
 		case 0x0002: line_out[6] = shade_1; break;
 		case 0x0200: line_out[6] = shade_2; break;
 		default: line_out[6] = shade_3; break;
 	}
 	
-	switch (*line_data & 0x0101) {
+	switch (line_data & 0x0101) {
 		case 0x0000: line_out[7] = shade_0; break;
 		case 0x0001: line_out[7] = shade_1; break;
 		case 0x0100: line_out[7] = shade_2; break;
