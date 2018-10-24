@@ -661,8 +661,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0xde: DEBUG_set_opcode_name("SBC A,x"); instruction_SBC(mem_read(registers.pc+1), 2, 8); break;
 		case 0xdf: DEBUG_set_opcode_name("RST 18H"); instruction_RST(0x18); break;
 		case 0xe0: { DEBUG_set_opcode_name("LDH (ff00+x),A");
-			u8 byte_0 = mem_read(registers.pc+1);
-			mem_write(0xff00 + byte_0, registers.a);
+			mem_write(0xff00 + mem_read(registers.pc+1), registers.a);
 			finish_instruction(2, 12);
 		} break;
 		case 0xe1: { DEBUG_set_opcode_name("POP HL");
