@@ -5,6 +5,8 @@
 #define TMA_ADDRESS 0xff06
 #define TAC_ADDRESS 0xff07
 
+#define MINIMUM_CYCLES_PER_TIMA_INCREMENT 16
+
 static u8 *tima = &robingb_memory[TIMA_ADDRESS];
 static u8 *tma = &robingb_memory[TMA_ADDRESS];
 static u8 *tac = &robingb_memory[TAC_ADDRESS]; /* TODO: what do with the upper 5 bytes of this register? */
@@ -12,7 +14,7 @@ static u8 *tac = &robingb_memory[TAC_ADDRESS]; /* TODO: what do with the upper 5
 static u16 incrementer_every_cycle;
 static u8 *div = ((u8*)&incrementer_every_cycle) + 1;
 
-int cycles_since_last_tima_increment = 0;
+static u16 cycles_since_last_tima_increment = 0;
 
 void init_timer() {
 	incrementer_every_cycle = 0xabcc;
@@ -34,29 +36,33 @@ void update_timer(u8 num_cycles) {
 	incrementer_every_cycle += num_cycles;
 	robingb_memory[TIMER_DIV_ADDRESS] = *div;
 	
-	/* Update TIMA and potentially request an interrupt. */
+	/* Update TIMA and potentially request an interrupt */
 	if ((*tac) & 0x04 /* check if timer is enabled */) {
+	
 		cycles_since_last_tima_increment += num_cycles;
 		
-		int cycles_per_tima_increment;
-		switch ((*tac) & 0x03) {
-			case 0x00: cycles_per_tima_increment = 1024; break;
-			case 0x01: cycles_per_tima_increment = 16; break;
-			case 0x02: cycles_per_tima_increment = 64; break;
-			case 0x03: cycles_per_tima_increment = 256; break;
-			default: assert(false); break;
-		}
-		
-		if (cycles_since_last_tima_increment >= cycles_per_tima_increment) {
-			u8 prev_tima = (*tima)++;
-			
-			/* check for overflow */
-			if (prev_tima > *tima) {
-				*tima = *tma;
-				request_interrupt(INTERRUPT_FLAG_TIMER);
+		if (cycles_since_last_tima_increment >= MINIMUM_CYCLES_PER_TIMA_INCREMENT) {
+			/* calculate actual cycles per TIMA increment */
+			u16 cycles_per_tima_increment;
+			switch ((*tac) & 0x03) {
+				case 0x00: cycles_per_tima_increment = 1024; break;
+				case 0x01: cycles_per_tima_increment = 16; break;
+				case 0x02: cycles_per_tima_increment = 64; break;
+				case 0x03: cycles_per_tima_increment = 256; break;
+				default: assert(false); break;
 			}
 			
-			cycles_since_last_tima_increment -= cycles_per_tima_increment;
+			if (cycles_since_last_tima_increment >= cycles_per_tima_increment) {
+				u8 prev_tima = (*tima)++;
+				
+				/* check for overflow */
+				if (prev_tima > *tima) {
+					*tima = *tma;
+					request_interrupt(INTERRUPT_FLAG_TIMER);
+				}
+				
+				cycles_since_last_tima_increment -= cycles_per_tima_increment;
+			}
 		}
 	}
 }
