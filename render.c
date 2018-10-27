@@ -195,21 +195,42 @@ static void render_objects() {
 			bool choose_palette_1 = object_flags & bit(4);
 			bool flip_x = object_flags & bit(5);
 			bool flip_y = object_flags & bit(6);
+			bool behind_bg = object_flags & bit(7);
 			
 			if (choose_palette_1) set_palette(*object_palette_1);
 			else set_palette(*object_palette_0);
 			
-			u8 tile_line_index = flip_y ? (translation_y+7 - *ly) : *ly - translation_y;
 			u8 tile_line[TILE_WIDTH];
-			get_tile_line(0x8000, tile_data_index, tile_line_index, tile_line);
+			{
+				u8 tile_line_index = flip_y ? (translation_y+7 - *ly) : *ly - translation_y;
+				get_tile_line(0x8000, tile_data_index, tile_line_index, tile_line);
+			}
 			
-			if (flip_x) {
-				for (int i = 0; i < TILE_WIDTH; i++) {
-					if (tile_line[i] != shade_0) robingb_screen[translation_x + 7-i + (*ly)*SCREEN_WIDTH] = tile_line[i];
+			u16 screen_index_start = translation_x + (*ly)*SCREEN_WIDTH;
+			
+			if (behind_bg) {
+				if (flip_x) {
+					for (int i = 0; i < TILE_WIDTH; i++) {
+						if (tile_line[i] != shade_0 && robingb_screen[screen_index_start + 7-i] == shade_0) {
+							robingb_screen[screen_index_start + 7-i] = tile_line[i];
+						}
+					}
+				} else {
+					for (int i = 0; i < TILE_WIDTH; i++) {
+						if (tile_line[i] != shade_0 && robingb_screen[screen_index_start + i] == shade_0) {
+							robingb_screen[screen_index_start + i] = tile_line[i];
+						}
+					}
 				}
 			} else {
-				for (int i = 0; i < TILE_WIDTH; i++) {
-					if (tile_line[i] != shade_0) robingb_screen[translation_x + i + (*ly)*SCREEN_WIDTH] = tile_line[i];
+				if (flip_x) {
+					for (int i = 0; i < TILE_WIDTH; i++) {
+						if (tile_line[i] != shade_0) robingb_screen[screen_index_start + 7-i] = tile_line[i];
+					}
+				} else {
+					for (int i = 0; i < TILE_WIDTH; i++) {
+						if (tile_line[i] != shade_0) robingb_screen[screen_index_start + i] = tile_line[i];
+					}
 				}
 			}
 		}

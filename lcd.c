@@ -39,7 +39,7 @@ void update_mode_and_write_status(int elapsed_cycles) {
 	u8 current_mode;
 	
 	if (elapsed_cycles < NUM_CYCLES_PER_FULL_SCREEN_REFRESH - MODE_1_CYCLE_DURATION) {
-		s32 row_draw_phase = elapsed_cycles % NUM_CYCLES_PER_LY_INCREMENT;
+		u16 row_draw_phase = elapsed_cycles % NUM_CYCLES_PER_LY_INCREMENT;
 		
 		/*
 		Approx mode graph:
