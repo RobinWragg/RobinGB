@@ -7,10 +7,9 @@
 
 #define INSTRUCTION
 
-u8 *num_cycles_for_finish = 0;
+u8 *num_cycles_for_finish;
 
 void finish_instruction(s16 pc_increment, u8 num_cycles_param) {
-	assert(num_cycles_for_finish);
 	registers.pc += pc_increment;
 	*num_cycles_for_finish = num_cycles_param;
 }
@@ -230,6 +229,12 @@ INSTRUCTION static void instruction_SUB_u8(u8 subber, u16 pc_increment, int num_
 }
 
 void execute_next_opcode(u8 *num_cycles_out) {
+	
+	if (halted) {
+		*num_cycles_out = 4;
+		return;
+	}
+	
 	num_cycles_for_finish = num_cycles_out;
 	u8 opcode = mem_read(registers.pc);
 	

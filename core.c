@@ -104,9 +104,9 @@ void robingb_update(RobinGB_Input *input, u8 screen_out[], u8 *ly_out) {
 	assert(robingb_screen);
 	
 	while (*lcd_ly == prev_lcd_ly) {
-		u8 num_cycles = 4;
 		
-		if (!halted) execute_next_opcode(&num_cycles);
+		u8 num_cycles;
+		execute_next_opcode(&num_cycles);
 		
 		handle_interrupts();
 		lcd_update(num_cycles);
