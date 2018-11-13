@@ -296,11 +296,7 @@ void execute_cb_opcode() {
 		case 0x5b: instruction_BIT(3, registers.e, 8); break;
 		case 0x5c: instruction_BIT(3, registers.h, 8); break;
 		case 0x5d: instruction_BIT(3, registers.l, 8); break;
-		case 0x5e: {
-			u8 hl_value = mem_read(registers.hl);
-			instruction_SET(3, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
-		} break;
+		case 0x5e: instruction_BIT(3, mem_read(registers.hl), 16); break;
 		case 0x5f: instruction_BIT(3, registers.a, 8); break;
 		case 0x60: instruction_BIT(4, registers.b, 8); break;
 		case 0x61: instruction_BIT(4, registers.c, 8); break;
