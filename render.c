@@ -185,7 +185,7 @@ static void render_objects() {
 	u8 *screen_line = &robingb_screen[(*ly) * SCREEN_WIDTH];
 	
 	for (u16 object_address = 0xfe00; object_address <= 0xfe9f; object_address += 4) {
-		u8 translate_y = robingb_memory[object_address] - 16;
+		s16 translate_y = robingb_memory[object_address] - TILE_HEIGHT*2;
 		
 		if (*ly >= translate_y && *ly < translate_y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
 			s16 translate_x = robingb_memory[object_address+1] - TILE_WIDTH;
@@ -204,7 +204,7 @@ static void render_objects() {
 			
 			u8 tile_line[TILE_WIDTH];
 			{
-				u8 tile_line_index = flip_y ? (translate_y+7 - *ly) : *ly - translate_y;
+				s8 tile_line_index = flip_y ? (translate_y+7 - *ly) : *ly - translate_y;
 				get_tile_line(0x8000, tile_data_index, tile_line_index, tile_line);
 			}
 			
