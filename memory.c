@@ -177,8 +177,12 @@ static void perform_rom_bank_control(int address, u8 value) {
 
 void perform_cart_control(int address, u8 value) {
 	if (address >= 0x0000 && address < 0x2000) {
-		/* MBC1: external RAM control (at 0xa000 to 0xbfff) */
-		assert(false);
+		
+		/* ignore the request if the cart has no RAM */
+		if (cart_attributes.has_ram) {
+			/* MBC1: external RAM control (at 0xa000 to 0xbfff) */
+		}
+		
 	} else if (address >= 0x2000 && address < 0x4000) {
 		
 		perform_rom_bank_control(address, value);
@@ -196,7 +200,7 @@ void perform_cart_control(int address, u8 value) {
 
 void set_cart_attributes(Cart_Type cart_type) {
 	
-	/* mbc type */
+	/* MBC type */
 	switch (cart_type) {
 		case CART_TYPE_ROM_ONLY:
 		case CART_TYPE_RAM:
