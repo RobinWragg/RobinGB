@@ -179,80 +179,16 @@ static void render_window_line() {
 	}
 }
 
-static void render_objects_ex() {
-	assert(((*lcdc) & LCDC_DOUBLE_HEIGHT_OBJECTS) == false); /* not handling 8x16 objects yet */
-	
-	const u8 MAX_OBJECT_COUNT_PER_LINE = 40;
-	
-	typedef struct {
-		u8 translate_y;
-		u8 translate_x;
-		u8 tile_line[TILE_WIDTH];
-	} Cached_Object;
-	
-	Cached_Object objects[MAX_OBJECT_COUNT_PER_LINE];
-	u8 objects_count = 0;
-	
-	/* Cache all objects that could appear on the current line */
-	
-	/* TODO: iterate through objects backwards for proper object-to-object priority */
-	for (u16 object_address = 0xfe00; object_address <= 0xfe9f; object_address += 4) {
-		s16 translation_y = robingb_memory[object_address] - TILE_HEIGHT*2;
-		
-		/* TODO: TILE_HEIGHT should be TILE_HEIGHT*2 in 8x16 mode.*/
-		if (*ly >= translation_y && *ly < translation_y+TILE_HEIGHT) {
-			
-			/* copy x and y translations to the cache */
-			memcpy(&objects[objects_count], &robingb_memory[object_address], 2);
-			
-			/* convert the pixels and copy them to the cache */
-			{
-				/* TODO: ignore the lower bit of this if in 8x16 mode. */
-				u8 tile_data_index = robingb_memory[object_address+2];
-				
-				u8 object_flags = robingb_memory[object_address+3]; /* TODO: all the other object flags */
-				bool choose_palette_1 = object_flags & bit(4);
-				bool flip_y = object_flags & bit(6);
-				
-				if (choose_palette_1) set_palette(*object_palette_1);
-				else set_palette(*object_palette_0);
-				
-				u8 tile_line_index = flip_y ? (translation_y+7 - *ly) : *ly - translation_y;
-				get_tile_line(0x8000, tile_data_index, tile_line_index, objects[objects_count].tile_line);
-				
-				/* TODO: flip x here */
-			}
-			
-			if (++objects_count >= MAX_OBJECT_COUNT_PER_LINE) break;
-		}
-	}
-	
-	/* add the cached objects to the screen line */
-	
-	for (u8 screen_x = 0; screen_x < SCREEN_WIDTH; screen_x++) {
-		for (u16 object_index = 0; object_index < objects_count; object_index++) {
-			
-			s16 translate_y = objects[object_index].translate_y - TILE_HEIGHT*2;
-			s16 translate_x = objects[object_index].translate_x - TILE_HEIGHT;
-			
-			if (screen_x < translate_x || screen_x >= translate_x + TILE_WIDTH) {
-				continue;
-			}
-			
-			u16 screen_index = screen_x + (*ly)*SCREEN_WIDTH;
-			robingb_screen[screen_index] = 0x02;
-		}
-	}
-}
-
 static void render_objects() {
 	assert(((*lcdc) & LCDC_DOUBLE_HEIGHT_OBJECTS) == false); /* not handling 8x16 objects yet */
 	
+	u8 *screen_line = &robingb_screen[(*ly) * SCREEN_WIDTH];
+	
 	for (u16 object_address = 0xfe00; object_address <= 0xfe9f; object_address += 4) {
-		u8 translation_y = robingb_memory[object_address] - 16;
+		u8 translate_y = robingb_memory[object_address] - 16;
 		
-		if (*ly >= translation_y && *ly < translation_y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
-			u8 translation_x = robingb_memory[object_address+1] - TILE_WIDTH;
+		if (*ly >= translate_y && *ly < translate_y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
+			s16 translate_x = robingb_memory[object_address+1] - TILE_WIDTH;
 			
 			/* TODO: ignore the lower bit of this if in 8x16 mode. */
 			u8 tile_data_index = robingb_memory[object_address+2];
@@ -268,34 +204,51 @@ static void render_objects() {
 			
 			u8 tile_line[TILE_WIDTH];
 			{
-				u8 tile_line_index = flip_y ? (translation_y+7 - *ly) : *ly - translation_y;
+				u8 tile_line_index = flip_y ? (translate_y+7 - *ly) : *ly - translate_y;
 				get_tile_line(0x8000, tile_data_index, tile_line_index, tile_line);
 			}
 			
-			u16 screen_index_start = translation_x + (*ly)*SCREEN_WIDTH;
+			u8 screen_x_start = translate_x < 0 ? 0 : translate_x;
+			u8 screen_x_end = translate_x + TILE_WIDTH;
 			
-			if (behind_bg) {
-				if (flip_x) {
-					for (int i = 0; i < TILE_WIDTH; i++) {
-						if (tile_line[i] != shade_0 && robingb_screen[screen_index_start + 7-i] == shade_0) {
-							robingb_screen[screen_index_start + 7-i] = tile_line[i];
+			if (flip_x) {
+				u8 tile_pixel_index = translate_x < 0 ? (TILE_WIDTH-1)+translate_x : (TILE_WIDTH-1);
+				
+				if (behind_bg) {
+					for (u8 screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
+						u8 tile_pixel = tile_line[tile_pixel_index--];
+						
+						if (!(tile_pixel & SHADE_0_FLAG) && screen_line[screen_x] & SHADE_0_FLAG) {
+							screen_line[screen_x] = tile_pixel;
 						}
 					}
 				} else {
-					for (int i = 0; i < TILE_WIDTH; i++) {
-						if (tile_line[i] != shade_0 && robingb_screen[screen_index_start + i] == shade_0) {
-							robingb_screen[screen_index_start + i] = tile_line[i];
+					for (u8 screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
+						u8 tile_pixel = tile_line[tile_pixel_index--];
+						
+						if (!(tile_pixel & SHADE_0_FLAG)) {
+							screen_line[screen_x] = tile_pixel;
 						}
 					}
 				}
 			} else {
-				if (flip_x) {
-					for (int i = 0; i < TILE_WIDTH; i++) {
-						if (tile_line[i] != shade_0) robingb_screen[screen_index_start + 7-i] = tile_line[i];
+				u8 tile_pixel_index = translate_x < 0 ? -translate_x : 0;
+				
+				if (behind_bg) {
+					for (u8 screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
+						u8 tile_pixel = tile_line[tile_pixel_index++];
+						
+						if (!(tile_pixel & SHADE_0_FLAG) && screen_line[screen_x] & SHADE_0_FLAG) {
+							screen_line[screen_x] = tile_pixel;
+						}
 					}
 				} else {
-					for (int i = 0; i < TILE_WIDTH; i++) {
-						if (tile_line[i] != shade_0) robingb_screen[screen_index_start + i] = tile_line[i];
+					for (u8 screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
+						u8 tile_pixel = tile_line[tile_pixel_index++];
+						
+						if (!(tile_pixel & SHADE_0_FLAG)) {
+							screen_line[screen_x] = tile_pixel;
+						}
 					}
 				}
 			}
@@ -327,8 +280,7 @@ void render_screen_line() {
 	}
 	
 	/* check if object drawing is enabled */
-	/* if ((*lcdc) & LCDC_OBJECTS_ENABLED) render_objects(); */
-	if ((*lcdc) & LCDC_OBJECTS_ENABLED) render_objects_ex();
+	if ((*lcdc) & LCDC_OBJECTS_ENABLED) render_objects();
 	
 	/* convert from game boy 2-bit to target 8-bit */
 	u16 screen_line_start = (*ly)*SCREEN_WIDTH;
