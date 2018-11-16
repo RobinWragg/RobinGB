@@ -192,7 +192,7 @@ static void render_objects() {
 			/* TODO: ignore the lower bit of this if in 8x16 mode. */
 			u8 tile_data_index = robingb_memory[object_address+2];
 			
-			u8 object_flags = robingb_memory[object_address+3]; /* TODO: all the other object flags */
+			u8 object_flags = robingb_memory[object_address+3];
 			bool choose_palette_1 = object_flags & bit(4);
 			bool flip_x = object_flags & bit(5);
 			bool flip_y = object_flags & bit(6);
