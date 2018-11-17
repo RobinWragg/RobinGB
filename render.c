@@ -179,18 +179,21 @@ static void render_window_line() {
 }
 
 static void render_objects() {
-	assert(((*lcdc) & LCDC_DOUBLE_HEIGHT_OBJECTS) == false); /* not handling 8x16 objects yet */
+	u8 object_height = 8;
+	if ((*lcdc) & LCDC_DOUBLE_HEIGHT_OBJECTS) object_height = 16;
 	
 	u8 *screen_line = &robingb_screen[(*ly) * SCREEN_WIDTH];
 	
 	for (u16 object_address = 0xfe9c; object_address >= 0xfe00; object_address -= 4) {
 		s16 translate_y = robingb_memory[object_address] - TILE_HEIGHT*2;
 		
-		if (*ly >= translate_y && *ly < translate_y+8 /* TODO: 8 should be 16 in 8x16 mode.*/) {
+		if (*ly >= translate_y && *ly < translate_y+object_height) {
 			s16 translate_x = robingb_memory[object_address+1] - TILE_WIDTH;
 			
-			/* TODO: ignore the lower bit of this if in 8x16 mode. */
 			u8 tile_data_index = robingb_memory[object_address+2];
+			
+			/* ignore the lowest bit of the index if in double-height mode */
+			if (object_height > 8) tile_data_index &= 0xfe;
 			
 			u8 object_flags = robingb_memory[object_address+3];
 			bool choose_palette_1 = object_flags & bit(4);
