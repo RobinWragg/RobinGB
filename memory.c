@@ -177,10 +177,11 @@ static void perform_rom_bank_control(int address, u8 value) {
 
 void perform_cart_control(int address, u8 value) {
 	if (address >= 0x0000 && address < 0x2000) {
+		/* MBC1: enable/disable external RAM (at 0xa000 to 0xbfff) */
 		
 		/* ignore the request if the cart has no RAM */
 		if (cart_attributes.has_ram) {
-			/* MBC1: external RAM control (at 0xa000 to 0xbfff) */
+			
 		}
 		
 	} else if (address >= 0x2000 && address < 0x4000) {
@@ -188,7 +189,13 @@ void perform_cart_control(int address, u8 value) {
 		perform_rom_bank_control(address, value);
 		
 	} else if (address >= 0x4000 && address < 0x6000) {
-		assert(false); /* MBC1: RAM bank control, or, upper bits of ROM bank number, depending on ROM/RAM mode */
+		
+		/* Do nothing if car has no MBC and no RAM. NOTE: Multiple RAM banks may exist even if there is no MBC! */
+		if (cart_attributes.mbc_type == MBC_NONE && !cart_attributes.has_ram) return;
+		
+		/* MBC1: RAM bank number, or, upper bits of ROM bank number, depending on ROM/RAM mode */
+		assert(false);
+		
 	} else if (address >= 0x6000 && address < 0x8000) {
 		assert(false); /* MBC1: ROM/RAM mode select */
 	} else assert(false);
