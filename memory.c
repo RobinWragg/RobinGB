@@ -78,7 +78,7 @@ static void init_rom_cache() {
 	rom_bank_addresses[1].address = 0x4000;
 	
 	/* TODO: fill the cache with banks here, to reduce the
-	likelihood that they'll need to loaded from disk later. */
+	likelihood that they'll need to be loaded from disk later. */
 	
 	for (int i = 2; i < MAX_NUM_ROM_BANKS_IN_REAL_RAM; i++) {
 		rom_bank_addresses[i].bank_index = -1;

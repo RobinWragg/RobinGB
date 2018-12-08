@@ -23,24 +23,21 @@ static bool negate_produces_u8_half_carry(s16 a, s16 b, bool include_carry) {
 
 static bool addition_produces_u8_half_carry(s16 a, s16 b, bool include_carry) {
 	u8 optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
-	
-	if ((a & 0x0f) + (b & 0x0f) + optional_carry > 0x0f) return true;
-	else return false;
+	return ((a & 0x0f) + (b & 0x0f) + optional_carry > 0x0f);
 }
 
 static bool negate_produces_u8_full_carry(s16 a, s16 b) {
-	if (a - b < 0) return true;
-	else return false;
+	return (a - b < 0);
 }
 
 static bool addition_produces_u8_full_carry(s16 a, s16 b) {
-	if (a + b > 0xff) return true;
-	else return false;
+	return (a + b > 0xff);
 }
 
 static bool addition_produces_u16_half_carry(u16 a, u16 b) {
 	u16 a_bit_11_and_under = a & 0x0fff;
 	u16 b_bit_11_and_under = b & 0x0fff;
+	
 	if (a_bit_11_and_under + b_bit_11_and_under > 0x0fff) return true;
 	else return false;
 }
