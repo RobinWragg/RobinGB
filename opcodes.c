@@ -683,16 +683,20 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0xe6: DEBUG_set_opcode_name("AND x"); instruction_AND(mem_read(registers.pc+1), 2, 8); break;
 		case 0xe7: DEBUG_set_opcode_name("RST 20H"); instruction_RST(0x20); break;
 		case 0xe8: { DEBUG_set_opcode_name("ADD SP,s");
-			s8 signed_byte_to_add = mem_read(registers.pc+1);
+			s8 signed_byte = mem_read(registers.pc+1);
+			u16 sp_plus_signed_byte = registers.sp + signed_byte;
 			
-			/* TODO: really not sure about the carries for this operation. */
-			if (addition_produces_u16_half_carry(registers.sp, signed_byte_to_add)) registers.f |= FLAG_H;
-			else registers.f &= ~FLAG_H;
+			/* TODO: Investigate what happens with this double XOR. */
 			
-			if (addition_produces_u16_full_carry(registers.sp, signed_byte_to_add)) registers.f |= FLAG_C;
-			else registers.f &= ~FLAG_C;
+			if ((registers.sp ^ signed_byte ^ sp_plus_signed_byte) & 0x10) {
+				registers.f |= FLAG_H;
+			} else registers.f &= ~FLAG_H;
 			
-			registers.sp += signed_byte_to_add;
+			if ((registers.sp ^ signed_byte ^ sp_plus_signed_byte) & 0x100) {
+				registers.f |= FLAG_C;
+			} else registers.f &= ~FLAG_C;
+			
+			registers.sp += signed_byte;
 			
 			registers.f &= ~FLAG_Z;
 			registers.f &= ~FLAG_N;
@@ -748,19 +752,17 @@ void execute_next_opcode(u8 *num_cycles_out) {
 		case 0xf7: DEBUG_set_opcode_name("RST 30H"); instruction_RST(0x30); break;
 		case 0xf8: { DEBUG_set_opcode_name("LDHL SP,s");
 			s8 signed_byte = mem_read(registers.pc+1);
+			u16 sp_plus_signed_byte = registers.sp + signed_byte;
 			
-			/* TODO: really not sure about the carries for this operation. */
-			if (signed_byte >= 0) {
-				if (addition_produces_u16_half_carry(registers.sp, signed_byte)) registers.f |= FLAG_H;
-				else registers.f &= ~FLAG_H;
-				if (addition_produces_u16_full_carry(registers.sp, signed_byte)) registers.f |= FLAG_C;
-				else registers.f &= ~FLAG_C;
-			} else {
-				if (negate_produces_u8_half_carry(registers.sp, -signed_byte, false)) registers.f |= FLAG_H;
-				else registers.f &= ~FLAG_H;
-				if (negate_produces_u8_full_carry(registers.sp, -signed_byte)) registers.f |= FLAG_C;
-				else registers.f &= ~FLAG_C;
-			}
+			/* TODO: Investigate what happens with this double XOR. */
+			
+			if ((registers.sp ^ signed_byte ^ sp_plus_signed_byte) & 0x10) {
+				registers.f |= FLAG_H;
+			} else registers.f &= ~FLAG_H;
+			
+			if ((registers.sp ^ signed_byte ^ sp_plus_signed_byte) & 0x100) {
+				registers.f |= FLAG_C;
+			} else registers.f &= ~FLAG_C;
 			
 			registers.hl = registers.sp + signed_byte;
 			
