@@ -54,6 +54,7 @@ struct {
 	Mbc_Type mbc_type;
 	char file_path[256];
 	bool has_ram;
+	s16 rom_bank_count;
 	s16 current_rom_bank_in_slot_1;
 } cart_attributes;
 
@@ -71,7 +72,7 @@ static void load_rom_bank(u8 destination_slot_index, int file_bank_index) {
 		
 		if (cart_attributes.current_rom_bank_in_slot_1 != file_bank_index) {
 			char buf[128];
-			sprintf(buf, "Loading ROM bank %i into slot 1", file_bank_index);
+			sprintf(buf, "Loading ROM bank %i", file_bank_index);
 			robingb_log(buf);
 			u32 file_offset = file_bank_index * ROM_BANK_SIZE;
 			robingb_read_file(cart_attributes.file_path, file_offset, ROM_BANK_SIZE, &robingb_memory[ROM_BANK_SIZE]);
@@ -179,6 +180,22 @@ void set_cart_attributes(Cart_Type cart_type) {
 			assert(false);
 		} break;
 	}
+	
+	/* Number of ROM banks */
+	u8 rom_bank_count_identifier = mem_read(0x0148);
+	if (rom_bank_count_identifier <= 0x08) {
+		cart_attributes.rom_bank_count = 2 << rom_bank_count_identifier;
+	} else {
+		switch (rom_bank_count_identifier) {
+			case 0x52: cart_attributes.rom_bank_count = 72; break;
+			case 0x53: cart_attributes.rom_bank_count = 80; break;
+			case 0x54: cart_attributes.rom_bank_count = 96; break;
+			default: assert(false); break;
+		}
+	}
+	char buf[128];
+	sprintf(buf, "Cart has %i ROM banks", cart_attributes.rom_bank_count);
+	robingb_log(buf);
 	
 	/* has RAM */
 	switch (cart_type) {
