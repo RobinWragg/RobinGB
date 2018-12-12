@@ -50,6 +50,7 @@ typedef enum {
 typedef enum {
 	MBC_NONE,
 	MBC_1,
+	MBC_2,
 	MBC_3
 } Mbc_Type;
 
@@ -217,12 +218,20 @@ void set_cart_attributes(Cart_Type cart_type) {
 			assert(mem_read(0x0148) == 0x00);
 			cart_attributes.mbc_type = MBC_NONE;
 		break;
+		
 		case CART_TYPE_MBC1:
 		case CART_TYPE_MBC1_RAM:
 		case CART_TYPE_MBC1_RAM_BATTERY:
 			robingb_log("Cart has an MBC1");
 			cart_attributes.mbc_type = MBC_1;
 		break;
+		
+		case CART_TYPE_MBC2:
+		case CART_TYPE_MBC2_BATTERY:
+			robingb_log("Cart has an MBC2");
+			cart_attributes.mbc_type = MBC_2;
+		break;
+		
 		case CART_TYPE_MBC3:
 		case CART_TYPE_MBC3_RAM:
 		case CART_TYPE_MBC3_RAM_BATTERY:
@@ -231,6 +240,7 @@ void set_cart_attributes(Cart_Type cart_type) {
 			robingb_log("Cart has an MBC3");
 			cart_attributes.mbc_type = MBC_3;
 		break;
+		
 		default: {
 			char buf[128];
 			sprintf(buf, "Unrecognised cart type: %x", cart_type);
