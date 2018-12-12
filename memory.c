@@ -257,58 +257,6 @@ void mem_init(const char *cart_file_path) {
 	
 }
 
-/* TODO: remove? */
-Mem_Address_Description mem_get_address_description(int address) {
-	Mem_Address_Description desc;
-	desc.region[0] = '\0';
-	desc.byte[0] = '\0';
-	
-	if (address >= 0x0000 && address <= 0x3fff) strcpy(desc.region, "Cart ROM, Bank 0");
-	else if (address >= 0x4000 && address <= 0x7fff) strcpy(desc.region, "Cart ROM, Switchable Bank");
-	else if (address >= 0x8000 && address <= 0x9fff) strcpy(desc.region, "VRAM");
-	else if (address >= 0xa000 && address <= 0xbfff) strcpy(desc.region, "External RAM");
-	else if (address >= 0xc000 && address <= 0xfdff) strcpy(desc.region, "WRAM"); /* all WRAM including echo. */
-	else if (address >= 0xfe00 && address <= 0xfe9f) strcpy(desc.region, "OAM");
-	else if (address >= 0xfea0 && address <= 0xfeff) strcpy(desc.region, "Not Usable");
-	else if (address >= 0xff00 && address <= 0xff7f) {
-		if (address >= 0xff10 && address <= 0xff26) {
-			
-			/* if (address == 0xff24) sprintf(buf, "%s, Sound L/R channel control (NR50)", full_prefix); */
-			/* else if (address == 0xff25) sprintf(buf, "%s, Sound output terminal selection (NR51)", full_prefix); */
-			/* else if (address == 0xff26) sprintf(buf, "%s, Sound on/off (NR52)", full_prefix); */
-			strcpy(desc.region, "Sound");
-			
-		} else if (address >= 0xff40 && address <= 0xff49) {
-			strcpy(desc.region, "LCD");
-			
-			if (address == 0xff40) strcpy(desc.byte, "Control");
-			else if (address == 0xff41) strcpy(desc.byte, "Status");
-			else if (address == 0xff42) strcpy(desc.byte, "Scroll Y");
-			else if (address == 0xff43) strcpy(desc.byte, "Scroll X");
-			else if (address == 0xff44) strcpy(desc.byte, "LY");
-			else if (address == 0xff45) strcpy(desc.byte, "LYC");
-			else if (address == 0xff46) strcpy(desc.byte, "DMA Transfer and Start Address");
-			else if (address == 0xff47) strcpy(desc.byte, "BGP");
-			else if (address == 0xff48) strcpy(desc.byte, "OBP0");
-			else if (address == 0xff49) strcpy(desc.byte, "OBP1");
-			else if (address == 0xff4a) strcpy(desc.byte, "WY");
-			else if (address == 0xff4b) strcpy(desc.byte, "WX");
-			
-		} else strcpy(desc.region, "I/O");
-		
-		if (address == 0xff00) strcpy(desc.byte, "Joypad");
-	}
-	else if (address >= 0xff80 && address <= 0xfffe) {
-		strcpy(desc.region, "HRAM");
-	/* } else if (address == 0xffff) { */
-	/* 	sprintf(buf, "%s, Interrupts Enable Register (IE)", full_prefix); */
-	/* } else { */
-	/* 	sprintf(buf, "%s", full_prefix); */
-	}
-	
-	return desc;
-}
-
 u8 mem_read(u16 address) {
 	return robingb_memory[address];
 }

@@ -76,11 +76,6 @@ typedef struct {
 
 void print_binary(u8 value);
 
-typedef struct {
-	char region[1024];
-	char byte[1024];
-} Mem_Address_Description;
-
 extern void (*robingb_read_file)(const char *path, u32 offset, u32 size, u8 buffer[]);
 extern u8 *robingb_screen;
 
@@ -95,7 +90,6 @@ u16 stack_pop();
 void execute_next_opcode(u8 *num_cycles_out);
 void execute_cb_opcode();
 void finish_instruction(s16 pc_increment, u8 num_cycles_param);
-Mem_Address_Description mem_get_address_description(int address);
 
 extern u8 robingb_memory[];
 void mem_init(const char *cart_file_path);
