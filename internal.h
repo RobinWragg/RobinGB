@@ -93,7 +93,6 @@ void finish_instruction(s16 pc_increment, u8 num_cycles_param);
 
 extern u8 robingb_memory[];
 void mem_init(const char *cart_file_path);
-u8 * mem_get_pointer(u16 address);
 u8 mem_read(u16 address);
 u16 mem_read_u16(u16 address);
 void mem_write(u16 address, u8 value);

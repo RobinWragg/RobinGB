@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define GAME_BOY_MEMORY_ADDRESS_SPACE_SIZE (1024*64)
 
@@ -50,59 +51,48 @@ typedef enum {
 	MBC_3
 } Mbc_Type;
 
-struct {
-	Mbc_Type mbc_type;
-	char file_path[256];
-	bool has_ram;
-	s16 rom_bank_count;
-	s16 current_rom_bank_in_slot_1;
-} cart_attributes;
-
 /* ----------------------------------------------- */
 /* cart control code                               */
 /* ----------------------------------------------- */
 
-static void load_rom_bank(u8 destination_slot_index, int file_bank_index) {
-	if (destination_slot_index == 0) {
-		assert(file_bank_index == 0);
-		robingb_log("Loading ROM bank 0");
-		robingb_read_file(cart_attributes.file_path, 0, ROM_BANK_SIZE, &robingb_memory[0]);
-	} else if (destination_slot_index == 1) {
-		assert(file_bank_index > 0);
-		
-		if (cart_attributes.current_rom_bank_in_slot_1 != file_bank_index) {
-			char buf[128];
-			sprintf(buf, "Loading ROM bank %i", file_bank_index);
-			robingb_log(buf);
-			u32 file_offset = file_bank_index * ROM_BANK_SIZE;
-			robingb_read_file(cart_attributes.file_path, file_offset, ROM_BANK_SIZE, &robingb_memory[ROM_BANK_SIZE]);
-			cart_attributes.current_rom_bank_in_slot_1 = file_bank_index;
-		}
-	} else assert(false);
-}
+static struct {
+	Mbc_Type mbc_type;
+	char file_path[256];
+	bool has_ram;
+	s16 rom_bank_count;
+	s16 current_switchable_rom_bank;
+} cart_state;
+
+/* After set_cart_state(), cached_rom_banks contains all ROM banks other than banks 0 and 1.
+Banks 0 and 1 are stored at the start of robingb_memory.
+Bank 2 is at cached_rom_banks[0], bank 3 at cached_rom_banks[1] and so on. */
+static struct {
+	u8 data[ROM_BANK_SIZE];
+} *cached_rom_banks = NULL;
+u16 cached_rom_bank_count = 0;
 
 static void perform_rom_bank_control(int address, u8 value) {
 	assert(address >= 0x2000 && address < 0x4000);
 	
-	switch (cart_attributes.mbc_type) {
+	switch (cart_state.mbc_type) {
 		case MBC_NONE:
 		/* no-op */
 		break;
 		case MBC_1: {
 			assert(value <= 0x1f);
-			u8 new_bank = cart_attributes.current_rom_bank_in_slot_1 & ~0x1f; /* wipe the lower 5 bits */
+			u8 new_bank = cart_state.current_switchable_rom_bank & ~0x1f; /* wipe the lower 5 bits */
 			new_bank |= value; /* set the lower 5 bits to the new value */
 
 			if (new_bank == 0x00) new_bank++;
 			else if (new_bank == 0x20) new_bank++;
 			else if (new_bank == 0x40) new_bank++;
 			else if (new_bank == 0x60) new_bank++;
-			load_rom_bank(1, new_bank);
+			cart_state.current_switchable_rom_bank = new_bank;
 		} break;
 		case MBC_3: {
 			assert(value <= 0x7f);
 			if (value == 0x00) value++;
-			load_rom_bank(1, value);
+			cart_state.current_switchable_rom_bank = value;
 		} break;
 		default: assert(false); break;
 	}
@@ -113,7 +103,7 @@ void perform_cart_control(int address, u8 value) {
 		/* MBC1: enable/disable external RAM (at 0xa000 to 0xbfff) */
 		
 		/* ignore the request if the cart has no RAM */
-		if (cart_attributes.has_ram) {
+		if (cart_state.has_ram) {
 			
 		}
 		
@@ -124,7 +114,7 @@ void perform_cart_control(int address, u8 value) {
 	} else if (address >= 0x4000 && address < 0x6000) {
 		
 		/* Do nothing if car has no MBC and no RAM. NOTE: Multiple RAM banks may exist even if there is no MBC! */
-		if (cart_attributes.mbc_type == MBC_NONE && !cart_attributes.has_ram) return;
+		if (cart_state.mbc_type == MBC_NONE && !cart_state.has_ram) return;
 		
 		/* MBC1: RAM bank number, or, upper bits of ROM bank number, depending on ROM/RAM mode */
 		assert(false);
@@ -134,11 +124,16 @@ void perform_cart_control(int address, u8 value) {
 	} else assert(false);
 }
 
-/* ----------------------------------------------- */
-/* General memory code                             */
-/* ----------------------------------------------- */
-
-void set_cart_attributes(Cart_Type cart_type) {
+void set_cart_state() {
+	char buf[256];
+	
+	/* Load ROM banks 0 and 1 */
+	robingb_log("Loading the first 2 ROM banks...");
+	robingb_read_file(cart_state.file_path, 0, ROM_BANK_SIZE*2, robingb_memory);
+	robingb_log("Done");
+	
+	
+	Cart_Type cart_type = mem_read(0x0147);
 	
 	/* MBC type */
 	switch (cart_type) {
@@ -148,20 +143,20 @@ void set_cart_attributes(Cart_Type cart_type) {
 			/* TODO: Not sure if this is a complete list of non-MBC cart types. */
 			robingb_log("Cart has no MBC");
 			assert(mem_read(0x0148) == 0x00);
-			cart_attributes.mbc_type = MBC_NONE;
+			cart_state.mbc_type = MBC_NONE;
 		break;
 		
 		case CART_TYPE_MBC1:
 		case CART_TYPE_MBC1_RAM:
 		case CART_TYPE_MBC1_RAM_BATTERY:
 			robingb_log("Cart has an MBC1");
-			cart_attributes.mbc_type = MBC_1;
+			cart_state.mbc_type = MBC_1;
 		break;
 		
 		case CART_TYPE_MBC2:
 		case CART_TYPE_MBC2_BATTERY:
 			robingb_log("Cart has an MBC2");
-			cart_attributes.mbc_type = MBC_2;
+			cart_state.mbc_type = MBC_2;
 		break;
 		
 		case CART_TYPE_MBC3:
@@ -170,7 +165,7 @@ void set_cart_attributes(Cart_Type cart_type) {
 		case CART_TYPE_MBC3_TIMER_BATTERY:
 		case CART_TYPE_MBC3_TIMER_RAM_BATTERY:
 			robingb_log("Cart has an MBC3");
-			cart_attributes.mbc_type = MBC_3;
+			cart_state.mbc_type = MBC_3;
 		break;
 		
 		default: {
@@ -181,21 +176,48 @@ void set_cart_attributes(Cart_Type cart_type) {
 		} break;
 	}
 	
-	/* Number of ROM banks */
+	/* Additional ROM banks */
+	cart_state.current_switchable_rom_bank = 1;
+	
 	u8 rom_bank_count_identifier = mem_read(0x0148);
 	if (rom_bank_count_identifier <= 0x08) {
-		cart_attributes.rom_bank_count = 2 << rom_bank_count_identifier;
+		cart_state.rom_bank_count = 2 << rom_bank_count_identifier;
 	} else {
 		switch (rom_bank_count_identifier) {
-			case 0x52: cart_attributes.rom_bank_count = 72; break;
-			case 0x53: cart_attributes.rom_bank_count = 80; break;
-			case 0x54: cart_attributes.rom_bank_count = 96; break;
+			case 0x52: cart_state.rom_bank_count = 72; break;
+			case 0x53: cart_state.rom_bank_count = 80; break;
+			case 0x54: cart_state.rom_bank_count = 96; break;
 			default: assert(false); break;
 		}
 	}
-	char buf[128];
-	sprintf(buf, "Cart has %i ROM banks", cart_attributes.rom_bank_count);
+	
+	sprintf(buf, "Cart has a total of %i ROM banks", cart_state.rom_bank_count);
 	robingb_log(buf);
+	
+	if (cart_state.rom_bank_count > 2) {
+		if (cached_rom_banks) {
+			robingb_log("free()ing previous ROM bank cache...");
+			free(cached_rom_banks);
+			robingb_log("Done");
+		}
+		
+		cached_rom_bank_count = cart_state.rom_bank_count - 2;
+		
+		sprintf(buf, "Allocating %iKB for the remaining %i ROM banks...", cached_rom_bank_count*16, cached_rom_bank_count);
+		robingb_log(buf);
+		
+		cached_rom_banks = malloc(ROM_BANK_SIZE * cached_rom_bank_count);
+		
+		assert(cached_rom_banks);
+		robingb_log("Done");
+		
+		sprintf(buf, "Loading the remaining %i ROM banks...", cached_rom_bank_count);
+		robingb_log(buf);
+		
+		u32 file_offset = ROM_BANK_SIZE * 2;
+		robingb_read_file(cart_state.file_path, file_offset, ROM_BANK_SIZE*cached_rom_bank_count, (u8*)cached_rom_banks);
+		robingb_log("Done");
+	} else cached_rom_bank_count = 0;
 	
 	/* has RAM */
 	switch (cart_type) {
@@ -215,21 +237,24 @@ void set_cart_attributes(Cart_Type cart_type) {
 		case CART_TYPE_MBC5_RUMBLE_RAM:
 		case CART_TYPE_MBC5_RUMBLE_RAM_BATTERY:
 		case CART_TYPE_HuC1_RAM_BATTERY:
-			cart_attributes.has_ram = true;
+			cart_state.has_ram = true;
 			robingb_log("Cart has RAM");
 		break;
+		
 		default: {
-			cart_attributes.has_ram = false;
+			cart_state.has_ram = false;
 			robingb_log("Cart has no RAM");
 			assert(mem_read(0x0149) == 0x00);
 		} break;
 	}
-	
-	cart_attributes.current_rom_bank_in_slot_1 = -1;
 }
 
+/* ----------------------------------------------- */
+/* General memory code                             */
+/* ----------------------------------------------- */
+
 void mem_init(const char *cart_file_path) {
-	strcpy(cart_attributes.file_path, cart_file_path);
+	strcpy(cart_state.file_path, cart_file_path);
 	
 	mem_write(0xff10, 0x80);
 	mem_write(0xff11, 0xbf);
@@ -264,22 +289,23 @@ void mem_init(const char *cart_file_path) {
 	mem_write(IF_ADDRESS, 0xe1); /* TODO: Might be acceptable for this to be 0xe0 */
 	mem_write(IE_ADDRESS, 0x00);
 	
-	load_rom_bank(0, 0);
-	
-	Cart_Type cart_type = mem_read(0x0147);
-	set_cart_attributes(cart_type);
-	
-	load_rom_bank(1, 1);
-	
-	
+	set_cart_state();
+}
+
+u8 read_switchable_rom_bank(u16 address) {
+	if (cart_state.current_switchable_rom_bank == 1) {
+		return robingb_memory[address];
+	} else {
+		return cached_rom_banks[cart_state.current_switchable_rom_bank-2].data[address-ROM_BANK_SIZE];
+	}
 }
 
 u8 mem_read(u16 address) {
-	return robingb_memory[address];
-}
-
-u8 * mem_get_pointer(u16 address) {
-	return &robingb_memory[address];
+	if (address >= 0x4000 && address < 0x8000) {
+		return read_switchable_rom_bank(address);
+	} else {
+		return robingb_memory[address];
+	}
 }
 
 u16 mem_read_u16(u16 address) {
