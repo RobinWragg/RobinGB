@@ -34,21 +34,6 @@ static bool addition_produces_u8_full_carry(s16 a, s16 b) {
 	return (a + b > 0xff);
 }
 
-#warning TODO: This function is legacy. See opcodes 0xe8 and 0xf8 for the new way.
-static bool addition_produces_u16_half_carry(u16 a, u16 b) {
-	u16 a_bit_11_and_under = a & 0x0fff;
-	u16 b_bit_11_and_under = b & 0x0fff;
-	
-	if (a_bit_11_and_under + b_bit_11_and_under > 0x0fff) return true;
-	else return false;
-}
-
-#warning TODO: This function is legacy. See opcodes 0xe8 and 0xf8 for the new way.
-static bool addition_produces_u16_full_carry(s32 a, s32 b) {
-	if (a + b > 0xffff) return true;
-	else return false;
-}
-
 INSTRUCTION static void instruction_XOR(u8 to_xor, u8 num_cycles) {
 	registers.a ^= to_xor;
 	
@@ -196,18 +181,21 @@ INSTRUCTION static void instruction_ADD_A_u8(u8 to_add, u16 pc_increment, u8 num
 	finish_instruction(pc_increment, num_cycles);
 }
 
-INSTRUCTION static void instruction_ADD_HL_u16(u16 to_add, u16 pc_increment, u8 num_cycles) {
-	if (addition_produces_u16_half_carry(registers.hl, to_add)) registers.f |= FLAG_H;
-	else registers.f &= ~FLAG_H;
+INSTRUCTION static void instruction_ADD_HL_u16(u16 to_add) {
 	
-	if (addition_produces_u16_full_carry(registers.hl, to_add)) registers.f |= FLAG_C;
+	/* check for 16-bit full carry */
+	if (registers.hl + to_add > 0xffff) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
-	registers.hl += to_add;
+	/* check for 16-bit half carry */
+	if ((registers.hl & 0x0fff) + (to_add & 0x0fff) > 0x0fff) registers.f |= FLAG_H;
+	else registers.f &= ~FLAG_H;
 	
 	registers.f &= ~FLAG_N;
 	
-	finish_instruction(pc_increment, num_cycles);
+	registers.hl += to_add;
+	
+	finish_instruction(1, 8);
 }
 
 INSTRUCTION static void instruction_SUB_u8(u8 subber, u16 pc_increment, int num_cycles) {
@@ -263,7 +251,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 4);
 		} break;
 		case 0x08: DEBUG_set_opcode_name("LD (xx),SP"); mem_write_u16(mem_read_u16(registers.pc+1), registers.sp); finish_instruction(3, 20); break;
-		case 0x09: DEBUG_set_opcode_name("ADD HL,BC"); instruction_ADD_HL_u16(registers.bc, 1, 8); break;
+		case 0x09: DEBUG_set_opcode_name("ADD HL,BC"); instruction_ADD_HL_u16(registers.bc); break;
 		case 0x0a: DEBUG_set_opcode_name("LD A,(BC)"); registers.a = mem_read(registers.bc); finish_instruction(1, 8); break;
 		case 0x0b: DEBUG_set_opcode_name("DEC BC"); registers.bc--; finish_instruction(1, 8); break;
 		case 0x0c: DEBUG_set_opcode_name("INC C"); instruction_INC_u8(&registers.c, 4); break;
@@ -314,7 +302,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			finish_instruction(1, 4);
 		} break;
 		case 0x18: DEBUG_set_opcode_name("JR %i(d)"); finish_instruction(2 + (s8)mem_read(registers.pc+1), 12); break;
-		case 0x19: DEBUG_set_opcode_name("ADD HL,DE"); instruction_ADD_HL_u16(registers.de, 1, 8); break;
+		case 0x19: DEBUG_set_opcode_name("ADD HL,DE"); instruction_ADD_HL_u16(registers.de); break;
 		case 0x1a: DEBUG_set_opcode_name("LD A,(DE)"); registers.a = mem_read(registers.de); finish_instruction(1, 8); break;
 		case 0x1b: DEBUG_set_opcode_name("DEC DE"); registers.de--; finish_instruction(1, 8); break;
 		case 0x1c: DEBUG_set_opcode_name("INC E"); instruction_INC_u8(&registers.e, 4); break;
@@ -376,7 +364,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			if (registers.f & FLAG_Z) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
-		case 0x29: DEBUG_set_opcode_name("ADD HL,HL"); instruction_ADD_HL_u16(registers.hl, 1, 8); break;
+		case 0x29: DEBUG_set_opcode_name("ADD HL,HL"); instruction_ADD_HL_u16(registers.hl); break;
 		case 0x2a: DEBUG_set_opcode_name("LD A,(HL+)"); registers.a = mem_read(registers.hl++); finish_instruction(1, 8); break;
 		case 0x2b: DEBUG_set_opcode_name("DEC HL"); registers.hl--; finish_instruction(1, 8); break;
 		case 0x2c: DEBUG_set_opcode_name("INC L"); instruction_INC_u8(&registers.l, 4); break;
@@ -416,7 +404,7 @@ void execute_next_opcode(u8 *num_cycles_out) {
 			if (registers.f & FLAG_C) finish_instruction(2 + (s8)mem_read(registers.pc+1), 12);
 			else finish_instruction(2, 8);
 		} break;
-		case 0x39: DEBUG_set_opcode_name("ADD HL,SP"); instruction_ADD_HL_u16(registers.sp, 1, 8); break;
+		case 0x39: DEBUG_set_opcode_name("ADD HL,SP"); instruction_ADD_HL_u16(registers.sp); break;
 		case 0x3a: DEBUG_set_opcode_name("LD A,(HL-)"); registers.a = mem_read(registers.hl--); finish_instruction(1, 8); break;
 		case 0x3b: DEBUG_set_opcode_name("DEC SP"); registers.sp--; finish_instruction(1, 8); break;
 		case 0x3c: DEBUG_set_opcode_name("INC A"); instruction_INC_u8(&registers.a, 4); break;
