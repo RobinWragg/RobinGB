@@ -97,7 +97,7 @@ void robingb_init(
 
 u8 *lcd_ly = &robingb_memory[LCD_LY_ADDRESS];
 
-void robingb_update(RobinGB_Input *input, u8 screen_out[], u8 *ly_out) {
+void robingb_update(u8 screen_out[], u8 *ly_out) {
 	u8 prev_lcd_ly = *lcd_ly;
 	
 	robingb_screen = screen_out;
@@ -110,7 +110,6 @@ void robingb_update(RobinGB_Input *input, u8 screen_out[], u8 *ly_out) {
 		
 		handle_interrupts();
 		lcd_update(num_cycles);
-		joypad_update(input);
 		/* update_audio(num_cycles); */
 		update_timer(num_cycles);
 	}

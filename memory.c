@@ -324,6 +324,9 @@ void mem_write(u16 address, u8 value) {
 	
 	if (address < 0x8000) {
 		perform_cart_control(address, value);
+	} else if (address == 0xff00) {
+		robingb_memory[address] = value;
+		joypad_update();
 	} else if (address == 0xff46) {
 		memcpy(&robingb_memory[0xfe00], &robingb_memory[value * 0x100], 160); /* OAM DMA transfer */
 	} else {

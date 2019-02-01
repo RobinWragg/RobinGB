@@ -99,7 +99,7 @@ void mem_write(u16 address, u8 value);
 void mem_write_u16(u16 address, u16 value);
 
 void lcd_update(int num_cycles_passed);
-void joypad_update(RobinGB_Input *input);
+void joypad_update();
 void init_timer();
 u8 get_new_timer_div_value_on_write();
 void update_timer(u8 num_cycles_delta);
