@@ -9,8 +9,6 @@
 #define LEFT_OR_B 0x02
 #define RIGHT_OR_A 0x01
 
-static u8 *joypad_register = &robingb_memory[0xff00];
-
 static u8 action_buttons = 0xff;
 static u8 direction_buttons = 0xff;
 
@@ -42,19 +40,21 @@ void robingb_release_button(RobinGB_Button button) {
 	}
 }
 
-void joypad_update() {
-	*joypad_register |= 0xc0; /* bits 6 and 7 are always 1. */
-	*joypad_register |= 0x0f; /* unpressed buttons are 1. */
+u8 process_joypad_register(u8 register_value) {
+	register_value |= 0xc0; /* bits 6 and 7 are always 1. */
+	register_value |= 0x0f; /* unpressed buttons are 1. */
 	
-	if (((*joypad_register) & ACTION_BUTTON_REQUEST) == false) {
-		*joypad_register &= action_buttons;
+	if ((register_value & ACTION_BUTTON_REQUEST) == false) {
+		register_value &= action_buttons;
 		request_interrupt(INTERRUPT_FLAG_JOYPAD);
 	}
 	
-	if (((*joypad_register) & DIRECTION_BUTTON_REQUEST) == false) {
-		*joypad_register &= direction_buttons;
+	if ((register_value & DIRECTION_BUTTON_REQUEST) == false) {
+		register_value &= direction_buttons;
 		request_interrupt(INTERRUPT_FLAG_JOYPAD);
 	}
+	
+	return register_value;
 }
 
 
