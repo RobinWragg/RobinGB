@@ -1,6 +1,7 @@
 #include "internal.h"
 #include <assert.h>
 
+#define DIV_ADDRESS 0xff04
 #define TIMA_ADDRESS 0xff05
 #define TMA_ADDRESS 0xff06
 #define TAC_ADDRESS 0xff07
@@ -19,14 +20,14 @@ static u16 cycles_since_last_tima_increment = 0;
 void init_timer() {
 	incrementer_every_cycle = 0xabcc;
 	assert(*div == 0xab);
-	robingb_memory[TIMER_DIV_ADDRESS] = *div;
+	robingb_memory[DIV_ADDRESS] = *div;
 	
 	*tima = 0x00;
 	*tma = 0x00;
 	*tac = 0x00;
 }
 
-u8 get_new_timer_div_value_on_write() {
+u8 process_written_timer_div_register() {
 	return 0x00;
 }
 
@@ -34,7 +35,7 @@ void update_timer(u8 num_cycles) {
 	
 	/* update incrementer and therefore DIV. */
 	incrementer_every_cycle += num_cycles;
-	robingb_memory[TIMER_DIV_ADDRESS] = *div;
+	robingb_memory[DIV_ADDRESS] = *div;
 	
 	/* Update TIMA and potentially request an interrupt */
 	if ((*tac) & 0x04 /* check if timer is enabled */) {

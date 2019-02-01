@@ -28,8 +28,6 @@ typedef int32_t s32;
 #define FLAG_H (0x20) /* Half Carry Flag (BCD) */
 #define FLAG_C (0x10) /* Carry Flag */
 
-#define TIMER_DIV_ADDRESS (0xff04)
-
 #define LCD_CONTROL_ADDRESS 0xff40 /* "LCDC" */
 #define LCD_STATUS_ADDRESS 0xff41
 #define LCD_LY_ADDRESS 0xff44
@@ -99,9 +97,9 @@ void mem_write(u16 address, u8 value);
 void mem_write_u16(u16 address, u16 value);
 
 void lcd_update(int num_cycles_passed);
-u8 process_joypad_register(u8 new_value);
+u8 process_written_joypad_register(u8 new_value);
 void init_timer();
-u8 get_new_timer_div_value_on_write();
+u8 process_written_timer_div_register();
 void update_timer(u8 num_cycles_delta);
 void update_audio(int num_cycles);
 void render_screen_line();
