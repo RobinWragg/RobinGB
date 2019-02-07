@@ -1,8 +1,8 @@
 #include "internal.h"
 #include <assert.h>
 
-u8 *requested_interrupts = &robingb_memory[IF_ADDRESS];
-u8 *enabled_interrupts = &robingb_memory[IE_ADDRESS];
+static u8 *requested_interrupts = &robingb_memory[IF_ADDRESS];
+static u8 *enabled_interrupts = &robingb_memory[IE_ADDRESS];
 
 void handle_interrupts() {
 	u8 interrupts_to_handle = (*requested_interrupts) & (*enabled_interrupts);

@@ -1,4 +1,3 @@
-/* TODO: Add a print/log function */
 /* TODO: Remove assert()s */
 /* TODO: Add formatting cabability to robingb_log() */
 
@@ -35,7 +34,7 @@ void robingb_press_button(RobinGB_Button button);
 void robingb_release_button(RobinGB_Button button);
 
 /* Set this to your logging function if you want to receive logs from RobinGB. */
-extern void (*robingb_logging_function_ptr)(const char *text);
+extern void (*robingb_logging_function)(const char *text);
 
 void robingb_init(
 	const char *cart_file_path,

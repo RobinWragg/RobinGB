@@ -267,12 +267,22 @@ void render_screen_line() {
 		u8 bg_buffer[BG_WIDTH];
 		render_background_line(bg_buffer);
 		
-		/* copy bg to screen */
-		u8 bg_x = *bg_scroll_x;
-		u16 screen_line_start = (*ly) * SCREEN_WIDTH;
-		u16 screen_line_end = screen_line_start + SCREEN_WIDTH;
-		for (u16 screen_index = screen_line_start; screen_index < screen_line_end; screen_index++) {
-			robingb_screen[screen_index] = bg_buffer[bg_x++]; /* bg_x overflows deliberately */
+		/* Copy background to screen */
+		
+		u8 *screen_line_ptr = &robingb_screen[(*ly) * SCREEN_WIDTH];
+		
+		if (*bg_scroll_x < BG_WIDTH-SCREEN_WIDTH) {
+			memcpy(screen_line_ptr, &bg_buffer[*bg_scroll_x], SCREEN_WIDTH);
+		} else {
+			/* Handle background wraparound */
+			
+			u8 first_bg_section_size = BG_WIDTH - (*bg_scroll_x);
+			u8 second_bg_section_size = SCREEN_WIDTH - first_bg_section_size;
+			
+			memcpy(screen_line_ptr, &bg_buffer[*bg_scroll_x], first_bg_section_size);
+			
+			u8 bg_x = *bg_scroll_x + first_bg_section_size; /* Variable deliberately overflows */
+			memcpy(screen_line_ptr + first_bg_section_size, &bg_buffer[bg_x], second_bg_section_size);
 		}
 		
 		if ((*lcdc) & LCDC_WINDOW_ENABLED) render_window_line();

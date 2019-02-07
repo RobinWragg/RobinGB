@@ -7,17 +7,17 @@
 Registers registers;
 bool halted = false;
 
-void (*robingb_logging_function_ptr)(const char *text) = 0;
+void (*robingb_logging_function)(const char *text) = 0;
 
 void robingb_log_with_prefix(const char *prefix, const char *main_body) {
-	if (robingb_logging_function_ptr) {
+	if (robingb_logging_function) {
 		char *buf = malloc(strlen(prefix) + strlen(main_body) + 5);
 		buf[0] = '\0';
 		strcat(buf, prefix);
 		strcat(buf, "(): ");
 		strcat(buf, main_body);
 		
-		robingb_logging_function_ptr(buf);
+		robingb_logging_function(buf);
 		
 		free(buf);
 	}
