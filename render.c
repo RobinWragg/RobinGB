@@ -131,7 +131,7 @@ static void get_bg_tile_line(u8 coord_x, u8 coord_y, u16 tile_map_address_space,
 	}
 }
 
-static void render_background_line(u8 bg_line[]) {
+static void render_background_line() {
 	u8 bg_y = *ly + *bg_scroll_y;
 	
 	u8 tilegrid_y = bg_y / TILE_HEIGHT;
@@ -140,8 +140,36 @@ static void render_background_line(u8 bg_line[]) {
 	u16 tile_map_address_space = ((*lcdc) & LCDC_BG_TILE_MAP_SELECT) ? 0x9c00 : 0x9800;
 	u16 tile_data_address_space = ((*lcdc) & LCDC_BG_AND_WINDOW_TILE_DATA_SELECT) ? 0x8000 : 0x9000;
 	
-	for (int tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
+	/* for (int tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
 		get_bg_tile_line(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, &bg_line[tilegrid_x*TILE_WIDTH]);
+	} */
+	
+	u8 *screen_line = &robingb_screen[(*ly) * SCREEN_WIDTH];
+	
+	for (int tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
+		u8 screen_x = tilegrid_x*TILE_WIDTH - (*bg_scroll_x);
+		assert(screen_x >= 0);
+		
+		if (screen_x <= SCREEN_WIDTH - TILE_WIDTH) {
+			get_bg_tile_line(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, &screen_line[screen_x]);
+		} else if (screen_x <= SCREEN_WIDTH) {
+			u8 tile_line[TILE_WIDTH];
+			get_bg_tile_line(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line);
+			
+			for (u8 tile_x = 0; tile_x < SCREEN_WIDTH-screen_x; tile_x++) {
+				screen_line[screen_x + tile_x] = tile_line[tile_x];
+			}
+		} else if (screen_x-SCREEN_WIDTH < TILE_WIDTH) {
+			u8 pixel_count_to_render = screen_x - SCREEN_WIDTH;
+			screen_x = 0;
+			
+			u8 tile_line[TILE_WIDTH];
+			get_bg_tile_line((*bg_scroll_x)/TILE_WIDTH, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line);
+			
+			for (u8 tile_x = TILE_WIDTH - pixel_count_to_render; tile_x < TILE_WIDTH; tile_x++) {
+				screen_line[screen_x++] = tile_line[tile_x];
+			}
+		}
 	}
 }
 
@@ -264,26 +292,7 @@ void render_screen_line() {
 	if ((*lcdc) & LCDC_BG_AND_WINDOW_ENABLED) {
 		set_palette(*bg_palette);
 		
-		u8 bg_buffer[BG_WIDTH];
-		render_background_line(bg_buffer);
-		
-		/* Copy background to screen */
-		
-		u8 *screen_line_ptr = &robingb_screen[(*ly) * SCREEN_WIDTH];
-		
-		if (*bg_scroll_x < BG_WIDTH-SCREEN_WIDTH) {
-			memcpy(screen_line_ptr, &bg_buffer[*bg_scroll_x], SCREEN_WIDTH);
-		} else {
-			/* Handle background wraparound */
-			
-			u8 first_bg_section_size = BG_WIDTH - (*bg_scroll_x);
-			u8 second_bg_section_size = SCREEN_WIDTH - first_bg_section_size;
-			
-			memcpy(screen_line_ptr, &bg_buffer[*bg_scroll_x], first_bg_section_size);
-			
-			u8 bg_x = *bg_scroll_x + first_bg_section_size; /* Variable deliberately overflows */
-			memcpy(screen_line_ptr + first_bg_section_size, &bg_buffer[bg_x], second_bg_section_size);
-		}
+		render_background_line();
 		
 		if ((*lcdc) & LCDC_WINDOW_ENABLED) render_window_line();
 	} else {
