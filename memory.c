@@ -98,7 +98,7 @@ static void perform_rom_bank_control(int address, u8 value) {
 	}
 }
 
-void perform_cart_control(int address, u8 value) {
+static void perform_cart_control(int address, u8 value) {
 	if (address >= 0x0000 && address < 0x2000) {
 		/* MBC1: enable/disable external RAM (at 0xa000 to 0xbfff) */
 		
@@ -124,7 +124,7 @@ void perform_cart_control(int address, u8 value) {
 	} else assert(false);
 }
 
-void set_cart_state() {
+static void set_cart_state() {
 	char buf[256];
 	
 	/* Load ROM banks 0 and 1 */
@@ -292,7 +292,7 @@ void mem_init(const char *cart_file_path) {
 	set_cart_state();
 }
 
-u8 read_switchable_rom_bank(u16 address) {
+static u8 read_switchable_rom_bank(u16 address) {
 	if (cart_state.current_switchable_rom_bank == 1) {
 		return robingb_memory[address];
 	} else {
