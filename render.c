@@ -153,15 +153,20 @@ static void render_background_line() {
 			
 			u8 tile_line[TILE_WIDTH];
 			get_bg_tile_line(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line);
-			memcpy(&screen_line[screen_x], tile_line, SCREEN_WIDTH-screen_x);
 			
+			for (u8 tile_x = 0; tile_x < SCREEN_WIDTH-screen_x; tile_x++) {
+				screen_line[screen_x + tile_x] = tile_line[tile_x];
+			}
 		} else if (screen_x-SCREEN_WIDTH < TILE_WIDTH) {
+			u8 pixel_count_to_render = screen_x - SCREEN_WIDTH;
+			screen_x = 0;
 			
 			u8 tile_line[TILE_WIDTH];
-			u8 tile_x_render_start = SCREEN_WIDTH + TILE_WIDTH - screen_x;
 			get_bg_tile_line((*bg_scroll_x)/TILE_WIDTH, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line);
-			memcpy(screen_line, &tile_line[tile_x_render_start], TILE_WIDTH - tile_x_render_start);
 			
+			for (u8 tile_x = TILE_WIDTH - pixel_count_to_render; tile_x < TILE_WIDTH; tile_x++) {
+				screen_line[screen_x++] = tile_line[tile_x];
+			}
 		}
 	}
 }
