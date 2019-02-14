@@ -25,6 +25,8 @@ This signal is set to 1 if:
 
 #define NUM_CYCLES_PER_FULL_SCREEN_REFRESH 70224 /* Approximately 59.7275Hz */
 #define NUM_CYCLES_PER_LY_INCREMENT 456
+#define LY_VBLANK_ENTRY_VALUE 144
+#define LY_MAXIMUM_VALUE 154
 #define MODE_0_CYCLE_DURATION 204
 #define MODE_1_CYCLE_DURATION 4560
 #define MODE_2_CYCLE_DURATION 80
@@ -46,12 +48,13 @@ void lcd_update(int num_cycles_delta) {
 	
 	static s32 elapsed_cycles = 0;
 	elapsed_cycles += num_cycles_delta;
-	if (elapsed_cycles >= NUM_CYCLES_PER_FULL_SCREEN_REFRESH) {
-		elapsed_cycles -= NUM_CYCLES_PER_FULL_SCREEN_REFRESH;
-	}
 	
 	/* set LY */
-	*ly = elapsed_cycles / NUM_CYCLES_PER_LY_INCREMENT;
+	if (elapsed_cycles >= NUM_CYCLES_PER_LY_INCREMENT) {
+		elapsed_cycles -= NUM_CYCLES_PER_LY_INCREMENT;
+		
+		if (++(*ly) >= LY_MAXIMUM_VALUE) *ly = 0;
+	}
 	
 	/* handle LYC */
 	if (*ly == *lyc) {
@@ -61,11 +64,11 @@ void lcd_update(int num_cycles_delta) {
 		*status &= ~0x04;
 	}
 	
-	u8 current_mode;
+	/* set mode */
+	const u8 prev_mode = (*status) & 0x03; /* get lower 2 bits only */
+	*status &= 0xfc; /* wipe the old mode */
 	
-	if (elapsed_cycles < NUM_CYCLES_PER_FULL_SCREEN_REFRESH - MODE_1_CYCLE_DURATION) {
-		u16 row_draw_phase = elapsed_cycles % NUM_CYCLES_PER_LY_INCREMENT;
-		
+	if (*ly < LY_VBLANK_ENTRY_VALUE) {
 		/*
 		Approx mode graph:
 		Mode 2  2_____2_____2_____2_____2_____2___________________2____
@@ -74,37 +77,30 @@ void lcd_update(int num_cycles_delta) {
 		Mode 1  ____________________________________11111111111111_____
 		*/
 		
-		if (row_draw_phase >= MODE_2_CYCLE_DURATION + MODE_3_CYCLE_DURATION) {
-			current_mode = 0x00; /* H-blank */
-		} else if (row_draw_phase >= MODE_2_CYCLE_DURATION) {
-			current_mode = 0x03; /* The LCD is reading from both OAM and VRAM */
+		if (elapsed_cycles >= MODE_2_CYCLE_DURATION + MODE_3_CYCLE_DURATION) {
+			*status |= 0x00; /* H-blank */
+			
+			if (prev_mode != 0x00 && ((*status) & 0x08)) {
+				request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+			}
+		} else if (elapsed_cycles >= MODE_2_CYCLE_DURATION) {
+			*status |= 0x03; /* The LCD is reading from both OAM and VRAM */
+			
+			if (prev_mode != 0x03) render_screen_line();
 		} else {
-			current_mode = 0x02; /* The LCD is reading from OAM */
+			*status |= 0x02; /* The LCD is reading from OAM */
+			
+			if (prev_mode != 0x02 && ((*status) & 0x20)) {
+				request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+			}
 		}
 		
 	} else {
-		current_mode = 0x01; /* V-blank */
-	}
-	
-	const u8 prev_mode = (*status) & 0x03; /* get lower 2 bits only */
-	*status &= 0xfc; /* wipe the old mode */
-	*status |= current_mode;
-	
-	if (prev_mode != current_mode) {
-		switch (current_mode) {
-			case 0x00: {
-				if ((*status) & 0x08) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
-			} break;
-			case 0x01: {
-				request_interrupt(INTERRUPT_FLAG_VBLANK);
-				if ((*status) & 0x10) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
-			} break;
-			case 0x02: {
-				if ((*status) & 0x20) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
-			} break;
-			case 0x03: {
-				render_screen_line();
-			} break;
+		*status |= 0x01; /* V-blank */
+		
+		if (prev_mode != 0x01) {
+			request_interrupt(INTERRUPT_FLAG_VBLANK);
+			if ((*status) & 0x10) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 		}
 	}
 }
