@@ -35,7 +35,32 @@ static u8 *status = &robingb_memory[LCD_STATUS_ADDRESS];
 static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
 static u8 *lyc = &robingb_memory[LCD_LYC_ADDRESS];
 
-void update_mode_and_write_status(int elapsed_cycles) {
+void lcd_update(int num_cycles_delta) {
+	if (((*control) & LCDC_ENABLED_BIT) == 0) {
+		/* Bit 7 of the LCD control register is 0, so the LCD is switched off. */
+		/* LY, the mode, and the LYC=LY flag should all be 0. */
+		*ly = 0x00;
+		*status &= 0xf8;
+		return; 
+	}
+	
+	static s32 elapsed_cycles = 0;
+	elapsed_cycles += num_cycles_delta;
+	if (elapsed_cycles >= NUM_CYCLES_PER_FULL_SCREEN_REFRESH) {
+		elapsed_cycles -= NUM_CYCLES_PER_FULL_SCREEN_REFRESH;
+	}
+	
+	/* set LY */
+	*ly = elapsed_cycles / NUM_CYCLES_PER_LY_INCREMENT;
+	
+	/* handle LYC */
+	if (*ly == *lyc) {
+		*status |= 0x04;
+		if ((*status) & 0x40) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+	} else {
+		*status &= ~0x04;
+	}
+	
 	u8 current_mode;
 	
 	if (elapsed_cycles < NUM_CYCLES_PER_FULL_SCREEN_REFRESH - MODE_1_CYCLE_DURATION) {
@@ -82,35 +107,6 @@ void update_mode_and_write_status(int elapsed_cycles) {
 			} break;
 		}
 	}
-}
-
-void lcd_update(int num_cycles_delta) {
-	if (((*control) & LCDC_ENABLED_BIT) == 0) {
-		/* Bit 7 of the LCD control register is 0, so the LCD is switched off. */
-		/* LY, the mode, and the LYC=LY flag should all be 0. */
-		*ly = 0x00;
-		*status &= 0xf8;
-		return; 
-	}
-	
-	static s32 elapsed_cycles = 0;
-	elapsed_cycles += num_cycles_delta;
-	if (elapsed_cycles >= NUM_CYCLES_PER_FULL_SCREEN_REFRESH) {
-		elapsed_cycles -= NUM_CYCLES_PER_FULL_SCREEN_REFRESH;
-	}
-	
-	/* set LY */
-	*ly = elapsed_cycles / NUM_CYCLES_PER_LY_INCREMENT;
-	
-	/* handle LYC */
-	if (*ly == *lyc) {
-		*status |= 0x04;
-		if ((*status) & 0x40) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
-	} else {
-		*status &= ~0x04;
-	}
-	
-	update_mode_and_write_status(elapsed_cycles);
 }
 
 
