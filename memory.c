@@ -79,14 +79,13 @@ static void perform_rom_bank_control(int address, u8 value) {
 		/* no-op */
 		break;
 		case MBC_1: {
-			assert(value <= 0x1f);
+			value &= 0x1f; /* Discard all but the lower 5 bits */
 			u8 new_bank = cart_state.current_switchable_rom_bank & ~0x1f; /* wipe the lower 5 bits */
 			new_bank |= value; /* set the lower 5 bits to the new value */
-
-			if (new_bank == 0x00) new_bank++;
-			else if (new_bank == 0x20) new_bank++;
-			else if (new_bank == 0x40) new_bank++;
-			else if (new_bank == 0x60) new_bank++;
+			
+			/* TODO: This 0-to-1 conversion should be done when setting the upper bits for the rom bank index instead. */
+			if (new_bank == 0x00 || new_bank == 0x20 || new_bank == 0x40 || new_bank == 0x60) new_bank++;
+			
 			cart_state.current_switchable_rom_bank = new_bank;
 		} break;
 		case MBC_3: {
