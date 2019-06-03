@@ -79,13 +79,15 @@ void get_chan3_wave_pattern(s8 pattern_out[]) {
 			default: assert(false); break;
 		}
 		
-		for (int i = 0; i < CHAN3_WAVE_PATTERN_LENGTH; i += 2) {
+		int i;
+		for (i = 0; i < CHAN3_WAVE_PATTERN_LENGTH; i += 2) {
 			u8 value = mem_read(0xff30 + i/2);
 			pattern_out[i] = (((value & 0xf0) >> 4) * 16 - 128) * volume;
 			pattern_out[i+1] = ((value & 0x0f) * 16 - 128) * volume;
 		}
 	} else {
-		for (int i = 0; i < CHAN3_WAVE_PATTERN_LENGTH; i++) {
+		int i;
+		for (i = 0; i < CHAN3_WAVE_PATTERN_LENGTH; i++) {
 			pattern_out[i] = 0;
 		}
 	}
@@ -217,7 +219,8 @@ void write_next_sample() {
 }
 
 void update_audio(int num_cycles) {
-	for (int i = 0; i < RING_SIZE; i++) {
+	int ring_index;
+	for (ring_index = 0; ring_index < RING_SIZE; ring_index++) {
 		if (ring_write_index != ring_read_index) write_next_sample();
 		else break;
 	}

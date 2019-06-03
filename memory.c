@@ -268,7 +268,8 @@ void mem_init(const char *cart_file_path) {
 	mem_write(0xff1c, 0x9f);
 	mem_write(0xff1e, 0xbf);
 	mem_write(0xff00, 0xff);
-	for (int i = 0xff10; i <= 0xff26; i++) mem_write(i, 0x00); /* zero audio */
+	int address;
+	for (address = 0xff10; address <= 0xff26; address++) mem_write(address, 0x00); /* zero audio */
 	mem_write(0xff20, 0xff);
 	mem_write(0xff21, 0x00);
 	mem_write(0xff22, 0x00);
