@@ -91,9 +91,7 @@ static void perform_rom_bank_control(int address, u8 value) {
 			cart_state.current_switchable_rom_bank = new_bank;
 		} break;
 		case MBC_3: {
-			assert(value <= 0x7f);
-			if (value == 0x00) value++;
-			cart_state.current_switchable_rom_bank = value;
+			assert(false); /* Not implemented yet */
 		} break;
 		default: assert(false); break;
 	}
