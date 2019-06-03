@@ -97,6 +97,10 @@ static void perform_rom_bank_control(int address, u8 value) {
 	}
 }
 
+static void perform_ram_bank_control(int address, u8 value) {
+	/* Temporary no-op */
+}
+
 static void perform_cart_control(int address, u8 value) {
 	if (address >= 0x0000 && address < 0x2000) {
 		/* MBC1: enable/disable external RAM (at 0xa000 to 0xbfff) */
@@ -116,7 +120,13 @@ static void perform_cart_control(int address, u8 value) {
 		if (cart_state.mbc_type == MBC_NONE && !cart_state.has_ram) return;
 		
 		/* TODO: MBC1: RAM bank number, or, upper bits of ROM bank number, depending on ROM/RAM mode */
-		assert(false);
+		assert(cart_state.mbc_type == MBC_1);
+		
+		if (cart_state.banking_mode == BM_ROM) {
+			perform_rom_bank_control(address, value);
+		} else {
+			perform_ram_bank_control(address, value);
+		}
 		
 	} else if (address >= 0x6000 && address < 0x8000) {
 		/* MBC1: ROM/RAM banking mode select */
