@@ -48,13 +48,15 @@ typedef enum {
 /* cart control code                               */
 /* ----------------------------------------------- */
 
+typedef enum {
+	MBC_NONE,
+	MBC_1,
+	MBC_2,
+	MBC_3
+} Mbc_Type;
+
 static struct {
-	enum {
-		MBC_NONE,
-		MBC_1,
-		MBC_2,
-		MBC_3
-	} mbc_type;
+	Mbc_Type mbc_type;
 	char file_path[256];
 	bool has_ram;
 	s16 rom_bank_count;
@@ -65,7 +67,7 @@ static struct {
 	} banking_mode;
 } cart_state;
 
-/* After set_cart_state(), cached_rom_banks contains all ROM banks other than banks 0 and 1.
+/* After init_cart_state(), cached_rom_banks contains all ROM banks other than banks 0 and 1.
 Banks 0 and 1 are stored at the start of robingb_memory.
 Bank 2 is at cached_rom_banks[0], bank 3 at cached_rom_banks[1] and so on. */
 static struct {
@@ -138,7 +140,49 @@ static void perform_cart_control(int address, u8 value) {
 	} else assert(false);
 }
 
-static void set_cart_state() {
+static Mbc_Type calculate_mbc_type(Cart_Type cart_type) {
+	switch (cart_type) {
+		case CART_TYPE_ROM_ONLY:
+		case CART_TYPE_RAM:
+		case CART_TYPE_RAM_BATTERY:
+			/* TODO: Not sure if this is a complete list of non-MBC cart types. */
+			robingb_log("Cart has no MBC");
+			assert(mem_read(0x0148) == 0x00);
+			return MBC_NONE;
+		break;
+		
+		case CART_TYPE_MBC1:
+		case CART_TYPE_MBC1_RAM:
+		case CART_TYPE_MBC1_RAM_BATTERY:
+			robingb_log("Cart has an MBC1");
+			return MBC_1;
+		break;
+		
+		case CART_TYPE_MBC2:
+		case CART_TYPE_MBC2_BATTERY:
+			robingb_log("Cart has an MBC2");
+			return MBC_2;
+		break;
+		
+		case CART_TYPE_MBC3:
+		case CART_TYPE_MBC3_RAM:
+		case CART_TYPE_MBC3_RAM_BATTERY:
+		case CART_TYPE_MBC3_TIMER_BATTERY:
+		case CART_TYPE_MBC3_TIMER_RAM_BATTERY:
+			robingb_log("Cart has an MBC3");
+			return MBC_3;
+		break;
+		
+		default: {
+			char buf[128];
+			sprintf(buf, "Unrecognised cart type: %x", cart_type);
+			robingb_log(buf);
+			assert(false);
+		} break;
+	}
+}
+
+static void init_cart_state() {
 	char buf[256];
 	
 	/* Load ROM banks 0 and 1 */
@@ -149,46 +193,7 @@ static void set_cart_state() {
 	
 	Cart_Type cart_type = mem_read(0x0147);
 	
-	/* MBC type */
-	switch (cart_type) {
-		case CART_TYPE_ROM_ONLY:
-		case CART_TYPE_RAM:
-		case CART_TYPE_RAM_BATTERY:
-			/* TODO: Not sure if this is a complete list of non-MBC cart types. */
-			robingb_log("Cart has no MBC");
-			assert(mem_read(0x0148) == 0x00);
-			cart_state.mbc_type = MBC_NONE;
-		break;
-		
-		case CART_TYPE_MBC1:
-		case CART_TYPE_MBC1_RAM:
-		case CART_TYPE_MBC1_RAM_BATTERY:
-			robingb_log("Cart has an MBC1");
-			cart_state.mbc_type = MBC_1;
-		break;
-		
-		case CART_TYPE_MBC2:
-		case CART_TYPE_MBC2_BATTERY:
-			robingb_log("Cart has an MBC2");
-			cart_state.mbc_type = MBC_2;
-		break;
-		
-		case CART_TYPE_MBC3:
-		case CART_TYPE_MBC3_RAM:
-		case CART_TYPE_MBC3_RAM_BATTERY:
-		case CART_TYPE_MBC3_TIMER_BATTERY:
-		case CART_TYPE_MBC3_TIMER_RAM_BATTERY:
-			robingb_log("Cart has an MBC3");
-			cart_state.mbc_type = MBC_3;
-		break;
-		
-		default: {
-			char buf[128];
-			sprintf(buf, "Unrecognised cart type: %x", cart_type);
-			robingb_log(buf);
-			assert(false);
-		} break;
-	}
+	cart_state.mbc_type = calculate_mbc_type(cart_type);
 	
 	/* Additional ROM banks */
 	cart_state.current_switchable_rom_bank = 1;
@@ -304,7 +309,7 @@ void mem_init(const char *cart_file_path) {
 	mem_write(IF_ADDRESS, 0xe1); /* TODO: Might be acceptable for this to be 0xe0 */
 	mem_write(IE_ADDRESS, 0x00);
 	
-	set_cart_state();
+	init_cart_state();
 }
 
 static u8 read_switchable_rom_bank(u16 address) {
