@@ -44,23 +44,25 @@ typedef enum {
 	CART_TYPE_UNDEFINED
 } Cart_Type;
 
-typedef enum {
-	MBC_NONE,
-	MBC_1,
-	MBC_2,
-	MBC_3
-} Mbc_Type;
-
 /* ----------------------------------------------- */
 /* cart control code                               */
 /* ----------------------------------------------- */
 
 static struct {
-	Mbc_Type mbc_type;
+	enum {
+		MBC_NONE,
+		MBC_1,
+		MBC_2,
+		MBC_3
+	} mbc_type;
 	char file_path[256];
 	bool has_ram;
 	s16 rom_bank_count;
 	s16 current_switchable_rom_bank;
+	enum {
+		BM_ROM,
+		BM_RAM
+	} banking_mode;
 } cart_state;
 
 /* After set_cart_state(), cached_rom_banks contains all ROM banks other than banks 0 and 1.
