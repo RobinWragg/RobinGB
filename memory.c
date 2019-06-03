@@ -1,4 +1,3 @@
-
 #include "internal.h"
 #include <assert.h>
 #include <string.h>
@@ -7,6 +6,7 @@
 
 #define GAME_BOY_MEMORY_ADDRESS_SPACE_SIZE (1024*64)
 
+/* TODO: remove duplicate? */
 #define ROM_BANK_SIZE 16384 /* 16kB */
 
 u8 robingb_memory[GAME_BOY_MEMORY_ADDRESS_SPACE_SIZE];
@@ -222,14 +222,11 @@ static int calculate_ram_bank_count(Cart_Type cart_type) {
 	}
 }
 
-static void init_cart_state() {
+static void init_cart_state(const char *file_path) {
 	char buf[256];
 	
-	/* Load ROM banks 0 and 1 */
-	robingb_log("Loading the first 2 ROM banks...");
-	robingb_read_file(cart_state.file_path, 0, ROM_BANK_SIZE*2, robingb_memory);
-	robingb_log("Done");
-	
+	strcpy(cart_state.file_path, file_path);
+	init_first_rom_banks(cart_state.file_path);
 	
 	Cart_Type cart_type = mem_read(0x0147);
 	
@@ -287,8 +284,6 @@ static void init_cart_state() {
 /* ----------------------------------------------- */
 
 void mem_init(const char *cart_file_path) {
-	strcpy(cart_state.file_path, cart_file_path);
-	
 	mem_write(0xff10, 0x80);
 	mem_write(0xff11, 0xbf);
 	mem_write(0xff12, 0xf3);
@@ -323,7 +318,7 @@ void mem_init(const char *cart_file_path) {
 	mem_write(IF_ADDRESS, 0xe1); /* TODO: Might be acceptable for this to be 0xe0 */
 	mem_write(IE_ADDRESS, 0x00);
 	
-	init_cart_state();
+	init_cart_state(cart_file_path);
 }
 
 static u8 read_switchable_rom_bank(u16 address) {
