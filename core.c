@@ -72,20 +72,26 @@ void robingb_init(
 	{
 		char buf[128] = {0};
 		strcpy(buf, "Name: ");
-		for (int i = 0x0134; i < 0x0143; i++) {
-			s8 b = mem_read(i);
+		
+		int character_address;
+		for (character_address = 0x0134; character_address < 0x0143; character_address++) {
+			s8 b = mem_read(character_address);
 			if (b == '\0') break;
 			sprintf(buf, "%s%c", buf, b);
 		}
+		
 		robingb_log(buf);
 	}
 	
 	/* barebones cart error check */
 	{
 		int sum = 0;
-		for (int addr = 0x0134; addr <= 0x014D; addr++) {
-			sum += mem_read(addr);
+		int address;
+		
+		for (address = 0x0134; address <= 0x014D; address++) {
+			sum += mem_read(address);
 		}
+		
 		sum += 25;
 		u8 *bytes = (u8*)&sum;
 		assert(bytes[0] == 0);
