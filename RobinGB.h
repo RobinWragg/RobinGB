@@ -23,7 +23,7 @@ typedef enum {
 void robingb_press_button(RobinGB_Button button);
 void robingb_release_button(RobinGB_Button button);
 
-/* Set this to your logging function if you want to receive logs from RobinGB. */
+/* Set this variable to your logging function pointer if you want to receive logs from RobinGB. */
 extern void (*robingb_logging_function)(const char *text);
 
 void robingb_init(
