@@ -115,11 +115,16 @@ static void perform_cart_control(int address, u8 value) {
 		/* Do nothing if cart has no MBC and no RAM. NOTE: Multiple RAM banks may exist even if there is no MBC! */
 		if (cart_state.mbc_type == MBC_NONE && !cart_state.has_ram) return;
 		
-		/* MBC1: RAM bank number, or, upper bits of ROM bank number, depending on ROM/RAM mode */
+		/* TODO: MBC1: RAM bank number, or, upper bits of ROM bank number, depending on ROM/RAM mode */
 		assert(false);
 		
 	} else if (address >= 0x6000 && address < 0x8000) {
-		assert(false); /* MBC1: ROM/RAM mode select */
+		/* MBC1: ROM/RAM banking mode select */
+		assert(cart_state.mbc_type == MBC_1);
+		
+		if (value & 0x01) cart_state.banking_mode = BM_RAM;
+		else cart_state.banking_mode = BM_ROM;
+		
 	} else assert(false);
 }
 
