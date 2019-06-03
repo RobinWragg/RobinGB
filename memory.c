@@ -182,6 +182,46 @@ static Mbc_Type calculate_mbc_type(Cart_Type cart_type) {
 	}
 }
 
+static int calculate_ram_bank_count(Cart_Type cart_type) {
+	switch (cart_type) {
+		case CART_TYPE_MBC1_RAM:
+		case CART_TYPE_MBC1_RAM_BATTERY:
+		case CART_TYPE_RAM:
+		case CART_TYPE_RAM_BATTERY:
+		case CART_TYPE_MMM01_RAM:
+		case CART_TYPE_MMM01_RAM_BATTERY:
+		case CART_TYPE_MBC3_TIMER_RAM_BATTERY:
+		case CART_TYPE_MBC3_RAM:
+		case CART_TYPE_MBC3_RAM_BATTERY:
+		case CART_TYPE_MBC4_RAM:
+		case CART_TYPE_MBC4_RAM_BATTERY:
+		case CART_TYPE_MBC5_RAM:
+		case CART_TYPE_MBC5_RAM_BATTERY:
+		case CART_TYPE_MBC5_RUMBLE_RAM:
+		case CART_TYPE_MBC5_RUMBLE_RAM_BATTERY:
+		case CART_TYPE_HuC1_RAM_BATTERY:
+			robingb_log("Cart has RAM");
+			return 9999; /* TODO: Calculate the correct value */
+			
+			/*
+			Byte at address 0x0149:
+			00h - None
+			01h - 2 KBytes
+			02h - 8 Kbytes
+			03h - 32 KBytes (4 banks of 8KBytes each)
+			04h - 128 KBytes (16 banks of 8KBytes each)
+			05h - 64 KBytes (8 banks of 8KBytes each)
+			*/
+		break;
+		
+		default: {
+			robingb_log("Cart has no RAM");
+			assert(mem_read(0x0149) == 0x00);
+			return 0;
+		} break;
+	}
+}
+
 static void init_cart_state() {
 	char buf[256];
 	
@@ -238,34 +278,8 @@ static void init_cart_state() {
 		robingb_log("Done");
 	} else cached_rom_bank_count = 0;
 	
-	/* has RAM */
-	switch (cart_type) {
-		case CART_TYPE_MBC1_RAM:
-		case CART_TYPE_MBC1_RAM_BATTERY:
-		case CART_TYPE_RAM:
-		case CART_TYPE_RAM_BATTERY:
-		case CART_TYPE_MMM01_RAM:
-		case CART_TYPE_MMM01_RAM_BATTERY:
-		case CART_TYPE_MBC3_TIMER_RAM_BATTERY:
-		case CART_TYPE_MBC3_RAM:
-		case CART_TYPE_MBC3_RAM_BATTERY:
-		case CART_TYPE_MBC4_RAM:
-		case CART_TYPE_MBC4_RAM_BATTERY:
-		case CART_TYPE_MBC5_RAM:
-		case CART_TYPE_MBC5_RAM_BATTERY:
-		case CART_TYPE_MBC5_RUMBLE_RAM:
-		case CART_TYPE_MBC5_RUMBLE_RAM_BATTERY:
-		case CART_TYPE_HuC1_RAM_BATTERY:
-			cart_state.has_ram = true;
-			robingb_log("Cart has RAM");
-		break;
-		
-		default: {
-			cart_state.has_ram = false;
-			robingb_log("Cart has no RAM");
-			assert(mem_read(0x0149) == 0x00);
-		} break;
-	}
+	int ram_bank_count = calculate_ram_bank_count(cart_type);
+	cart_state.has_ram = ram_bank_count > 0;
 }
 
 /* ----------------------------------------------- */
