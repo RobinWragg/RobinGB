@@ -142,7 +142,8 @@ static void render_background_line() {
 	
 	u8 *screen_line = &robingb_screen[(*ly) * SCREEN_WIDTH];
 	
-	for (int tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
+	s8 tilegrid_x;
+	for (tilegrid_x = 0; tilegrid_x < NUM_TILES_PER_BG_LINE; tilegrid_x++) {
 		u8 screen_x = tilegrid_x*TILE_WIDTH - (*bg_scroll_x);
 		
 		if (screen_x <= SCREEN_WIDTH - TILE_WIDTH) {
@@ -154,7 +155,8 @@ static void render_background_line() {
 			u8 tile_line[TILE_WIDTH];
 			get_bg_tile_line(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line);
 			
-			for (u8 tile_x = 0; tile_x < SCREEN_WIDTH-screen_x; tile_x++) {
+			u8 tile_x;
+			for (tile_x = 0; tile_x < SCREEN_WIDTH-screen_x; tile_x++) {
 				screen_line[screen_x + tile_x] = tile_line[tile_x];
 			}
 		} else if (screen_x-SCREEN_WIDTH < TILE_WIDTH) {
@@ -164,7 +166,8 @@ static void render_background_line() {
 			u8 tile_line[TILE_WIDTH];
 			get_bg_tile_line((*bg_scroll_x)/TILE_WIDTH, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_line);
 			
-			for (u8 tile_x = TILE_WIDTH - pixel_count_to_render; tile_x < TILE_WIDTH; tile_x++) {
+			u8 tile_x;
+			for (tile_x = TILE_WIDTH - pixel_count_to_render; tile_x < TILE_WIDTH; tile_x++) {
 				screen_line[screen_x++] = tile_line[tile_x];
 			}
 		}
@@ -187,7 +190,8 @@ static void render_window_line() {
 	
 	u8 *screen_with_offset = &robingb_screen[window_offset_x + (*ly)*SCREEN_WIDTH];
 	
-	for (u8 tilegrid_x = 0; tilegrid_x < num_tiles_to_render; tilegrid_x++) {
+	u8 tilegrid_x;
+	for (tilegrid_x = 0; tilegrid_x < num_tiles_to_render; tilegrid_x++) {
 		get_bg_tile_line(tilegrid_x, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, &screen_with_offset[tilegrid_x*TILE_WIDTH]);
 	}
 	
@@ -198,7 +202,8 @@ static void render_window_line() {
 		u8 tile_pixels[TILE_WIDTH];
 		get_bg_tile_line(num_tiles_to_render, tilegrid_y, tile_map_address_space, tile_data_address_space, tile_line_index, tile_pixels);
 		
-		for (s16 screen_x = num_pixels_rendered; screen_x < num_pixels_to_render; screen_x++) {
+		s16 screen_x;
+		for (screen_x = num_pixels_rendered; screen_x < num_pixels_to_render; screen_x++) {
 			screen_with_offset[screen_x] = tile_pixels[screen_x - num_pixels_rendered];
 		}
 	}
@@ -210,7 +215,8 @@ static void render_objects() {
 	
 	u8 *screen_line = &robingb_screen[(*ly) * SCREEN_WIDTH];
 	
-	for (u16 object_address = 0xfe9c; object_address >= 0xfe00; object_address -= 4) {
+	u16 object_address;
+	for (object_address = 0xfe9c; object_address >= 0xfe00; object_address -= 4) {
 		s16 translate_y = robingb_memory[object_address] - TILE_HEIGHT*2;
 		
 		if (*ly >= translate_y && *ly < translate_y+object_height) {
@@ -225,7 +231,7 @@ static void render_objects() {
 			bool choose_palette_1 = object_flags & bit(4);
 			bool flip_x = object_flags & bit(5);
 			bool flip_y = object_flags & bit(6);
-			bool behind_bg = object_flags & bit(7);
+			bool behind_background = object_flags & bit(7);
 			
 			if (choose_palette_1) set_palette(*object_palette_1);
 			else set_palette(*object_palette_0);
@@ -242,8 +248,9 @@ static void render_objects() {
 			if (flip_x) {
 				u8 tile_pixel_index = translate_x < 0 ? (TILE_WIDTH-1)+translate_x : (TILE_WIDTH-1);
 				
-				if (behind_bg) {
-					for (u8 screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
+				if (behind_background) {
+					u8 screen_x;
+					for (screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
 						u8 tile_pixel = tile_line[tile_pixel_index--];
 						
 						if (!(tile_pixel & SHADE_0_FLAG) && screen_line[screen_x] & SHADE_0_FLAG) {
@@ -251,7 +258,8 @@ static void render_objects() {
 						}
 					}
 				} else {
-					for (u8 screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
+					u8 screen_x;
+					for (screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
 						u8 tile_pixel = tile_line[tile_pixel_index--];
 						
 						if (!(tile_pixel & SHADE_0_FLAG)) {
@@ -262,8 +270,9 @@ static void render_objects() {
 			} else {
 				u8 tile_pixel_index = translate_x < 0 ? -translate_x : 0;
 				
-				if (behind_bg) {
-					for (u8 screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
+				if (behind_background) {
+					u8 screen_x;
+					for (screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
 						u8 tile_pixel = tile_line[tile_pixel_index++];
 						
 						if (!(tile_pixel & SHADE_0_FLAG) && screen_line[screen_x] & SHADE_0_FLAG) {
@@ -271,7 +280,8 @@ static void render_objects() {
 						}
 					}
 				} else {
-					for (u8 screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
+					u8 screen_x;
+					for (screen_x = screen_x_start; screen_x < screen_x_end; screen_x++) {
 						u8 tile_pixel = tile_line[tile_pixel_index++];
 						
 						if (!(tile_pixel & SHADE_0_FLAG)) {
@@ -302,12 +312,16 @@ void render_screen_line() {
 	if ((*lcdc) & LCDC_OBJECTS_ENABLED) render_objects();
 	
 	/* convert from game boy 2-bit to target 8-bit */
-	u16 screen_line_start = (*ly)*SCREEN_WIDTH;
-	u16 screen_line_end = screen_line_start + SCREEN_WIDTH;
-	for (u16 i = screen_line_start; i < screen_line_end; i++) {
-		/* The "& 0x03" below is to discard the SHADE_0_FLAG bit,
-		which has already served its purpose in render_objects(). */
-		robingb_screen[i] = ((robingb_screen[i] & 0x03) - 3) * -85;
+	{
+		u16 pixel_index;
+		u16 screen_line_start = (*ly)*SCREEN_WIDTH;
+		u16 screen_line_end = screen_line_start + SCREEN_WIDTH;
+		
+		for (pixel_index = screen_line_start; pixel_index < screen_line_end; pixel_index++) {
+			/* The "& 0x03" below is to discard the SHADE_0_FLAG bit,
+			which has already served its purpose in render_objects(). */
+			robingb_screen[pixel_index] = ((robingb_screen[pixel_index] & 0x03) - 3) * -85;
+		}
 	}
 }
 
