@@ -226,7 +226,7 @@ static void init_cart_state(const char *file_path) {
 	char buf[256];
 	
 	strcpy(cart_state.file_path, file_path);
-	init_first_rom_banks(cart_state.file_path);
+	romb_init_first_rom_banks(cart_state.file_path);
 	
 	Cart_Type cart_type = mem_read(0x0147);
 	

@@ -96,14 +96,14 @@ u16 mem_read_u16(u16 address);
 void mem_write(u16 address, u8 value);
 void mem_write_u16(u16 address, u16 value);
 
-void init_first_rom_banks();
+void romb_init_first_rom_banks();
 
 void lcd_update(int num_cycles_passed);
 u8 process_written_joypad_register(u8 new_value);
-void init_timer();
+void timer_init();
 u8 process_written_timer_div_register();
-void update_timer(u8 num_cycles_delta);
-void update_audio(int num_cycles);
+void timer_update(u8 num_cycles_delta);
+void audio_update(int num_cycles);
 void render_screen_line();
 const char * get_opcode_name(u16 opcode_address);
 

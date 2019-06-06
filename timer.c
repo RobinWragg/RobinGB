@@ -17,7 +17,7 @@ static u8 *div = ((u8*)&incrementer_every_cycle) + 1;
 
 static u16 cycles_since_last_tima_increment = 0;
 
-void init_timer() {
+void timer_init() {
 	incrementer_every_cycle = 0xabcc;
 	assert(*div == 0xab);
 	robingb_memory[DIV_ADDRESS] = *div;
@@ -31,7 +31,7 @@ u8 process_written_timer_div_register() {
 	return 0x00;
 }
 
-void update_timer(u8 num_cycles) {
+void timer_update(u8 num_cycles) {
 	
 	/* update incrementer and therefore DIV. */
 	incrementer_every_cycle += num_cycles;
