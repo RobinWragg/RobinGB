@@ -48,19 +48,11 @@ typedef enum {
 /* cart control code                               */
 /* ----------------------------------------------- */
 
-typedef enum {
-	MBC_NONE,
-	MBC_1,
-	MBC_2,
-	MBC_3
-} Mbc_Type;
-
 static struct {
 	Mbc_Type mbc_type;
 	char file_path[256];
 	bool has_ram;
 	s16 rom_bank_count;
-	s16 current_switchable_rom_bank;
 	enum {
 		BM_ROM,
 		BM_RAM
@@ -75,31 +67,8 @@ static struct {
 } *cached_rom_banks = NULL;
 u16 cached_rom_bank_count = 0;
 
-static void perform_rom_bank_control(int address, u8 value) {
-	assert(address >= 0x2000 && address < 0x4000);
+static void ramb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type) {
 	
-	switch (cart_state.mbc_type) {
-		case MBC_NONE:
-		/* no-op */
-		break;
-		case MBC_1: {
-			value &= 0x1f; /* Discard all but the lower 5 bits */
-			u8 new_bank = cart_state.current_switchable_rom_bank & ~0x1f; /* wipe the lower 5 bits */
-			new_bank |= value; /* set the lower 5 bits to the new value */
-			
-			/* TODO: This 0-to-1 conversion should be done when setting the upper bits for the rom bank index instead. */
-			if (new_bank == 0x00 || new_bank == 0x20 || new_bank == 0x40 || new_bank == 0x60) new_bank++;
-			
-			cart_state.current_switchable_rom_bank = new_bank;
-		} break;
-		case MBC_3: {
-			assert(false); /* Not implemented yet */
-		} break;
-		default: assert(false); break;
-	}
-}
-
-static void perform_ram_bank_control(int address, u8 value) {
 	/* Temporary no-op */
 }
 
@@ -114,7 +83,7 @@ static void perform_cart_control(int address, u8 value) {
 		
 	} else if (address >= 0x2000 && address < 0x4000) {
 		
-		perform_rom_bank_control(address, value);
+		romb_perform_bank_control(address, value, cart_state.mbc_type);
 		
 	} else if (address >= 0x4000 && address < 0x6000) {
 		
@@ -125,9 +94,9 @@ static void perform_cart_control(int address, u8 value) {
 		assert(cart_state.mbc_type == MBC_1);
 		
 		if (cart_state.banking_mode == BM_ROM) {
-			perform_rom_bank_control(address, value);
+			romb_perform_bank_control(address, value, cart_state.mbc_type);
 		} else {
-			perform_ram_bank_control(address, value);
+			ramb_perform_bank_control(address, value, cart_state.mbc_type);
 		}
 		
 	} else if (address >= 0x6000 && address < 0x8000) {
@@ -226,15 +195,13 @@ static void init_cart_state(const char *file_path) {
 	char buf[256];
 	
 	strcpy(cart_state.file_path, file_path);
-	romb_init_first_rom_banks(cart_state.file_path);
+	romb_init_first_banks(cart_state.file_path);
 	
 	Cart_Type cart_type = mem_read(0x0147);
 	
 	cart_state.mbc_type = calculate_mbc_type(cart_type);
 	
 	/* Additional ROM banks */
-	cart_state.current_switchable_rom_bank = 1;
-	
 	u8 rom_bank_count_identifier = mem_read(0x0148);
 	if (rom_bank_count_identifier <= 0x08) {
 		cart_state.rom_bank_count = 2 << rom_bank_count_identifier;
@@ -321,17 +288,17 @@ void mem_init(const char *cart_file_path) {
 	init_cart_state(cart_file_path);
 }
 
-static u8 read_switchable_rom_bank(u16 address) {
-	if (cart_state.current_switchable_rom_bank == 1) {
+static u8 romb_read_switchable_bank(u16 address) {
+	if (romb_current_switchable_bank == 1) {
 		return robingb_memory[address];
 	} else {
-		return cached_rom_banks[cart_state.current_switchable_rom_bank-2].data[address-ROM_BANK_SIZE];
+		return cached_rom_banks[romb_current_switchable_bank-2].data[address-ROM_BANK_SIZE];
 	}
 }
 
 u8 mem_read(u16 address) {
 	if (address >= 0x4000 && address < 0x8000) {
-		return read_switchable_rom_bank(address);
+		return romb_read_switchable_bank(address);
 	} else {
 		return robingb_memory[address];
 	}

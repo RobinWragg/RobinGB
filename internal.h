@@ -72,6 +72,13 @@ typedef struct {
 	bool ime;
 } Registers;
 
+typedef enum {
+	MBC_NONE,
+	MBC_1,
+	MBC_2,
+	MBC_3
+} Mbc_Type;
+
 void print_binary(u8 value);
 
 extern void (*robingb_read_file)(const char *path, u32 offset, u32 size, u8 buffer[]);
@@ -96,7 +103,9 @@ u16 mem_read_u16(u16 address);
 void mem_write(u16 address, u8 value);
 void mem_write_u16(u16 address, u16 value);
 
-void romb_init_first_rom_banks();
+void romb_init_first_banks();
+void romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type);
+extern s16 romb_current_switchable_bank;
 
 void lcd_update(int num_cycles_passed);
 u8 process_written_joypad_register(u8 new_value);
