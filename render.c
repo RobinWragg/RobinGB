@@ -295,7 +295,6 @@ static void render_objects() {
 }
 
 void render_screen_line() {
-	/* TODO: bg should render to the screen buffer directly. */
 	
 	if ((*lcdc) & LCDC_BG_AND_WINDOW_ENABLED) {
 		set_palette(*bg_palette);

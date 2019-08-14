@@ -10,7 +10,7 @@
 
 static u8 *tima = &robingb_memory[TIMA_ADDRESS];
 static u8 *tma = &robingb_memory[TMA_ADDRESS];
-static u8 *tac = &robingb_memory[TAC_ADDRESS]; /* TODO: what do with the upper 5 bytes of this register? */
+static u8 *tac = &robingb_memory[TAC_ADDRESS]; /* TODO: what do with the upper 5 bits of this register? */
 
 static u16 incrementer_every_cycle;
 static u8 *div = ((u8*)&incrementer_every_cycle) + 1;

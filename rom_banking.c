@@ -89,7 +89,6 @@ void robingb_romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type)
 			u8 new_bank = robingb_romb_current_switchable_bank & ~0x1f; /* wipe the lower 5 bits */
 			new_bank |= value; /* set the lower 5 bits to the new value */
 			
-			/* TODO: This 0-to-1 conversion should be done when setting the upper bits for the rom bank index instead. */
 			if (new_bank == 0x00 || new_bank == 0x20 || new_bank == 0x40 || new_bank == 0x60) new_bank++;
 			
 			robingb_romb_current_switchable_bank = new_bank;

@@ -1,5 +1,3 @@
-/* TODO: can we speed stuff up if we increment pc gradually instead of in one go as part of robingb_finish_instruction()? */
-
 #include "internal.h"
 #include <string.h>
 #include <assert.h>
