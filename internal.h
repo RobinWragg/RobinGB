@@ -100,11 +100,11 @@ u16 robingb_memory_read_u16(u16 address);
 void robingb_memory_write(u16 address, u8 value);
 void robingb_memory_write_u16(u16 address, u16 value);
 
-void romb_init_first_banks();
-void romb_init_additional_banks(const char *file_path);
-void romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type);
-u8 romb_read_switchable_bank(u16 address);
-extern s16 romb_current_switchable_bank;
+void robingb_romb_init_first_banks();
+void robingb_romb_init_additional_banks(const char *file_path);
+void robingb_romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type);
+u8 robingb_romb_read_switchable_bank(u16 address);
+extern s16 robingb_romb_current_switchable_bank;
 
 void lcd_update(int num_cycles_passed);
 u8 process_written_joypad_register(u8 new_value);

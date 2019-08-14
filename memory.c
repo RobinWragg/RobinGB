@@ -78,7 +78,7 @@ static void perform_cart_control(int address, u8 value) {
 		
 	} else if (address >= 0x2000 && address < 0x4000) {
 		
-		romb_perform_bank_control(address, value, cart_state.mbc_type);
+		robingb_romb_perform_bank_control(address, value, cart_state.mbc_type);
 		
 	} else if (address >= 0x4000 && address < 0x6000) {
 		
@@ -89,7 +89,7 @@ static void perform_cart_control(int address, u8 value) {
 		assert(cart_state.mbc_type == MBC_1);
 		
 		if (cart_state.banking_mode == BM_ROM) {
-			romb_perform_bank_control(address, value, cart_state.mbc_type);
+			robingb_romb_perform_bank_control(address, value, cart_state.mbc_type);
 		} else {
 			ramb_perform_bank_control(address, value, cart_state.mbc_type);
 		}
@@ -189,13 +189,13 @@ static int calculate_ram_bank_count(Cart_Type cart_type) {
 static void init_cart_state(const char *file_path) {
 	
 	strcpy(cart_state.file_path, file_path);
-	romb_init_first_banks(cart_state.file_path);
+	robingb_romb_init_first_banks(cart_state.file_path);
 	
 	Cart_Type cart_type = robingb_memory_read(0x0147);
 	
 	cart_state.mbc_type = calculate_mbc_type(cart_type);
 	
-	romb_init_additional_banks(cart_state.file_path);
+	robingb_romb_init_additional_banks(cart_state.file_path);
 	
 	int ram_bank_count = calculate_ram_bank_count(cart_type);
 	cart_state.has_ram = ram_bank_count > 0;
@@ -245,7 +245,7 @@ void robingb_memory_init(const char *cart_file_path) {
 
 u8 robingb_memory_read(u16 address) {
 	if (address >= 0x4000 && address < 0x8000) {
-		return romb_read_switchable_bank(address);
+		return robingb_romb_read_switchable_bank(address);
 	} else {
 		return robingb_memory[address];
 	}

@@ -6,7 +6,7 @@
 #define BANK_SIZE 16384 /* 16kB */
 #define BANK_COUNT_ADDRESS 0x0148
 
-s16 romb_current_switchable_bank;
+s16 robingb_romb_current_switchable_bank;
 
 /* After init_cart_state(), cached_banks contains all ROM banks other than banks 0 and 1.
 Banks 0 and 1 are stored at the start of robingb_memory.
@@ -16,23 +16,23 @@ static struct {
 } *cached_banks = NULL;
 static u16 cached_bank_count = 0;
 
-u8 romb_read_switchable_bank(u16 address) {
-	if (romb_current_switchable_bank == 1) {
+u8 robingb_romb_read_switchable_bank(u16 address) {
+	if (robingb_romb_current_switchable_bank == 1) {
 		return robingb_memory[address];
 	} else {
-		return cached_banks[romb_current_switchable_bank-2].data[address-BANK_SIZE];
+		return cached_banks[robingb_romb_current_switchable_bank-2].data[address-BANK_SIZE];
 	}
 }
 
-void romb_init_first_banks(const char *file_path) {
+void robingb_romb_init_first_banks(const char *file_path) {
 	/* Load ROM banks 0 and 1 */
 	robingb_log("Loading the first 2 ROM banks...");
 	robingb_read_file(file_path, 0, BANK_SIZE*2, robingb_memory);
-	romb_current_switchable_bank = 1;
+	robingb_romb_current_switchable_bank = 1;
 	robingb_log("Done");
 }
 
-void romb_init_additional_banks(const char *file_path) {
+void robingb_romb_init_additional_banks(const char *file_path) {
 	s16 total_bank_count;
 	
 	u8 bank_count_identifier = robingb_memory[BANK_COUNT_ADDRESS];
@@ -77,7 +77,7 @@ void romb_init_additional_banks(const char *file_path) {
 	} else cached_bank_count = 0;
 }
 
-void romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type) {
+void robingb_romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type) {
 	assert(address >= 0x2000 && address < 0x4000);
 	
 	switch (mbc_type) {
@@ -86,13 +86,13 @@ void romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type) {
 		break;
 		case MBC_1: {
 			value &= 0x1f; /* Discard all but the lower 5 bits */
-			u8 new_bank = romb_current_switchable_bank & ~0x1f; /* wipe the lower 5 bits */
+			u8 new_bank = robingb_romb_current_switchable_bank & ~0x1f; /* wipe the lower 5 bits */
 			new_bank |= value; /* set the lower 5 bits to the new value */
 			
 			/* TODO: This 0-to-1 conversion should be done when setting the upper bits for the rom bank index instead. */
 			if (new_bank == 0x00 || new_bank == 0x20 || new_bank == 0x40 || new_bank == 0x60) new_bank++;
 			
-			romb_current_switchable_bank = new_bank;
+			robingb_romb_current_switchable_bank = new_bank;
 		} break;
 		case MBC_3: {
 			assert(false); /* Not implemented yet */
