@@ -111,7 +111,7 @@ static Mbc_Type calculate_mbc_type(Cart_Type cart_type) {
 		case CART_TYPE_RAM_BATTERY:
 			/* TODO: Not sure if this is a complete list of non-MBC cart types. */
 			robingb_log("Cart has no MBC");
-			assert(mem_read(0x0148) == 0x00);
+			assert(robingb_memory_read(0x0148) == 0x00);
 			return MBC_NONE;
 		break;
 		
@@ -180,7 +180,7 @@ static int calculate_ram_bank_count(Cart_Type cart_type) {
 		
 		default: {
 			robingb_log("Cart has no RAM");
-			assert(mem_read(0x0149) == 0x00);
+			assert(robingb_memory_read(0x0149) == 0x00);
 			return 0;
 		} break;
 	}
@@ -191,7 +191,7 @@ static void init_cart_state(const char *file_path) {
 	strcpy(cart_state.file_path, file_path);
 	romb_init_first_banks(cart_state.file_path);
 	
-	Cart_Type cart_type = mem_read(0x0147);
+	Cart_Type cart_type = robingb_memory_read(0x0147);
 	
 	cart_state.mbc_type = calculate_mbc_type(cart_type);
 	
@@ -205,45 +205,45 @@ static void init_cart_state(const char *file_path) {
 /* General memory code                             */
 /* ----------------------------------------------- */
 
-void mem_init(const char *cart_file_path) {
-	mem_write(0xff10, 0x80);
-	mem_write(0xff11, 0xbf);
-	mem_write(0xff12, 0xf3);
-	mem_write(0xff14, 0xbf);
-	mem_write(0xff16, 0x3f);
-	mem_write(0xff17, 0x00);
-	mem_write(0xff19, 0xbf);
-	mem_write(0xff1a, 0x7f);
-	mem_write(0xff1b, 0xff);
-	mem_write(0xff1c, 0x9f);
-	mem_write(0xff1e, 0xbf);
-	mem_write(0xff00, 0xff);
+void robingb_memory_init(const char *cart_file_path) {
+	robingb_memory_write(0xff10, 0x80);
+	robingb_memory_write(0xff11, 0xbf);
+	robingb_memory_write(0xff12, 0xf3);
+	robingb_memory_write(0xff14, 0xbf);
+	robingb_memory_write(0xff16, 0x3f);
+	robingb_memory_write(0xff17, 0x00);
+	robingb_memory_write(0xff19, 0xbf);
+	robingb_memory_write(0xff1a, 0x7f);
+	robingb_memory_write(0xff1b, 0xff);
+	robingb_memory_write(0xff1c, 0x9f);
+	robingb_memory_write(0xff1e, 0xbf);
+	robingb_memory_write(0xff00, 0xff);
 	int address;
-	for (address = 0xff10; address <= 0xff26; address++) mem_write(address, 0x00); /* zero audio */
-	mem_write(0xff20, 0xff);
-	mem_write(0xff21, 0x00);
-	mem_write(0xff22, 0x00);
-	mem_write(0xff23, 0xbf);
-	mem_write(0xff24, 0x77);
-	mem_write(0xff25, 0xf3);
-	mem_write(0xff26, 0xf1); /* NOTE: This is different for Game Boy Color etc. */
-	mem_write(LCD_CONTROL_ADDRESS, 0x91);
-	mem_write(LCD_STATUS_ADDRESS, 0x85);
-	mem_write(0xff42, 0x00);
-	mem_write(0xff43, 0x00);
-	mem_write(0xff45, 0x00);
-	mem_write(0xff47, 0xfc);
-	mem_write(0xff48, 0xff);
-	mem_write(0xff49, 0xff);
-	mem_write(0xff4a, 0x00);
-	mem_write(0xff4b, 0x00);
-	mem_write(IF_ADDRESS, 0xe1); /* TODO: Might be acceptable for this to be 0xe0 */
-	mem_write(IE_ADDRESS, 0x00);
+	for (address = 0xff10; address <= 0xff26; address++) robingb_memory_write(address, 0x00); /* zero audio */
+	robingb_memory_write(0xff20, 0xff);
+	robingb_memory_write(0xff21, 0x00);
+	robingb_memory_write(0xff22, 0x00);
+	robingb_memory_write(0xff23, 0xbf);
+	robingb_memory_write(0xff24, 0x77);
+	robingb_memory_write(0xff25, 0xf3);
+	robingb_memory_write(0xff26, 0xf1); /* NOTE: This is different for Game Boy Color etc. */
+	robingb_memory_write(LCD_CONTROL_ADDRESS, 0x91);
+	robingb_memory_write(LCD_STATUS_ADDRESS, 0x85);
+	robingb_memory_write(0xff42, 0x00);
+	robingb_memory_write(0xff43, 0x00);
+	robingb_memory_write(0xff45, 0x00);
+	robingb_memory_write(0xff47, 0xfc);
+	robingb_memory_write(0xff48, 0xff);
+	robingb_memory_write(0xff49, 0xff);
+	robingb_memory_write(0xff4a, 0x00);
+	robingb_memory_write(0xff4b, 0x00);
+	robingb_memory_write(IF_ADDRESS, 0xe1); /* TODO: Might be acceptable for this to be 0xe0 */
+	robingb_memory_write(IE_ADDRESS, 0x00);
 	
 	init_cart_state(cart_file_path);
 }
 
-u8 mem_read(u16 address) {
+u8 robingb_memory_read(u16 address) {
 	if (address >= 0x4000 && address < 0x8000) {
 		return romb_read_switchable_bank(address);
 	} else {
@@ -251,15 +251,15 @@ u8 mem_read(u16 address) {
 	}
 }
 
-u16 mem_read_u16(u16 address) {
+u16 robingb_memory_read_u16(u16 address) {
 	u16 out;
 	u8 *bytes = (u8*)&out;
-	bytes[0] = mem_read(address);
-	bytes[1] = mem_read(address+1);
+	bytes[0] = robingb_memory_read(address);
+	bytes[1] = robingb_memory_read(address+1);
 	return out;
 }
 
-void mem_write(u16 address, u8 value) {
+void robingb_memory_write(u16 address, u8 value) {
 	if (address < 0x8000) {
 		perform_cart_control(address, value);
 	} else if (address == 0xff00) {
@@ -281,10 +281,10 @@ void mem_write(u16 address, u8 value) {
 	}
 }
 
-void mem_write_u16(u16 address, u16 value) {
+void robingb_memory_write_u16(u16 address, u16 value) {
 	u8 *values = (u8*)&value;
-	mem_write(address, values[0]);
-	mem_write(address+1, values[1]);
+	robingb_memory_write(address, values[0]);
+	robingb_memory_write(address+1, values[1]);
 }
 
 

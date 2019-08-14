@@ -26,7 +26,7 @@ void get_chan_volume_envelope(int channel, f32 *initial_volume, bool *direction_
 		volume_envelope_address = 0xff17;
 	} else assert(false);
 	
-	u8 envelope_byte = mem_read(volume_envelope_address);
+	u8 envelope_byte = robingb_memory_read(volume_envelope_address);
 	
 	*initial_volume = (envelope_byte >> 4) * (1.0/15);
 	*direction_is_increase = envelope_byte & 0x08;
@@ -50,9 +50,9 @@ void get_chan_freq_and_restart_and_envelope_stop(int channel, s16 *freq, bool *s
 		upper_freq_bits_and_restart_and_stop_address = 0xff1e;
 	} else assert(false);
 	
-	u16 freq_specifier = mem_read(lower_freq_bits_address); /* lower 8 bits of frequency */
-	u8 restart_and_stop_byte = mem_read(upper_freq_bits_and_restart_and_stop_address);
-	mem_write(upper_freq_bits_and_restart_and_stop_address, restart_and_stop_byte & ~0x80); /* reset the restart flag */
+	u16 freq_specifier = robingb_memory_read(lower_freq_bits_address); /* lower 8 bits of frequency */
+	u8 restart_and_stop_byte = robingb_memory_read(upper_freq_bits_and_restart_and_stop_address);
+	robingb_memory_write(upper_freq_bits_and_restart_and_stop_address, restart_and_stop_byte & ~0x80); /* reset the restart flag */
 	
 	freq_specifier |= (restart_and_stop_byte & 0x07) << 8; /* upper 3 bits of frequency */
 	
@@ -64,11 +64,11 @@ void get_chan_freq_and_restart_and_envelope_stop(int channel, s16 *freq, bool *s
 }
 
 bool chan3_is_enabled() {
-	return mem_read(0xff1a) & bit(7);
+	return robingb_memory_read(0xff1a) & bit(7);
 }
 
 void get_chan3_wave_pattern(s8 pattern_out[]) {
-	u8 volume_byte = (mem_read(0xff1c) & 0x60) >> 5;
+	u8 volume_byte = (robingb_memory_read(0xff1c) & 0x60) >> 5;
 	
 	if (volume_byte) {
 		f32 volume;
@@ -81,7 +81,7 @@ void get_chan3_wave_pattern(s8 pattern_out[]) {
 		
 		int i;
 		for (i = 0; i < CHAN3_WAVE_PATTERN_LENGTH; i += 2) {
-			u8 value = mem_read(0xff30 + i/2);
+			u8 value = robingb_memory_read(0xff30 + i/2);
 			pattern_out[i] = (((value & 0xf0) >> 4) * 16 - 128) * volume;
 			pattern_out[i+1] = ((value & 0x0f) * 16 - 128) * volume;
 		}

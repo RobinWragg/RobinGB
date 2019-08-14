@@ -78,8 +78,6 @@ typedef enum {
 	MBC_3
 } Mbc_Type;
 
-void print_binary(u8 value);
-
 extern void (*robingb_read_file)(const char *path, u32 offset, u32 size, u8 buffer[]);
 extern u8 *robingb_screen;
 
@@ -96,11 +94,11 @@ void robingb_execute_cb_opcode();
 void robingb_finish_instruction(s16 pc_increment, u8 num_cycles_param);
 
 extern u8 robingb_memory[];
-void mem_init(const char *cart_file_path);
-u8 mem_read(u16 address);
-u16 mem_read_u16(u16 address);
-void mem_write(u16 address, u8 value);
-void mem_write_u16(u16 address, u16 value);
+void robingb_memory_init(const char *cart_file_path);
+u8 robingb_memory_read(u16 address);
+u16 robingb_memory_read_u16(u16 address);
+void robingb_memory_write(u16 address, u8 value);
+void robingb_memory_write_u16(u16 address, u16 value);
 
 void romb_init_first_banks();
 void romb_init_additional_banks(const char *file_path);

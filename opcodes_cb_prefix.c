@@ -166,8 +166,8 @@ INSTRUCTION void instruction_SET(u8 bit_index, u8 *register_to_set, u8 num_cycle
 }
 
 void robingb_execute_cb_opcode() {
-	assert(mem_read(registers.pc) == 0xcb);
-	u8 opcode = mem_read(++registers.pc);
+	assert(robingb_memory_read(registers.pc) == 0xcb);
+	u8 opcode = robingb_memory_read(++registers.pc);
 	
 	switch (opcode) {
 		case 0x00: DEBUG_set_opcode_name("RLC B"); instruction_RLC(&registers.b, 8); break;
@@ -177,9 +177,9 @@ void robingb_execute_cb_opcode() {
 		case 0x04: DEBUG_set_opcode_name("RLC H"); instruction_RLC(&registers.h, 8); break;
 		case 0x05: DEBUG_set_opcode_name("RLC L"); instruction_RLC(&registers.l, 8); break;
 		case 0x06: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_RLC(&hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x07: instruction_RLC(&registers.a, 8); break;
 		case 0x08: instruction_RRC(&registers.b, 8); break;
@@ -189,9 +189,9 @@ void robingb_execute_cb_opcode() {
 		case 0x0c: instruction_RRC(&registers.h, 8); break;
 		case 0x0d: instruction_RRC(&registers.l, 8); break;
 		case 0x0e: {
-					u8 hl_value = mem_read(registers.hl);
+					u8 hl_value = robingb_memory_read(registers.hl);
 					instruction_RRC(&hl_value, 16);
-					mem_write(registers.hl, hl_value);
+					robingb_memory_write(registers.hl, hl_value);
 				} break;
 		case 0x0f: instruction_RRC(&registers.a, 8); break;
 		case 0x10: instruction_RL(&registers.b, 8); break;
@@ -201,9 +201,9 @@ void robingb_execute_cb_opcode() {
 		case 0x14: instruction_RL(&registers.h, 8); break;
 		case 0x15: instruction_RL(&registers.l, 8); break;
 		case 0x16: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_RL(&hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x17: instruction_RL(&registers.a, 8); break;
 		case 0x18: instruction_RR(&registers.b, 8); break;
@@ -213,9 +213,9 @@ void robingb_execute_cb_opcode() {
 		case 0x1c: instruction_RR(&registers.h, 8); break;
 		case 0x1d: instruction_RR(&registers.l, 8); break;
 		case 0x1e: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_RR(&hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x1f: instruction_RR(&registers.a, 8); break;
 		case 0x20: instruction_SLA(&registers.b); break;
@@ -225,9 +225,9 @@ void robingb_execute_cb_opcode() {
 		case 0x24: instruction_SLA(&registers.h); break;
 		case 0x25: instruction_SLA(&registers.l); break;
 		case 0x26: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SLA(&hl_value);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x27: instruction_SLA(&registers.a); break;
 		case 0x28: instruction_SRA(&registers.b, 8); break;
@@ -237,9 +237,9 @@ void robingb_execute_cb_opcode() {
 		case 0x2c: instruction_SRA(&registers.h, 8); break;
 		case 0x2d: instruction_SRA(&registers.l, 8); break;
 		case 0x2e: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SRA(&hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x2f: instruction_SRA(&registers.a, 8); break;
 		case 0x30: instruction_SWAP(&registers.b, 8); break;
@@ -249,9 +249,9 @@ void robingb_execute_cb_opcode() {
 		case 0x34: instruction_SWAP(&registers.h, 8); break;
 		case 0x35: instruction_SWAP(&registers.l, 8); break;
 		case 0x36: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SWAP(&hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x37: instruction_SWAP(&registers.a, 8); break;
 		case 0x38: instruction_SRL(&registers.b, 8); break;
@@ -261,9 +261,9 @@ void robingb_execute_cb_opcode() {
 		case 0x3c: instruction_SRL(&registers.h, 8); break;
 		case 0x3d: instruction_SRL(&registers.l, 8); break;
 		case 0x3e: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SRL(&hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x3f: instruction_SRL(&registers.a, 8); break;
 		case 0x40: instruction_BIT(0, registers.b, 8); break;
@@ -272,7 +272,7 @@ void robingb_execute_cb_opcode() {
 		case 0x43: instruction_BIT(0, registers.e, 8); break;
 		case 0x44: instruction_BIT(0, registers.h, 8); break;
 		case 0x45: instruction_BIT(0, registers.l, 8); break;
-		case 0x46: instruction_BIT(0, mem_read(registers.hl), 16); break;
+		case 0x46: instruction_BIT(0, robingb_memory_read(registers.hl), 16); break;
 		case 0x47: instruction_BIT(0, registers.a, 8); break;
 		case 0x48: instruction_BIT(1, registers.b, 8); break;
 		case 0x49: instruction_BIT(1, registers.c, 8); break;
@@ -280,7 +280,7 @@ void robingb_execute_cb_opcode() {
 		case 0x4b: instruction_BIT(1, registers.e, 8); break;
 		case 0x4c: instruction_BIT(1, registers.h, 8); break;
 		case 0x4d: instruction_BIT(1, registers.l, 8); break;
-		case 0x4e: instruction_BIT(1, mem_read(registers.hl), 16); break;
+		case 0x4e: instruction_BIT(1, robingb_memory_read(registers.hl), 16); break;
 		case 0x4f: instruction_BIT(1, registers.a, 8); break;
 		case 0x50: instruction_BIT(2, registers.b, 8); break;
 		case 0x51: instruction_BIT(2, registers.c, 8); break;
@@ -288,7 +288,7 @@ void robingb_execute_cb_opcode() {
 		case 0x53: instruction_BIT(2, registers.e, 8); break;
 		case 0x54: instruction_BIT(2, registers.h, 8); break;
 		case 0x55: instruction_BIT(2, registers.l, 8); break;
-		case 0x56: instruction_BIT(2, mem_read(registers.hl), 16); break;
+		case 0x56: instruction_BIT(2, robingb_memory_read(registers.hl), 16); break;
 		case 0x57: instruction_BIT(2, registers.a, 8); break;
 		case 0x58: instruction_BIT(3, registers.b, 8); break;
 		case 0x59: instruction_BIT(3, registers.c, 8); break;
@@ -296,7 +296,7 @@ void robingb_execute_cb_opcode() {
 		case 0x5b: instruction_BIT(3, registers.e, 8); break;
 		case 0x5c: instruction_BIT(3, registers.h, 8); break;
 		case 0x5d: instruction_BIT(3, registers.l, 8); break;
-		case 0x5e: instruction_BIT(3, mem_read(registers.hl), 16); break;
+		case 0x5e: instruction_BIT(3, robingb_memory_read(registers.hl), 16); break;
 		case 0x5f: instruction_BIT(3, registers.a, 8); break;
 		case 0x60: instruction_BIT(4, registers.b, 8); break;
 		case 0x61: instruction_BIT(4, registers.c, 8); break;
@@ -304,7 +304,7 @@ void robingb_execute_cb_opcode() {
 		case 0x63: instruction_BIT(4, registers.e, 8); break;
 		case 0x64: instruction_BIT(4, registers.h, 8); break;
 		case 0x65: instruction_BIT(4, registers.l, 8); break;
-		case 0x66: instruction_BIT(4, mem_read(registers.hl), 16); break;
+		case 0x66: instruction_BIT(4, robingb_memory_read(registers.hl), 16); break;
 		case 0x67: instruction_BIT(4, registers.a, 8); break;
 		case 0x68: instruction_BIT(5, registers.b, 8); break;
 		case 0x69: instruction_BIT(5, registers.c, 8); break;
@@ -312,7 +312,7 @@ void robingb_execute_cb_opcode() {
 		case 0x6b: instruction_BIT(5, registers.e, 8); break;
 		case 0x6c: instruction_BIT(5, registers.h, 8); break;
 		case 0x6d: instruction_BIT(5, registers.l, 8); break;
-		case 0x6e: instruction_BIT(5, mem_read(registers.hl), 16); break;
+		case 0x6e: instruction_BIT(5, robingb_memory_read(registers.hl), 16); break;
 		case 0x6f: instruction_BIT(5, registers.a, 8); break;
 		case 0x70: instruction_BIT(6, registers.b, 8); break;
 		case 0x71: instruction_BIT(6, registers.c, 8); break;
@@ -320,7 +320,7 @@ void robingb_execute_cb_opcode() {
 		case 0x73: instruction_BIT(6, registers.e, 8); break;
 		case 0x74: instruction_BIT(6, registers.h, 8); break;
 		case 0x75: instruction_BIT(6, registers.l, 8); break;
-		case 0x76: instruction_BIT(6, mem_read(registers.hl), 16); break;
+		case 0x76: instruction_BIT(6, robingb_memory_read(registers.hl), 16); break;
 		case 0x77: instruction_BIT(6, registers.a, 8); break;
 		case 0x78: instruction_BIT(7, registers.b, 8); break;
 		case 0x79: instruction_BIT(7, registers.c, 8); break;
@@ -328,7 +328,7 @@ void robingb_execute_cb_opcode() {
 		case 0x7b: instruction_BIT(7, registers.e, 8); break;
 		case 0x7c: instruction_BIT(7, registers.h, 8); break;
 		case 0x7d: instruction_BIT(7, registers.l, 8); break;
-		case 0x7e: instruction_BIT(7, mem_read(registers.hl), 16); break;
+		case 0x7e: instruction_BIT(7, robingb_memory_read(registers.hl), 16); break;
 		case 0x7f: instruction_BIT(7, registers.a, 8); break;
 		case 0x80: instruction_RES(0, &registers.b, 8); break;
 		case 0x81: instruction_RES(0, &registers.c, 8); break;
@@ -337,9 +337,9 @@ void robingb_execute_cb_opcode() {
 		case 0x84: instruction_RES(0, &registers.h, 8); break;
 		case 0x85: instruction_RES(0, &registers.l, 8); break;
 		case 0x86: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_RES(0, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x87: instruction_RES(0, &registers.a, 8); break;
 		case 0x88: instruction_RES(1, &registers.b, 8); break;
@@ -349,9 +349,9 @@ void robingb_execute_cb_opcode() {
 		case 0x8c: instruction_RES(1, &registers.h, 8); break;
 		case 0x8d: instruction_RES(1, &registers.l, 8); break;
 		case 0x8e: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_RES(1, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x8f: instruction_RES(1, &registers.a, 8); break;
 		case 0x90: instruction_RES(2, &registers.b, 8); break;
@@ -361,9 +361,9 @@ void robingb_execute_cb_opcode() {
 		case 0x94: instruction_RES(2, &registers.h, 8); break;
 		case 0x95: instruction_RES(2, &registers.l, 8); break;
 		case 0x96: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_RES(2, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x97: instruction_RES(2, &registers.a, 8); break;
 		case 0x98: instruction_RES(3, &registers.b, 8); break;
@@ -373,9 +373,9 @@ void robingb_execute_cb_opcode() {
 		case 0x9c: instruction_RES(3, &registers.h, 8); break;
 		case 0x9d: instruction_RES(3, &registers.l, 8); break;
 		case 0x9e: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_RES(3, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x9f: instruction_RES(3, &registers.a, 8); break;
 		case 0xa0: instruction_RES(4, &registers.b, 8); break;
@@ -385,9 +385,9 @@ void robingb_execute_cb_opcode() {
 		case 0xa4: instruction_RES(4, &registers.h, 8); break;
 		case 0xa5: instruction_RES(4, &registers.l, 8); break;
 		case 0xa6: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_RES(4, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xa7: instruction_RES(4, &registers.a, 8); break;
 		case 0xa8: instruction_RES(5, &registers.b, 8); break;
@@ -397,9 +397,9 @@ void robingb_execute_cb_opcode() {
 		case 0xac: instruction_RES(5, &registers.h, 8); break;
 		case 0xad: instruction_RES(5, &registers.l, 8); break;
 		case 0xae: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_RES(5, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xaf: instruction_RES(5, &registers.a, 8); break;
 		case 0xb0: instruction_RES(6, &registers.b, 8); break;
@@ -409,9 +409,9 @@ void robingb_execute_cb_opcode() {
 		case 0xb4: instruction_RES(6, &registers.h, 8); break;
 		case 0xb5: instruction_RES(6, &registers.l, 8); break;
 		case 0xb6: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_RES(6, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xb7: instruction_RES(6, &registers.a, 8); break;
 		case 0xb8: instruction_RES(7, &registers.b, 8); break;
@@ -421,9 +421,9 @@ void robingb_execute_cb_opcode() {
 		case 0xbc: instruction_RES(7, &registers.h, 8); break;
 		case 0xbd: instruction_RES(7, &registers.l, 8); break;
 		case 0xbe: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_RES(7, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xbf: instruction_RES(7, &registers.a, 8); break;
 		case 0xc0: instruction_SET(0, &registers.b, 8); break;
@@ -433,9 +433,9 @@ void robingb_execute_cb_opcode() {
 		case 0xc4: instruction_SET(0, &registers.h, 8); break;
 		case 0xc5: instruction_SET(0, &registers.l, 8); break;
 		case 0xc6: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SET(0, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xc7: instruction_SET(0, &registers.a, 8); break;
 		case 0xc8: instruction_SET(1, &registers.b, 8); break;
@@ -445,9 +445,9 @@ void robingb_execute_cb_opcode() {
 		case 0xcc: instruction_SET(1, &registers.h, 8); break;
 		case 0xcd: instruction_SET(1, &registers.l, 8); break;
 		case 0xce: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SET(1, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xcf: instruction_SET(1, &registers.a, 8); break;
 		case 0xd0: instruction_SET(2, &registers.b, 8); break;
@@ -457,9 +457,9 @@ void robingb_execute_cb_opcode() {
 		case 0xd4: instruction_SET(2, &registers.h, 8); break;
 		case 0xd5: instruction_SET(2, &registers.l, 8); break;
 		case 0xd6: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SET(2, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xd7: instruction_SET(2, &registers.a, 8); break;
 		case 0xd8: instruction_SET(3, &registers.b, 8); break;
@@ -469,9 +469,9 @@ void robingb_execute_cb_opcode() {
 		case 0xdc: instruction_SET(3, &registers.h, 8); break;
 		case 0xdd: instruction_SET(3, &registers.l, 8); break;
 		case 0xde: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SET(3, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xdf: instruction_SET(3, &registers.a, 8); break;
 		case 0xe0: instruction_SET(4, &registers.b, 8); break;
@@ -481,9 +481,9 @@ void robingb_execute_cb_opcode() {
 		case 0xe4: instruction_SET(4, &registers.h, 8); break;
 		case 0xe5: instruction_SET(4, &registers.l, 8); break;
 		case 0xe6: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SET(4, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xe7: instruction_SET(4, &registers.a, 8); break;
 		case 0xe8: instruction_SET(5, &registers.b, 8); break;
@@ -493,9 +493,9 @@ void robingb_execute_cb_opcode() {
 		case 0xec: instruction_SET(5, &registers.h, 8); break;
 		case 0xed: instruction_SET(5, &registers.l, 8); break;
 		case 0xee: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SET(5, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xef: instruction_SET(5, &registers.a, 8); break;
 		case 0xf0: instruction_SET(6, &registers.b, 8); break;
@@ -505,9 +505,9 @@ void robingb_execute_cb_opcode() {
 		case 0xf4: instruction_SET(6, &registers.h, 8); break;
 		case 0xf5: instruction_SET(6, &registers.l, 8); break;
 		case 0xf6: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SET(6, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xf7: instruction_SET(6, &registers.a, 8); break;
 		case 0xf8: instruction_SET(7, &registers.b, 8); break;
@@ -517,9 +517,9 @@ void robingb_execute_cb_opcode() {
 		case 0xfc: instruction_SET(7, &registers.h, 8); break;
 		case 0xfd: instruction_SET(7, &registers.l, 8); break;
 		case 0xfe: {
-			u8 hl_value = mem_read(registers.hl);
+			u8 hl_value = robingb_memory_read(registers.hl);
 			instruction_SET(7, &hl_value, 16);
-			mem_write(registers.hl, hl_value);
+			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0xff: instruction_SET(7, &registers.a, 8); break;
 		default: {

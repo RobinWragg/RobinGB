@@ -26,12 +26,12 @@ void robingb_log_with_prefix(const char *prefix, const char *main_body) {
 void robingb_stack_push(u16 value) {
 	u8 *bytes = (u8*)&value;
 	registers.sp -= 2;
-	mem_write(registers.sp, bytes[0]);
-	mem_write(registers.sp+1, bytes[1]);
+	robingb_memory_write(registers.sp, bytes[0]);
+	robingb_memory_write(registers.sp+1, bytes[1]);
 }
 
 u16 robingb_stack_pop() {
-	u16 value = mem_read_u16(registers.sp);
+	u16 value = robingb_memory_read_u16(registers.sp);
 	registers.sp += 2;
 	return value;
 }
@@ -67,7 +67,7 @@ void robingb_init(
 	robingb_read_file = read_file_function_ptr;
 	assert(robingb_read_file);
 	
-	mem_init(cart_file_path);
+	robingb_memory_init(cart_file_path);
 	
 	{
 		char buf[128] = {0};
@@ -75,7 +75,7 @@ void robingb_init(
 		
 		int character_address;
 		for (character_address = 0x0134; character_address < 0x0143; character_address++) {
-			s8 b = mem_read(character_address);
+			s8 b = robingb_memory_read(character_address);
 			if (b == '\0') break;
 			sprintf(buf, "%s%c", buf, b);
 		}
@@ -89,7 +89,7 @@ void robingb_init(
 		int address;
 		
 		for (address = 0x0134; address <= 0x014D; address++) {
-			sum += mem_read(address);
+			sum += robingb_memory_read(address);
 		}
 		
 		sum += 25;
