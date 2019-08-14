@@ -5,5 +5,4 @@ With Super Mario Land as a benchmark, RobinGB currently runs at full speed with 
 
 Although RobinGB is designed for performance rather than emulation accuracy, no compromises have had to be made so far and it passes all of Blargg's CPU instruction tests, apart from the interrupt tests. There's no audio output yet, but development on that will start once Pokemon Red & Blue are playable.
 
-## Inexhaustive list of working games
-Asteroids, Bomb Jack, Boxxle, Brainbender, Bubble Ghost, Castelian, Catrap, Cool Ball, Crystal Quest, Dr. Mario, Flipull, Heiankyo Alien, Kwirk, Loopz, Missile Command, Motocross Maniacs, Pipe Dream, Q Billion, Serpent, Shanghai, Super Mario Land, Tasmania Story, Tennis, Tesserae, Tetris, World Bowling.
+The emulator can currently run games that use the RAM-less MBC1 chip (that's the vast majority of Game Boy games). Work is currently being done to support MBC1 games that contain RAM, including battery savestates. Support for MBC2 and MBC3 is planned.
