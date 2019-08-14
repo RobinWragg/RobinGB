@@ -1,5 +1,4 @@
 /* TODO: Prevent name clashes with user code (RobinGB prefixes, static definitions in .c files) */
-/* TODO: Almost all subsystems should access memory via robingb_memory[address] rather than mem_read()/mem_write() */
 
 #ifndef ROBINGB_INTERNAL_H
 #define ROBINGB_INTERNAL_H
@@ -88,13 +87,13 @@ extern Registers registers;
 extern bool halted;
 
 void robingb_log_with_prefix(const char *prefix, const char *main_body);
-void request_interrupt(u8 interrupts_to_request);
-void handle_interrupts();
-void stack_push(u16 value);
-u16 stack_pop();
-void execute_next_opcode(u8 *num_cycles_out);
-void execute_cb_opcode();
-void finish_instruction(s16 pc_increment, u8 num_cycles_param);
+void robingb_request_interrupt(u8 interrupts_to_request);
+void robingb_handle_interrupts();
+void robingb_stack_push(u16 value);
+u16 robingb_stack_pop();
+void robingb_execute_next_opcode(u8 *num_cycles_out);
+void robingb_execute_cb_opcode();
+void robingb_finish_instruction(s16 pc_increment, u8 num_cycles_param);
 
 extern u8 robingb_memory[];
 void mem_init(const char *cart_file_path);

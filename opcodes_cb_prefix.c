@@ -21,7 +21,7 @@ INSTRUCTION void instruction_RL(u8 *byte_to_rotate, u8 num_cycles) {
 	registers.f &= ~FLAG_N;
 	registers.f &= ~FLAG_H;
 	
-	finish_instruction(1, num_cycles);
+	robingb_finish_instruction(1, num_cycles);
 }
 
 INSTRUCTION void instruction_RLC(u8 *byte_to_rotate, u8 num_cycles) {
@@ -41,7 +41,7 @@ INSTRUCTION void instruction_RLC(u8 *byte_to_rotate, u8 num_cycles) {
 	registers.f &= ~FLAG_N;
 	registers.f &= ~FLAG_H;
 	
-	finish_instruction(1, num_cycles);
+	robingb_finish_instruction(1, num_cycles);
 }
 
 INSTRUCTION void instruction_RRC(u8 *byte_to_rotate, u8 num_cycles) {
@@ -61,7 +61,7 @@ INSTRUCTION void instruction_RRC(u8 *byte_to_rotate, u8 num_cycles) {
 	registers.f &= ~FLAG_N;
 	registers.f &= ~FLAG_H;
 	
-	finish_instruction(1, num_cycles);
+	robingb_finish_instruction(1, num_cycles);
 }
 
 INSTRUCTION void instruction_RR(u8 *byte_to_rotate, u8 num_cycles) {
@@ -80,7 +80,7 @@ INSTRUCTION void instruction_RR(u8 *byte_to_rotate, u8 num_cycles) {
 	registers.f &= ~FLAG_N;
 	registers.f &= ~FLAG_H;
 	
-	finish_instruction(1, num_cycles);
+	robingb_finish_instruction(1, num_cycles);
 }
 
 INSTRUCTION void instruction_SLA(u8 *byte_to_shift) {
@@ -96,7 +96,7 @@ INSTRUCTION void instruction_SLA(u8 *byte_to_shift) {
 	registers.f &= ~FLAG_N;
 	registers.f &= ~FLAG_H;
 	
-	finish_instruction(1, 8);
+	robingb_finish_instruction(1, 8);
 }
 
 INSTRUCTION void instruction_SRA(u8 *byte_to_shift, u8 num_cycles) {
@@ -112,7 +112,7 @@ INSTRUCTION void instruction_SRA(u8 *byte_to_shift, u8 num_cycles) {
 	registers.f &= ~FLAG_N;
 	registers.f &= ~FLAG_H;
 	
-	finish_instruction(1, num_cycles);
+	robingb_finish_instruction(1, num_cycles);
 }
 
 INSTRUCTION void instruction_SWAP(u8 *byte_to_swap, u8 num_cycles) {
@@ -126,7 +126,7 @@ INSTRUCTION void instruction_SWAP(u8 *byte_to_swap, u8 num_cycles) {
 	registers.f &= ~FLAG_N;
 	registers.f &= ~FLAG_H;
 	registers.f &= ~FLAG_C;
-	finish_instruction(1, num_cycles);
+	robingb_finish_instruction(1, num_cycles);
 }
 
 INSTRUCTION void instruction_SRL(u8 *byte_to_shift, u8 num_cycles) {
@@ -142,7 +142,7 @@ INSTRUCTION void instruction_SRL(u8 *byte_to_shift, u8 num_cycles) {
 	registers.f &= ~FLAG_N;
 	registers.f &= ~FLAG_H;
 	
-	finish_instruction(1, num_cycles);
+	robingb_finish_instruction(1, num_cycles);
 }
 
 INSTRUCTION void instruction_BIT(u8 bit_index, u8 byte_to_check, int num_cycles) {
@@ -152,20 +152,20 @@ INSTRUCTION void instruction_BIT(u8 bit_index, u8 byte_to_check, int num_cycles)
 	registers.f &= ~FLAG_N;
 	registers.f |= FLAG_H;
 	
-	finish_instruction(1, num_cycles);
+	robingb_finish_instruction(1, num_cycles);
 }
 
 INSTRUCTION void instruction_RES(u8 bit_index, u8 *byte_to_reset, u8 num_cycles) {
 	*byte_to_reset &= ~(0x01 << bit_index);
-	finish_instruction(1, num_cycles);
+	robingb_finish_instruction(1, num_cycles);
 }
 
 INSTRUCTION void instruction_SET(u8 bit_index, u8 *register_to_set, u8 num_cycles) {
 	*register_to_set |= 0x01 << bit_index;
-	finish_instruction(1, num_cycles);
+	robingb_finish_instruction(1, num_cycles);
 }
 
-void execute_cb_opcode() {
+void robingb_execute_cb_opcode() {
 	assert(mem_read(registers.pc) == 0xcb);
 	u8 opcode = mem_read(++registers.pc);
 	

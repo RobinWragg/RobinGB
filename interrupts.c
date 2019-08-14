@@ -4,7 +4,7 @@
 static u8 *requested_interrupts = &robingb_memory[IF_ADDRESS];
 static u8 *enabled_interrupts = &robingb_memory[IE_ADDRESS];
 
-void handle_interrupts() {
+void robingb_handle_interrupts() {
 	u8 interrupts_to_handle = (*requested_interrupts) & (*enabled_interrupts);
 	
 	if (interrupts_to_handle) {
@@ -13,7 +13,7 @@ void handle_interrupts() {
 		if (registers.ime) {
 			registers.ime = false;
 			
-			stack_push(registers.pc);
+			robingb_stack_push(registers.pc);
 			
 			if (interrupts_to_handle & INTERRUPT_FLAG_VBLANK) {
 				*requested_interrupts &= ~INTERRUPT_FLAG_VBLANK;
@@ -35,7 +35,7 @@ void handle_interrupts() {
 	}
 }
 
-void request_interrupt(u8 interrupt_to_request) {
+void robingb_request_interrupt(u8 interrupt_to_request) {
 	*requested_interrupts |= interrupt_to_request; /* combine with the existing request flags */
 	*requested_interrupts |= 0xe0; /* top 3 bits are always 1. */
 }

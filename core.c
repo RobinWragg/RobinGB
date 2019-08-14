@@ -23,14 +23,14 @@ void robingb_log_with_prefix(const char *prefix, const char *main_body) {
 	}
 }
 
-void stack_push(u16 value) {
+void robingb_stack_push(u16 value) {
 	u8 *bytes = (u8*)&value;
 	registers.sp -= 2;
 	mem_write(registers.sp, bytes[0]);
 	mem_write(registers.sp+1, bytes[1]);
 }
 
-u16 stack_pop() {
+u16 robingb_stack_pop() {
 	u16 value = mem_read_u16(registers.sp);
 	registers.sp += 2;
 	return value;
@@ -110,11 +110,10 @@ void robingb_update(u8 screen_out[], u8 *ly_out) {
 	assert(robingb_screen);
 	
 	while (*lcd_ly == prev_lcd_ly) {
-		
 		u8 num_cycles;
-		execute_next_opcode(&num_cycles);
+		robingb_execute_next_opcode(&num_cycles);
 		
-		handle_interrupts();
+		robingb_handle_interrupts();
 		lcd_update(num_cycles);
 		/* audio_update(num_cycles); */
 		timer_update(num_cycles);

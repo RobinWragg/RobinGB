@@ -59,7 +59,7 @@ void timer_update(u8 num_cycles) {
 				/* check for overflow */
 				if (prev_tima > *tima) {
 					*tima = *tma;
-					request_interrupt(INTERRUPT_FLAG_TIMER);
+					robingb_request_interrupt(INTERRUPT_FLAG_TIMER);
 				}
 				
 				cycles_since_last_tima_increment -= cycles_per_tima_increment;

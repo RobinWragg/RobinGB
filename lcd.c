@@ -59,7 +59,7 @@ void lcd_update(int num_cycles_delta) {
 	/* handle LYC */
 	if (*ly == *lyc) {
 		*status |= 0x04;
-		if ((*status) & 0x40) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+		if ((*status) & 0x40) robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 	} else {
 		*status &= ~0x04;
 	}
@@ -81,7 +81,7 @@ void lcd_update(int num_cycles_delta) {
 			*status |= 0x00; /* H-blank */
 			
 			if (prev_mode != 0x00 && ((*status) & 0x08)) {
-				request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+				robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 			}
 		} else if (elapsed_cycles >= MODE_2_CYCLE_DURATION) {
 			*status |= 0x03; /* The LCD is reading from both OAM and VRAM */
@@ -91,7 +91,7 @@ void lcd_update(int num_cycles_delta) {
 			*status |= 0x02; /* The LCD is reading from OAM */
 			
 			if (prev_mode != 0x02 && ((*status) & 0x20)) {
-				request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+				robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 			}
 		}
 		
@@ -99,8 +99,8 @@ void lcd_update(int num_cycles_delta) {
 		*status |= 0x01; /* V-blank */
 		
 		if (prev_mode != 0x01) {
-			request_interrupt(INTERRUPT_FLAG_VBLANK);
-			if ((*status) & 0x10) request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+			robingb_request_interrupt(INTERRUPT_FLAG_VBLANK);
+			if ((*status) & 0x10) robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
 		}
 	}
 }

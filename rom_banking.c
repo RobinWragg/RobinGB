@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #define BANK_SIZE 16384 /* 16kB */
+#define BANK_COUNT_ADDRESS 0x0148
 
 s16 romb_current_switchable_bank;
 
@@ -34,7 +35,7 @@ void romb_init_first_banks(const char *file_path) {
 void romb_init_additional_banks(const char *file_path) {
 	s16 total_bank_count;
 	
-	u8 bank_count_identifier = mem_read(0x0148);
+	u8 bank_count_identifier = robingb_memory[BANK_COUNT_ADDRESS];
 	if (bank_count_identifier <= 0x08) {
 		total_bank_count = 2 << bank_count_identifier;
 	} else {

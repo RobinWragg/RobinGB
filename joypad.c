@@ -46,12 +46,12 @@ u8 process_written_joypad_register(u8 register_value) {
 	
 	if ((register_value & ACTION_BUTTON_REQUEST) == false) {
 		register_value &= action_buttons;
-		request_interrupt(INTERRUPT_FLAG_JOYPAD);
+		robingb_request_interrupt(INTERRUPT_FLAG_JOYPAD);
 	}
 	
 	if ((register_value & DIRECTION_BUTTON_REQUEST) == false) {
 		register_value &= direction_buttons;
-		request_interrupt(INTERRUPT_FLAG_JOYPAD);
+		robingb_request_interrupt(INTERRUPT_FLAG_JOYPAD);
 	}
 	
 	return register_value;
