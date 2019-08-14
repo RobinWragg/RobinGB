@@ -6,7 +6,7 @@
 #define BANK_SIZE 16384 /* 16kB */
 #define BANK_COUNT_ADDRESS 0x0148
 
-s16 robingb_romb_current_switchable_bank;
+static s16 robingb_romb_current_switchable_bank;
 
 /* After init_cart_state(), cached_banks contains all ROM banks other than banks 0 and 1.
 Banks 0 and 1 are stored at the start of robingb_memory.

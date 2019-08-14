@@ -1,5 +1,3 @@
-/* TODO: Prevent name clashes with user code (RobinGB prefixes, static definitions in .c files) */
-
 #ifndef ROBINGB_INTERNAL_H
 #define ROBINGB_INTERNAL_H
 
@@ -104,7 +102,6 @@ void robingb_romb_init_first_banks();
 void robingb_romb_init_additional_banks(const char *file_path);
 void robingb_romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type);
 u8 robingb_romb_read_switchable_bank(u16 address);
-extern s16 robingb_romb_current_switchable_bank;
 
 void lcd_update(int num_cycles_passed);
 u8 process_written_joypad_register(u8 new_value);
