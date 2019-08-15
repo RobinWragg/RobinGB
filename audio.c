@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 /* Allow the user to set the sample rate. */
 
@@ -16,12 +17,7 @@
 #define CPU_CLOCK_FREQ (4194304)
 #define STEPS_PER_ENVELOPE (16)
 
-typedef struct {
-	s16 l, r;
-} RobinGB_Sample;
-
-static RobinGB_Sample *sample_buffer = NULL;
-static u16 sample_buffer_size = 0;
+u16 SAMPLE_RATE = 0;
 
 static void get_channel_volume_envelope(s8 channel, f32 *initial_volume, bool *direction_is_increase, s32 *step_length_in_cycles) {
 	int volume_envelope_address;
@@ -101,6 +97,11 @@ static void get_chan3_wave_pattern(s8 pattern_out[]) {
 	}
 }
 
+struct {
+	float phase;
+	s16 freq;
+} channel_2;
+
 static void update_channel_2(int num_cycles) {
 	
 	// static f32 period_position = 0;
@@ -112,10 +113,10 @@ static void update_channel_2(int num_cycles) {
 	s32 envelope_step_length_in_cycles;
 	get_channel_volume_envelope(2, &initial_volume, &direction_is_increase, &envelope_step_length_in_cycles);
 	
-	s16 freq;
+	
 	bool should_restart;
 	bool should_stop_at_envelope_end;
-	get_channel_freq_and_restart_and_envelope_stop(2, &freq, &should_restart, &should_stop_at_envelope_end);
+	get_channel_freq_and_restart_and_envelope_stop(2, &channel_2.freq, &should_restart, &should_stop_at_envelope_end);
 	
 	// if (should_restart) {
 	// 	current_volume = initial_volume;
@@ -138,36 +139,32 @@ static void update_channel_2(int num_cycles) {
 	// while (period_position > 1.0) period_position -= 1.0;
 }
 
-void robingb_audio_init(uint32_t sample_rate, uint16_t buffer_size_param) {
-	sample_buffer_size = buffer_size_param;
-	assert(sample_buffer_size > 0);
+void robingb_audio_init(uint32_t sample_rate, uint16_t buffer_size) {
+	SAMPLE_RATE = sample_rate;
+	assert(SAMPLE_RATE > 0);
 	
-	sample_buffer = (RobinGB_Sample*)malloc(sizeof(RobinGB_Sample) * sample_buffer_size);
-	assert(sample_buffer);
+	ring_buffer.samples = (RobinGB_Sample*)malloc(sizeof(RobinGB_Sample) * buffer_size);
+	assert(ring_buffer.samples);
+	
+	ring_buffer.sample_count = buffer_size;
+	assert(ring_buffer.sample_count > 0);
+	
+	ring_buffer.read_index = 0;
+	ring_buffer.write_index = 0;
 }
 
-void robingb_audio_update(int num_cycles_this_update) {
-	static s16 accumulated_cycles = 0; /* This carries over to the next update */
-	
-	/* If we produce a sample every 87 cycles, we produce a sample rate of just over 48000Hz,
-	because CPU_CLOCK_FREQ / 48000Hz = 87.381 cycles. The speed of video and audio will diverge; that's just that nature of real hardware. So instead */
-	const int NUM_CYCLES_PER_SAMPLE = 87;
-	
-	accumulated_cycles += num_cycles_this_update;
-	
-	if (accumulated_cycles >= NUM_CYCLES_PER_SAMPLE) {
-		// update_channel_1(NUM_CYCLES_PER_SAMPLE);
-		update_channel_2(NUM_CYCLES_PER_SAMPLE);
-		// update_channel_3(NUM_CYCLES_PER_SAMPLE);
-		// update_channel_4(NUM_CYCLES_PER_SAMPLE);
-		
-		accumulated_cycles -= NUM_CYCLES_PER_SAMPLE;
-	}
+void robingb_audio_update(int num_cycles) {
+	// update_channel_1(num_cycles);
+	update_channel_2(num_cycles);
+	// update_channel_3(num_cycles);
+	// update_channel_4(num_cycles);
 }
 
 void robingb_read_next_audio_sample(s16 *l, s16 *r) {
-	*l = 0;
-	*r = 0;
+	channel_2.phase += (2*M_PI) * (channel_2.freq / (float)SAMPLE_RATE);
+	if (channel_2.phase > 2*M_PI) channel_2.phase -= 2*M_PI;
+	*l = sinf(channel_2.phase) * 32000;
+	*r = sinf(channel_2.phase) * 32000;
 }
 
 

@@ -3,6 +3,7 @@
 /* TODO: Add error logging. */
 /* TODO: Fail gracefully if malloc() returns NULL. */
 /* TODO: Remove printf(). */
+/* TODO: Remove the remaining mentions of an audio buffer. */
 
 #ifndef ROBINGB_H
 #define ROBINGB_H

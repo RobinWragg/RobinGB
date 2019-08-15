@@ -85,9 +85,10 @@ void robingb_update(u8 screen_out[], u8 *ly_out) {
 		
 		robingb_handle_interrupts();
 		robingb_lcd_update(num_cycles);
-		robingb_audio_update(num_cycles);
 		robingb_timer_update(num_cycles);
 	}
+	
+	robingb_audio_update(num_cycles);
 	
 	*ly_out = *lcd_ly;
 }
