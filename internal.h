@@ -18,8 +18,6 @@ typedef int32_t s32;
 
 #define bit(n) (0x01 << n)
 
-#define CPU_CLOCK_FREQ (4194304)
-
 #define FLAG_Z (0x80) /* Zero Flag */
 #define FLAG_N (0x40) /* Add/Sub-Flag (BCD) */
 #define FLAG_H (0x20) /* Half Carry Flag (BCD) */

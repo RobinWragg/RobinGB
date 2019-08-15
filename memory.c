@@ -62,7 +62,7 @@ static void ramb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type) 
 }
 
 static void perform_cart_control(int address, u8 value) {
-	printf("perform_cart_control: %x %x\n", address, value);
+	// printf("perform_cart_control: %x %x\n", address, value);
 	
 	if (address >= 0x0000 && address < 0x2000) {
 		/* MBC1: enable/disable external RAM (at 0xa000 to 0xbfff) */

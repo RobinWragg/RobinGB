@@ -9,6 +9,7 @@
 
 #define RING_SIZE (2048) /* TODO: set this low to improve latency */
 #define CHAN3_WAVE_PATTERN_LENGTH (32)
+#define CPU_CLOCK_FREQ (4194304)
 
 static struct {
 	s16 l, r;
@@ -17,7 +18,7 @@ static struct {
 static int ring_read_index = 0;
 static int ring_write_index = 0;
 
-static void get_chan_volume_envelope(int channel, f32 *initial_volume, bool *direction_is_increase, u32 *envelope_length_in_samples) {
+static void get_channel_volume_envelope(s8 channel, f32 *initial_volume, bool *direction_is_increase, u32 *envelope_length_in_samples) {
 	int volume_envelope_address;
 	
 	if (channel == 1 ) {
@@ -29,8 +30,15 @@ static void get_chan_volume_envelope(int channel, f32 *initial_volume, bool *dir
 	u8 envelope_byte = robingb_memory_read(volume_envelope_address);
 	
 	*initial_volume = (envelope_byte >> 4) * (1.0/15);
+	
 	*direction_is_increase = envelope_byte & 0x08;
-	f32 envelope_step_in_seconds = (envelope_byte & 0x07) * (1.0/64);
+	
+	u8 sweep_number = envelope_byte & 0x07;
+	if (sweep_number-- == 0) {
+		sweep_number = 255;
+	}
+	
+	f32 envelope_step_in_seconds = sweep_number * (1.0/64);
 	f32 envelope_length_in_seconds = envelope_step_in_seconds * 16; /* 16 steps across an envelope */
 	*envelope_length_in_samples = envelope_length_in_seconds * ROBINGB_AUDIO_SAMPLE_RATE;
 }
@@ -106,12 +114,48 @@ f32 lerp(f32 a, f32 b, f32 t) {
 	return a + (b-a)*t;
 }
 
+static void update_channel_2(int num_cycles) {
+	static f32 period_position = 0;
+	static f32 current_volume = 1;
+	static u32 num_samples_since_restart = 0;
+	
+	f32 initial_volume;
+	bool direction_is_increase;
+	u32 envelope_length_in_samples;
+	get_channel_volume_envelope(2, &initial_volume, &direction_is_increase, &envelope_length_in_samples);
+	
+	s16 freq;
+	bool should_restart;
+	bool should_stop_at_envelope_end;
+	get_chan_freq_and_restart_and_envelope_stop(2, &freq, &should_restart, &should_stop_at_envelope_end);
+	
+	if (should_restart) {
+		current_volume = initial_volume;
+		num_samples_since_restart = 0;
+		period_position = 0;
+	}
+	
+	if (direction_is_increase) {
+		current_volume = lerp(initial_volume, 1, num_samples_since_restart / (f32)envelope_length_in_samples);
+	} else {
+		current_volume = lerp(initial_volume, 0, num_samples_since_restart / (f32)envelope_length_in_samples);
+	}
+	
+	num_samples_since_restart++;
+	
+	ring[ring_write_index].l += (period_position > 0.5 ? 127 : -128) * current_volume;
+	ring[ring_write_index].r += (period_position > 0.5 ? 127 : -128) * current_volume;
+	
+	period_position += (1.0/ROBINGB_AUDIO_SAMPLE_RATE) * freq;
+	while (period_position > 1.0) period_position -= 1.0;
+}
+
 void write_next_sample() {
 	ring[ring_write_index].l = 0;
 	ring[ring_write_index].r = 0;
 	
 	/* channel 1 */
-	if (true) {
+	if (false) {
 		static f32 period_position = 0;
 		static f32 current_volume = 1;
 		static u32 num_samples_since_restart = 0;
@@ -119,7 +163,7 @@ void write_next_sample() {
 		f32 initial_volume;
 		bool direction_is_increase;
 		u32 envelope_length_in_samples;
-		get_chan_volume_envelope(1, &initial_volume, &direction_is_increase, &envelope_length_in_samples);
+		get_channel_volume_envelope(1, &initial_volume, &direction_is_increase, &envelope_length_in_samples);
 		
 		s16 freq;
 		bool should_restart;
@@ -156,7 +200,7 @@ void write_next_sample() {
 		f32 initial_volume;
 		bool direction_is_increase;
 		u32 envelope_length_in_samples;
-		get_chan_volume_envelope(2, &initial_volume, &direction_is_increase, &envelope_length_in_samples);
+		get_channel_volume_envelope(2, &initial_volume, &direction_is_increase, &envelope_length_in_samples);
 		
 		s16 freq;
 		bool should_restart;
@@ -185,7 +229,7 @@ void write_next_sample() {
 	}
 	
 	/* channel 3 */
-	if (true) {
+	if (false) {
 		static f32 period_position = 0;
 		static u32 num_samples_since_restart = 0;
 		
