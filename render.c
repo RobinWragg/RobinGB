@@ -294,7 +294,7 @@ static void render_objects() {
 	}
 }
 
-void render_screen_line() {
+void robingb_render_screen_line() {
 	
 	if ((*lcdc) & LCDC_BG_AND_WINDOW_ENABLED) {
 		set_palette(*bg_palette);

@@ -218,7 +218,7 @@ void write_next_sample() {
 	if (++ring_write_index >= RING_SIZE) ring_write_index = 0;
 }
 
-void audio_update(int num_cycles) {
+void robingb_audio_update(int num_cycles) {
 	int ring_index;
 	for (ring_index = 0; ring_index < RING_SIZE; ring_index++) {
 		if (ring_write_index != ring_read_index) write_next_sample();

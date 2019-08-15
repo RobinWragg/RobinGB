@@ -103,13 +103,12 @@ void robingb_romb_init_additional_banks(const char *file_path);
 void robingb_romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type);
 u8 robingb_romb_read_switchable_bank(u16 address);
 
-void lcd_update(int num_cycles_passed);
-u8 process_written_joypad_register(u8 new_value);
-void timer_init();
-u8 process_written_timer_div_register();
-void timer_update(u8 num_cycles_delta);
-void audio_update(int num_cycles);
-void render_screen_line();
-const char * get_opcode_name(u16 opcode_address);
+void robingb_lcd_update(int num_cycles_passed);
+u8 robingb_respond_to_joypad_register(u8 new_value);
+void robingb_timer_init();
+u8 robingb_respond_to_timer_div_register();
+void robingb_timer_update(u8 num_cycles_delta);
+void robingb_audio_update(int num_cycles);
+void robingb_render_screen_line();
 
 #endif

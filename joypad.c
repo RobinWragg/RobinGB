@@ -40,7 +40,7 @@ void robingb_release_button(RobinGB_Button button) {
 	}
 }
 
-u8 process_written_joypad_register(u8 register_value) {
+u8 robingb_respond_to_joypad_register(u8 register_value) {
 	register_value |= 0xc0; /* bits 6 and 7 are always 1. */
 	register_value |= 0x0f; /* unpressed buttons are 1. */
 	

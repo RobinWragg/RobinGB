@@ -98,7 +98,7 @@ void robingb_init(
 	}
 	
 	init_registers();
-	timer_init();
+	robingb_timer_init();
 }
 
 u8 *lcd_ly = &robingb_memory[LCD_LY_ADDRESS];
@@ -114,9 +114,9 @@ void robingb_update(u8 screen_out[], u8 *ly_out) {
 		robingb_execute_next_opcode(&num_cycles);
 		
 		robingb_handle_interrupts();
-		lcd_update(num_cycles);
-		/* audio_update(num_cycles); */
-		timer_update(num_cycles);
+		robingb_lcd_update(num_cycles);
+		robingb_audio_update(num_cycles);
+		robingb_timer_update(num_cycles);
 	}
 	
 	*ly_out = *lcd_ly;

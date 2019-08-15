@@ -263,9 +263,9 @@ void robingb_memory_write(u16 address, u8 value) {
 	if (address < 0x8000) {
 		perform_cart_control(address, value);
 	} else if (address == 0xff00) {
-		robingb_memory[address] = process_written_joypad_register(value);
+		robingb_memory[address] = robingb_respond_to_joypad_register(value);
 	} else if (address == 0xff04) {
-		robingb_memory[address] = process_written_timer_div_register();
+		robingb_memory[address] = robingb_respond_to_timer_div_register();
 	} else if (address == 0xff46) {
 		memcpy(&robingb_memory[0xfe00], &robingb_memory[value * 0x100], 160); /* OAM DMA transfer */
 	} else {

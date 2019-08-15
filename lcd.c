@@ -37,7 +37,7 @@ static u8 *status = &robingb_memory[LCD_STATUS_ADDRESS];
 static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
 static u8 *lyc = &robingb_memory[LCD_LYC_ADDRESS];
 
-void lcd_update(int num_cycles_delta) {
+void robingb_lcd_update(int num_cycles_delta) {
 	if (((*control) & LCDC_ENABLED_BIT) == 0) {
 		/* Bit 7 of the LCD control register is 0, so the LCD is switched off. */
 		/* LY, the mode, and the LYC=LY flag should all be 0. */
@@ -86,7 +86,7 @@ void lcd_update(int num_cycles_delta) {
 		} else if (elapsed_cycles >= MODE_2_CYCLE_DURATION) {
 			*status |= 0x03; /* The LCD is reading from both OAM and VRAM */
 			
-			if (prev_mode != 0x03) render_screen_line();
+			if (prev_mode != 0x03) robingb_render_screen_line();
 		} else {
 			*status |= 0x02; /* The LCD is reading from OAM */
 			
