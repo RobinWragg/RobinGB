@@ -1,5 +1,8 @@
 #include "internal.h"
+
 #include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 /* Allow the user to set the sample rate. */
 
@@ -12,6 +15,13 @@
 #define CHAN3_WAVE_PATTERN_LENGTH (32)
 #define CPU_CLOCK_FREQ (4194304)
 #define STEPS_PER_ENVELOPE (16)
+
+typedef struct {
+	s16 l, r;
+} RobinGB_Sample;
+
+static RobinGB_Sample *sample_buffer = NULL;
+static u16 sample_buffer_size = 0;
 
 static void get_channel_volume_envelope(s8 channel, f32 *initial_volume, bool *direction_is_increase, s32 *step_length_in_cycles) {
 	int volume_envelope_address;
@@ -128,8 +138,12 @@ static void update_channel_2(int num_cycles) {
 	// while (period_position > 1.0) period_position -= 1.0;
 }
 
-void robingb_audio_init(uint32_t sample_rate, uint16_t buffer_size) {
+void robingb_audio_init(uint32_t sample_rate, uint16_t buffer_size_param) {
+	sample_buffer_size = buffer_size_param;
+	assert(sample_buffer_size > 0);
 	
+	sample_buffer = (RobinGB_Sample*)malloc(sizeof(RobinGB_Sample) * sample_buffer_size);
+	assert(sample_buffer);
 }
 
 void robingb_audio_update(int num_cycles_this_update) {
