@@ -1,24 +1,19 @@
 #include "internal.h"
 #include <assert.h>
 
+/* Allow the user to set the sample rate. */
+
 /* DIV and AudioPU */
 /* - The APU uses the DIV to update sweep (channel 1), fade in/out and time out, the same way the timer uses it to update itself. */
 /* - In normal speed mode the APU updates when bit 5 of DIV goes from 1 to 0 (256 Hz). In double speed mode, bit 6. */
 /* - Writing to DIV every instruction, for example, will make the APU produce the same frequency with the same volume even if sweep and fade out are enabled. */
 /* - Writing to DIV doesn't affect the frequency itself. The waveform generation is driven by another timer. */
 
-#define RING_SIZE (2048) /* TODO: set this low to improve latency */
 #define CHAN3_WAVE_PATTERN_LENGTH (32)
 #define CPU_CLOCK_FREQ (4194304)
+#define STEPS_PER_ENVELOPE (16)
 
-static struct {
-	s16 l, r;
-} ring[RING_SIZE];
-
-static int ring_read_index = 0;
-static int ring_write_index = 0;
-
-static void get_channel_volume_envelope(s8 channel, f32 *initial_volume, bool *direction_is_increase, u32 *envelope_length_in_samples) {
+static void get_channel_volume_envelope(s8 channel, f32 *initial_volume, bool *direction_is_increase, s32 *step_length_in_cycles) {
 	int volume_envelope_address;
 	
 	if (channel == 1 ) {
@@ -29,21 +24,16 @@ static void get_channel_volume_envelope(s8 channel, f32 *initial_volume, bool *d
 	
 	u8 envelope_byte = robingb_memory_read(volume_envelope_address);
 	
-	*initial_volume = (envelope_byte >> 4) * (1.0/15);
+	u8 initial_volume_specifier = envelope_byte >> 4; /* can be 0 to 15 */
+	*initial_volume = initial_volume_specifier / 15.0f;
 	
 	*direction_is_increase = envelope_byte & 0x08;
 	
-	u8 sweep_number = envelope_byte & 0x07;
-	if (sweep_number-- == 0) {
-		sweep_number = 255;
-	}
-	
-	f32 envelope_step_in_seconds = sweep_number * (1.0/64);
-	f32 envelope_length_in_seconds = envelope_step_in_seconds * 16; /* 16 steps across an envelope */
-	*envelope_length_in_samples = envelope_length_in_seconds * ROBINGB_AUDIO_SAMPLE_RATE;
+	u8 step_size_specifier = envelope_byte & 0x07;
+	*step_length_in_cycles = step_size_specifier * (CPU_CLOCK_FREQ / 64);
 }
 
-static void get_chan_freq_and_restart_and_envelope_stop(int channel, s16 *freq, bool *should_restart, bool *should_stop_at_envelope_end) {
+static void get_channel_freq_and_restart_and_envelope_stop(int channel, s16 *freq, bool *should_restart, bool *should_stop_at_envelope_end) {
 	int lower_freq_bits_address;
 	int upper_freq_bits_and_restart_and_stop_address;
 	
@@ -101,173 +91,69 @@ static void get_chan3_wave_pattern(s8 pattern_out[]) {
 	}
 }
 
-void robingb_read_next_audio_sample(s16 *l, s16 *r) {
-	*l = ring[ring_read_index].l;
-	*r = ring[ring_read_index].r;
-	if (++ring_read_index >= RING_SIZE) ring_read_index = 0;
-}
-
-/* TODO: use a step-based envelope instead of lerping */
-f32 lerp(f32 a, f32 b, f32 t) {
-	if (t > 1) t = 1;
-	if (t < 0) t = 0;
-	return a + (b-a)*t;
-}
-
 static void update_channel_2(int num_cycles) {
-	static f32 period_position = 0;
-	static f32 current_volume = 1;
-	static u32 num_samples_since_restart = 0;
+	
+	// static f32 period_position = 0;
+	// static f32 current_volume = 1;
+	// static u32 num_samples_since_restart = 0;
 	
 	f32 initial_volume;
 	bool direction_is_increase;
-	u32 envelope_length_in_samples;
-	get_channel_volume_envelope(2, &initial_volume, &direction_is_increase, &envelope_length_in_samples);
+	s32 envelope_step_length_in_cycles;
+	get_channel_volume_envelope(2, &initial_volume, &direction_is_increase, &envelope_step_length_in_cycles);
 	
 	s16 freq;
 	bool should_restart;
 	bool should_stop_at_envelope_end;
-	get_chan_freq_and_restart_and_envelope_stop(2, &freq, &should_restart, &should_stop_at_envelope_end);
+	get_channel_freq_and_restart_and_envelope_stop(2, &freq, &should_restart, &should_stop_at_envelope_end);
 	
-	if (should_restart) {
-		current_volume = initial_volume;
-		num_samples_since_restart = 0;
-		period_position = 0;
-	}
+	// if (should_restart) {
+	// 	current_volume = initial_volume;
+	// 	num_samples_since_restart = 0;
+	// 	period_position = 0;
+	// }
 	
-	if (direction_is_increase) {
-		current_volume = lerp(initial_volume, 1, num_samples_since_restart / (f32)envelope_length_in_samples);
-	} else {
-		current_volume = lerp(initial_volume, 0, num_samples_since_restart / (f32)envelope_length_in_samples);
-	}
+	// if (direction_is_increase) {
+	// 	current_volume = lerp(initial_volume, 1, num_samples_since_restart / (f32)envelope_length_in_samples);
+	// } else {
+	// 	current_volume = lerp(initial_volume, 0, num_samples_since_restart / (f32)envelope_length_in_samples);
+	// }
 	
-	num_samples_since_restart++;
+	// num_samples_since_restart++;
 	
-	ring[ring_write_index].l += (period_position > 0.5 ? 127 : -128) * current_volume;
-	ring[ring_write_index].r += (period_position > 0.5 ? 127 : -128) * current_volume;
+	// ring[ring_write_index].l += (period_position > 0.5 ? 127 : -128) * current_volume;
+	// ring[ring_write_index].r += (period_position > 0.5 ? 127 : -128) * current_volume;
 	
-	period_position += (1.0/ROBINGB_AUDIO_SAMPLE_RATE) * freq;
-	while (period_position > 1.0) period_position -= 1.0;
+	// period_position += (1.0/ROBINGB_AUDIO_SAMPLE_RATE) * freq;
+	// while (period_position > 1.0) period_position -= 1.0;
 }
 
-void write_next_sample() {
-	ring[ring_write_index].l = 0;
-	ring[ring_write_index].r = 0;
+void robingb_audio_init(uint32_t sample_rate, uint16_t buffer_size) {
 	
-	/* channel 1 */
-	if (false) {
-		static f32 period_position = 0;
-		static f32 current_volume = 1;
-		static u32 num_samples_since_restart = 0;
-		
-		f32 initial_volume;
-		bool direction_is_increase;
-		u32 envelope_length_in_samples;
-		get_channel_volume_envelope(1, &initial_volume, &direction_is_increase, &envelope_length_in_samples);
-		
-		s16 freq;
-		bool should_restart;
-		bool should_stop_at_envelope_end;
-		get_chan_freq_and_restart_and_envelope_stop(1, &freq, &should_restart, &should_stop_at_envelope_end);
-		
-		if (should_restart) {
-			current_volume = initial_volume;
-			num_samples_since_restart = 0;
-			period_position = 0;
-		}
-		
-		if (direction_is_increase) {
-			current_volume = lerp(initial_volume, 1, num_samples_since_restart / (f32)envelope_length_in_samples);
-		} else {
-			current_volume = lerp(initial_volume, 0, num_samples_since_restart / (f32)envelope_length_in_samples);
-		}
-		
-		num_samples_since_restart++;
-		
-		ring[ring_write_index].l += (period_position > 0.5 ? 127 : -128) * current_volume;
-		ring[ring_write_index].r += (period_position > 0.5 ? 127 : -128) * current_volume;
-		
-		period_position += (1.0/ROBINGB_AUDIO_SAMPLE_RATE) * freq;
-		while (period_position > 1.0) period_position -= 1.0;
-	}
-	
-	/* channel 2 */
-	if (true) {
-		static f32 period_position = 0;
-		static f32 current_volume = 1;
-		static u32 num_samples_since_restart = 0;
-		
-		f32 initial_volume;
-		bool direction_is_increase;
-		u32 envelope_length_in_samples;
-		get_channel_volume_envelope(2, &initial_volume, &direction_is_increase, &envelope_length_in_samples);
-		
-		s16 freq;
-		bool should_restart;
-		bool should_stop_at_envelope_end;
-		get_chan_freq_and_restart_and_envelope_stop(2, &freq, &should_restart, &should_stop_at_envelope_end);
-		
-		if (should_restart) {
-			current_volume = initial_volume;
-			num_samples_since_restart = 0;
-			period_position = 0;
-		}
-		
-		if (direction_is_increase) {
-			current_volume = lerp(initial_volume, 1, num_samples_since_restart / (f32)envelope_length_in_samples);
-		} else {
-			current_volume = lerp(initial_volume, 0, num_samples_since_restart / (f32)envelope_length_in_samples);
-		}
-		
-		num_samples_since_restart++;
-		
-		ring[ring_write_index].l += (period_position > 0.5 ? 127 : -128) * current_volume;
-		ring[ring_write_index].r += (period_position > 0.5 ? 127 : -128) * current_volume;
-		
-		period_position += (1.0/ROBINGB_AUDIO_SAMPLE_RATE) * freq;
-		while (period_position > 1.0) period_position -= 1.0;
-	}
-	
-	/* channel 3 */
-	if (false) {
-		static f32 period_position = 0;
-		static u32 num_samples_since_restart = 0;
-		
-		if (chan3_is_enabled()) {
-			s16 freq;
-			bool should_restart;
-			bool should_stop_at_envelope_end;
-			get_chan_freq_and_restart_and_envelope_stop(3, &freq, &should_restart, &should_stop_at_envelope_end);
-			
-			s8 wave_pattern[CHAN3_WAVE_PATTERN_LENGTH];
-			get_chan3_wave_pattern(wave_pattern);
-			
-			u32 pattern_sample_index = period_position * CHAN3_WAVE_PATTERN_LENGTH;
-			pattern_sample_index %= CHAN3_WAVE_PATTERN_LENGTH;
-			
-			ring[ring_write_index].l += wave_pattern[pattern_sample_index];
-			ring[ring_write_index].r += wave_pattern[pattern_sample_index];
-			
-			num_samples_since_restart++;
-			
-			period_position += (1.0/ROBINGB_AUDIO_SAMPLE_RATE) * freq;
-			while (period_position > 1.0) period_position -= 1.0;
-		}
-	}
-	
-	/* make sure we don't clip. 16 bit max / (8 bit max * number of channels) */
-	ring[ring_write_index].l *= 32768.0 / (128*4);
-	ring[ring_write_index].r *= 32768.0 / (128*4);
-	
-	if (++ring_write_index >= RING_SIZE) ring_write_index = 0;
 }
 
-void robingb_audio_update(int num_cycles) {
-	int ring_index;
-	for (ring_index = 0; ring_index < RING_SIZE; ring_index++) {
-		if (ring_write_index != ring_read_index) write_next_sample();
-		else break;
+void robingb_audio_update(int num_cycles_this_update) {
+	static s16 accumulated_cycles = 0; /* This carries over to the next update */
+	
+	/* If we produce a sample every 87 cycles, we produce a sample rate of just over 48000Hz,
+	because CPU_CLOCK_FREQ / 48000Hz = 87.381 cycles. The speed of video and audio will diverge; that's just that nature of real hardware. So instead */
+	const int NUM_CYCLES_PER_SAMPLE = 87;
+	
+	accumulated_cycles += num_cycles_this_update;
+	
+	if (accumulated_cycles >= NUM_CYCLES_PER_SAMPLE) {
+		// update_channel_1(NUM_CYCLES_PER_SAMPLE);
+		update_channel_2(NUM_CYCLES_PER_SAMPLE);
+		// update_channel_3(NUM_CYCLES_PER_SAMPLE);
+		// update_channel_4(NUM_CYCLES_PER_SAMPLE);
+		
+		accumulated_cycles -= NUM_CYCLES_PER_SAMPLE;
 	}
+}
+
+void robingb_read_next_audio_sample(s16 *l, s16 *r) {
+	*l = 0;
+	*r = 0;
 }
 
 

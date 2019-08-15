@@ -523,9 +523,7 @@ void robingb_execute_cb_opcode() {
 		} break;
 		case 0xff: instruction_SET(7, &registers.a, 8); break;
 		default: {
-			char buf[128] = {0};
-			sprintf(buf, "Unknown opcode cb %x at address %x\n", opcode, registers.pc-1);
-			robingb_log(buf);
+			printf("Unknown opcode cb %x at address %x\n", opcode, registers.pc-1);
 			assert(false);
 		} break;
 	}

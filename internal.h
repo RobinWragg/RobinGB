@@ -16,8 +16,6 @@ typedef uint64_t u64;
 
 #define DEBUG_set_opcode_name(x) /* robingb_log(x) */
 
-#define robingb_log(x) robingb_log_with_prefix(__func__, x)
-
 #define bit(n) (0x01 << n)
 
 #define FLAG_Z (0x80) /* Zero Flag */
@@ -76,13 +74,11 @@ typedef enum {
 	MBC_3
 } Mbc_Type;
 
-extern void (*robingb_read_file)(const char *path, u32 offset, u32 size, u8 buffer[]);
 extern u8 *robingb_screen;
 
 extern Registers registers;
 extern bool halted;
 
-void robingb_log_with_prefix(const char *prefix, const char *main_body);
 void robingb_request_interrupt(u8 interrupts_to_request);
 void robingb_handle_interrupts();
 void robingb_stack_push(u16 value);
@@ -92,14 +88,17 @@ void robingb_execute_cb_opcode();
 void robingb_finish_instruction(s16 pc_increment, u8 num_cycles_param);
 
 extern u8 robingb_memory[];
-void robingb_memory_init(const char *cart_file_path);
+void robingb_memory_init();
 u8 robingb_memory_read(u16 address);
 u16 robingb_memory_read_u16(u16 address);
 void robingb_memory_write(u16 address, u8 value);
 void robingb_memory_write_u16(u16 address, u16 value);
 
-void robingb_romb_init_first_banks();
-void robingb_romb_init_additional_banks(const char *file_path);
+void robingb_romb_init_first_banks(
+	const char *file_path,
+	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
+	);
+void robingb_romb_init_additional_banks();
 void robingb_romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type);
 u8 robingb_romb_read_switchable_bank(u16 address);
 
@@ -108,6 +107,7 @@ u8 robingb_respond_to_joypad_register(u8 new_value);
 void robingb_timer_init();
 u8 robingb_respond_to_timer_div_register();
 void robingb_timer_update(u8 num_cycles_delta);
+void robingb_audio_init(uint32_t sample_rate, uint16_t buffer_size);
 void robingb_audio_update(int num_cycles);
 void robingb_render_screen_line();
 

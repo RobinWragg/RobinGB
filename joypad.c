@@ -1,5 +1,7 @@
 #include "internal.h"
 
+#include <stdio.h>
+
 /* TODO: What should happen to bits 4 and 5 of the joypad register after the update? */
 
 #define ACTION_BUTTON_REQUEST 0x20
@@ -22,7 +24,7 @@ void robingb_press_button(RobinGB_Button button) {
 		case ROBINGB_B: action_buttons &= ~LEFT_OR_B; break;
 		case ROBINGB_START: action_buttons &= ~DOWN_OR_START; break;
 		case ROBINGB_SELECT: action_buttons &= ~UP_OR_SELECT; break;
-		default: robingb_log("Invalid joypad button"); break;
+		default: printf("Invalid joypad button\n"); break;
 	}
 }
 
@@ -36,7 +38,7 @@ void robingb_release_button(RobinGB_Button button) {
 		case ROBINGB_B: action_buttons |= LEFT_OR_B; break;
 		case ROBINGB_START: action_buttons |= DOWN_OR_START; break;
 		case ROBINGB_SELECT: action_buttons |= UP_OR_SELECT; break;
-		default: robingb_log("Invalid joypad button"); break;
+		default: printf("Invalid joypad button\n"); break;
 	}
 }
 

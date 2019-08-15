@@ -778,9 +778,7 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 		} break;
 		case 0xff: DEBUG_set_opcode_name("RST 38H"); instruction_RST(0x38); break;
 		default: {
-			char buf[128] = {0};
-			sprintf(buf, "Unknown opcode %x at address %x\n", opcode, registers.pc);
-			robingb_log(buf);
+			printf("Unknown opcode %x at address %x\n", opcode, registers.pc);
 			assert(false);
 		} break;
 	}

@@ -7,22 +7,6 @@
 Registers registers;
 bool halted = false;
 
-void (*robingb_logging_function)(const char *text) = 0;
-
-void robingb_log_with_prefix(const char *prefix, const char *main_body) {
-	if (robingb_logging_function) {
-		char *buf = malloc(strlen(prefix) + strlen(main_body) + 5);
-		buf[0] = '\0';
-		strcat(buf, prefix);
-		strcat(buf, "(): ");
-		strcat(buf, main_body);
-		
-		robingb_logging_function(buf);
-		
-		free(buf);
-	}
-}
-
 void robingb_stack_push(u16 value) {
 	u8 *bytes = (u8*)&value;
 	registers.sp -= 2;
@@ -57,31 +41,17 @@ void init_registers() {
 	registers.ime = true;
 }
 
-void (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]) = 0;
-
 void robingb_init(
+	uint32_t audio_sample_rate,
+	uint16_t audio_buffer_size,
 	const char *cart_file_path,
 	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
 	) {
 	
-	robingb_read_file = read_file_function_ptr;
-	assert(robingb_read_file);
+	assert(read_file_function_ptr);
 	
-	robingb_memory_init(cart_file_path);
-	
-	{
-		char buf[128] = {0};
-		strcpy(buf, "Name: ");
-		
-		int character_address;
-		for (character_address = 0x0134; character_address < 0x0143; character_address++) {
-			s8 b = robingb_memory_read(character_address);
-			if (b == '\0') break;
-			sprintf(buf, "%s%c", buf, b);
-		}
-		
-		robingb_log(buf);
-	}
+	robingb_memory_init(cart_file_path, read_file_function_ptr);
+	robingb_audio_init(audio_sample_rate, audio_buffer_size);
 	
 	/* barebones cart error check */
 	{
@@ -104,12 +74,12 @@ void robingb_init(
 u8 *lcd_ly = &robingb_memory[LCD_LY_ADDRESS];
 
 void robingb_update(u8 screen_out[], u8 *ly_out) {
-	u8 prev_lcd_ly = *lcd_ly;
+	u8 previous_lcd_ly = *lcd_ly;
 	
 	robingb_screen = screen_out;
 	assert(robingb_screen);
 	
-	while (*lcd_ly == prev_lcd_ly) {
+	while (*lcd_ly == previous_lcd_ly) {
 		u8 num_cycles;
 		robingb_execute_next_opcode(&num_cycles);
 		

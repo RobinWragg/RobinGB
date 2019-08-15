@@ -62,7 +62,7 @@ static void ramb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type) 
 }
 
 static void perform_cart_control(int address, u8 value) {
-	// printf("perform_cart_control: %x %x\n", address, value);
+	/* printf("perform_cart_control: %x %x\n", address, value); */
 	
 	if (address >= 0x0000 && address < 0x2000) {
 		/* MBC1: enable/disable external RAM (at 0xa000 to 0xbfff) */
@@ -110,7 +110,7 @@ static Mbc_Type calculate_mbc_type(Cart_Type cart_type) {
 		case CART_TYPE_RAM:
 		case CART_TYPE_RAM_BATTERY:
 			/* TODO: Not sure if this is a complete list of non-MBC cart types. */
-			robingb_log("Cart has no MBC");
+			printf("Cart has no MBC\n");
 			assert(robingb_memory_read(0x0148) == 0x00);
 			return MBC_NONE;
 		break;
@@ -118,13 +118,13 @@ static Mbc_Type calculate_mbc_type(Cart_Type cart_type) {
 		case CART_TYPE_MBC1:
 		case CART_TYPE_MBC1_RAM:
 		case CART_TYPE_MBC1_RAM_BATTERY:
-			robingb_log("Cart has an MBC1");
+			printf("Cart has an MBC1\n");
 			return MBC_1;
 		break;
 		
 		case CART_TYPE_MBC2:
 		case CART_TYPE_MBC2_BATTERY:
-			robingb_log("Cart has an MBC2");
+			printf("Cart has an MBC2\n");
 			return MBC_2;
 		break;
 		
@@ -133,14 +133,12 @@ static Mbc_Type calculate_mbc_type(Cart_Type cart_type) {
 		case CART_TYPE_MBC3_RAM_BATTERY:
 		case CART_TYPE_MBC3_TIMER_BATTERY:
 		case CART_TYPE_MBC3_TIMER_RAM_BATTERY:
-			robingb_log("Cart has an MBC3");
+			printf("Cart has an MBC3\n");
 			return MBC_3;
 		break;
 		
 		default: {
-			char buf[128];
-			sprintf(buf, "Unrecognised cart type: %x", cart_type);
-			robingb_log(buf);
+			printf("Unrecognised cart type: %x", cart_type);
 			assert(false);
 		} break;
 	}
@@ -164,7 +162,7 @@ static int calculate_ram_bank_count(Cart_Type cart_type) {
 		case CART_TYPE_MBC5_RUMBLE_RAM:
 		case CART_TYPE_MBC5_RUMBLE_RAM_BATTERY:
 		case CART_TYPE_HuC1_RAM_BATTERY:
-			robingb_log("Cart has RAM");
+			printf("Cart has RAM\n");
 			return 9999; /* TODO: Calculate the correct value */
 			
 			/*
@@ -179,17 +177,20 @@ static int calculate_ram_bank_count(Cart_Type cart_type) {
 		break;
 		
 		default: {
-			robingb_log("Cart has no RAM");
+			printf("Cart has no RAM\n");
 			assert(robingb_memory_read(0x0149) == 0x00);
 			return 0;
 		} break;
 	}
 }
 
-static void init_cart_state(const char *file_path) {
+static void init_cart_state(
+	const char *file_path,
+	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
+	) {
 	
 	strcpy(cart_state.file_path, file_path);
-	robingb_romb_init_first_banks(cart_state.file_path);
+	robingb_romb_init_first_banks(cart_state.file_path, read_file_function_ptr);
 	
 	Cart_Type cart_type = robingb_memory_read(0x0147);
 	
@@ -205,7 +206,10 @@ static void init_cart_state(const char *file_path) {
 /* General memory code                             */
 /* ----------------------------------------------- */
 
-void robingb_memory_init(const char *cart_file_path) {
+void robingb_memory_init(
+	const char *cart_file_path,
+	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
+	) {
 	robingb_memory_write(0xff10, 0x80);
 	robingb_memory_write(0xff11, 0xbf);
 	robingb_memory_write(0xff12, 0xf3);
@@ -240,7 +244,7 @@ void robingb_memory_init(const char *cart_file_path) {
 	robingb_memory_write(IF_ADDRESS, 0xe1); /* TODO: Might be acceptable for this to be 0xe0 */
 	robingb_memory_write(IE_ADDRESS, 0x00);
 	
-	init_cart_state(cart_file_path);
+	init_cart_state(cart_file_path, read_file_function_ptr);
 }
 
 u8 robingb_memory_read(u16 address) {
