@@ -107,8 +107,8 @@ u8 robingb_respond_to_joypad_register(u8 new_value);
 void robingb_timer_init();
 u8 robingb_respond_to_timer_div_register();
 void robingb_timer_update(u8 num_cycles_delta);
-void robingb_audio_init(uint32_t sample_rate, uint16_t buffer_size);
-void robingb_audio_update(int num_cycles);
+void robingb_audio_init(u32 sample_rate);
+void robingb_audio_update(u32 num_cycles);
 void robingb_render_screen_line();
 
 #endif

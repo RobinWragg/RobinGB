@@ -99,7 +99,7 @@ static void get_chan3_wave_pattern(s8 pattern_out[]) {
 
 struct {
 	float phase;
-	s16 freq;
+	int freq;
 } channel_2;
 
 static void update_channel_2(int num_cycles) {
@@ -139,21 +139,11 @@ static void update_channel_2(int num_cycles) {
 	// while (period_position > 1.0) period_position -= 1.0;
 }
 
-void robingb_audio_init(uint32_t sample_rate, uint16_t buffer_size) {
+void robingb_audio_init(u32 sample_rate) {
 	SAMPLE_RATE = sample_rate;
-	assert(SAMPLE_RATE > 0);
-	
-	ring_buffer.samples = (RobinGB_Sample*)malloc(sizeof(RobinGB_Sample) * buffer_size);
-	assert(ring_buffer.samples);
-	
-	ring_buffer.sample_count = buffer_size;
-	assert(ring_buffer.sample_count > 0);
-	
-	ring_buffer.read_index = 0;
-	ring_buffer.write_index = 0;
 }
 
-void robingb_audio_update(int num_cycles) {
+void robingb_audio_update(u32 num_cycles) {
 	// update_channel_1(num_cycles);
 	update_channel_2(num_cycles);
 	// update_channel_3(num_cycles);

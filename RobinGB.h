@@ -3,7 +3,6 @@
 /* TODO: Add error logging. */
 /* TODO: Fail gracefully if malloc() returns NULL. */
 /* TODO: Remove printf(). */
-/* TODO: Remove the remaining mentions of an audio buffer. */
 
 #ifndef ROBINGB_H
 #define ROBINGB_H
@@ -27,7 +26,6 @@ void robingb_release_button(RobinGB_Button button);
 
 void robingb_init(
 	uint32_t audio_sample_rate,
-	uint16_t audio_buffer_size,
 	
 	/* TODO: The emulator will only call the user-given read-file function with the user-given cart file path, so just remove the paths from all of that. */
 	const char *cart_file_path,

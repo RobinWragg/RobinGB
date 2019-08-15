@@ -43,7 +43,6 @@ void init_registers() {
 
 void robingb_init(
 	uint32_t audio_sample_rate,
-	uint16_t audio_buffer_size,
 	const char *cart_file_path,
 	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
 	) {
@@ -51,7 +50,7 @@ void robingb_init(
 	assert(read_file_function_ptr);
 	
 	robingb_memory_init(cart_file_path, read_file_function_ptr);
-	robingb_audio_init(audio_sample_rate, audio_buffer_size);
+	robingb_audio_init(audio_sample_rate);
 	
 	/* barebones cart error check */
 	{
@@ -79,16 +78,20 @@ void robingb_update(u8 screen_out[], u8 *ly_out) {
 	robingb_screen = screen_out;
 	assert(robingb_screen);
 	
+	u32 num_cycles_this_h_blank = 0;
+	
 	while (*lcd_ly == previous_lcd_ly) {
-		u8 num_cycles;
-		robingb_execute_next_opcode(&num_cycles);
+		u8 num_cycles_this_opcode;
+		robingb_execute_next_opcode(&num_cycles_this_opcode);
 		
 		robingb_handle_interrupts();
-		robingb_lcd_update(num_cycles);
-		robingb_timer_update(num_cycles);
+		robingb_lcd_update(num_cycles_this_opcode);
+		robingb_timer_update(num_cycles_this_opcode);
+		
+		num_cycles_this_h_blank += num_cycles_this_opcode;
 	}
 	
-	robingb_audio_update(num_cycles);
+	robingb_audio_update(num_cycles_this_h_blank);
 	
 	*ly_out = *lcd_ly;
 }
