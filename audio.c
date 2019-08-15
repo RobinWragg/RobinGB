@@ -10,14 +10,14 @@
 #define RING_SIZE (2048) /* TODO: set this low to improve latency */
 #define CHAN3_WAVE_PATTERN_LENGTH (32)
 
-struct {
+static struct {
 	s16 l, r;
 } ring[RING_SIZE];
 
-int ring_read_index = 0;
-int ring_write_index = 0;
+static int ring_read_index = 0;
+static int ring_write_index = 0;
 
-void get_chan_volume_envelope(int channel, f32 *initial_volume, bool *direction_is_increase, u32 *envelope_length_in_samples) {
+static void get_chan_volume_envelope(int channel, f32 *initial_volume, bool *direction_is_increase, u32 *envelope_length_in_samples) {
 	int volume_envelope_address;
 	
 	if (channel == 1 ) {
@@ -35,7 +35,7 @@ void get_chan_volume_envelope(int channel, f32 *initial_volume, bool *direction_
 	*envelope_length_in_samples = envelope_length_in_seconds * ROBINGB_AUDIO_SAMPLE_RATE;
 }
 
-void get_chan_freq_and_restart_and_envelope_stop(int channel, s16 *freq, bool *should_restart, bool *should_stop_at_envelope_end) {
+static void get_chan_freq_and_restart_and_envelope_stop(int channel, s16 *freq, bool *should_restart, bool *should_stop_at_envelope_end) {
 	int lower_freq_bits_address;
 	int upper_freq_bits_and_restart_and_stop_address;
 	
@@ -63,11 +63,11 @@ void get_chan_freq_and_restart_and_envelope_stop(int channel, s16 *freq, bool *s
 	*should_stop_at_envelope_end = restart_and_stop_byte & 0x40; /* TODO: untested */
 }
 
-bool chan3_is_enabled() {
+static bool chan3_is_enabled() {
 	return robingb_memory_read(0xff1a) & bit(7);
 }
 
-void get_chan3_wave_pattern(s8 pattern_out[]) {
+static void get_chan3_wave_pattern(s8 pattern_out[]) {
 	u8 volume_byte = (robingb_memory_read(0xff1c) & 0x60) >> 5;
 	
 	if (volume_byte) {
