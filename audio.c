@@ -21,7 +21,9 @@
 
 u16 SAMPLE_RATE = 0;
 
-static void get_channel_volume_envelope(s8 channel, u8 *initial_volume, bool *direction_is_increase, s32 *step_length_in_cycles) {
+static void get_channel_volume_envelope(
+	s8 channel, u8 *initial_volume, bool *direction_is_increase, s32 *step_length_in_cycles) {
+	
 	int volume_envelope_address;
 	
 	if (channel == 1 ) {
@@ -40,7 +42,9 @@ static void get_channel_volume_envelope(s8 channel, u8 *initial_volume, bool *di
 	*step_length_in_cycles = step_size_specifier * (CPU_CLOCK_FREQ / 64);
 }
 
-static void get_channel_freq_and_restart_and_envelope_stop(int channel, s16 *freq, bool *should_restart, bool *should_stop_at_envelope_end) {
+static void get_channel_freq_and_restart_and_envelope_stop(
+	int channel, s16 *freq, bool *should_restart, bool *should_stop_at_envelope_end) {
+	
 	int lower_freq_bits_address;
 	int upper_freq_bits_and_restart_and_stop_address;
 	
@@ -111,7 +115,7 @@ typedef struct {
 robingb_Channel channel_1;
 robingb_Channel channel_2;
 
-static void update_channel_1(int num_cycles) {
+static void update_channel_1(u32 num_cycles) {
 	
 	u8 initial_volume;
 	bool direction_is_increase;
@@ -150,7 +154,7 @@ static void update_channel_1(int num_cycles) {
 	channel_1.num_cycles_since_restart += num_cycles;
 }
 
-static void update_channel_2(int num_cycles) {
+static void update_channel_2(u32 num_cycles) {
 	
 	u8 initial_volume;
 	bool direction_is_increase;
@@ -208,7 +212,7 @@ void robingb_audio_update(u32 num_cycles) {
 	// update_channel_4(num_cycles);
 }
 
-void robingb_read_next_audio_sample(s16 *l, s16 *r) {
+void robingb_read_next_audio_sample(s8 *l, s8 *r) {
 	channel_1.phase += (PHASE_FULL_PERIOD * channel_1.frequency) / SAMPLE_RATE;
 	// if (channel_1.phase >= PHASE_FULL_PERIOD) channel_1.phase -= PHASE_FULL_PERIOD; /* TODO: remove */
 	
@@ -225,8 +229,8 @@ void robingb_read_next_audio_sample(s16 *l, s16 *r) {
 	master_sample += channel_1_sample;
 	master_sample += channel_2_sample;
 	
-	*l = master_sample * 500;
-	*r = master_sample * 500;
+	*l = master_sample;
+	*r = master_sample;
 }
 
 

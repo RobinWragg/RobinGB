@@ -32,6 +32,6 @@ void robingb_init(
 	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
 	);
 void robingb_update(uint8_t screen_out[], uint8_t *ly_out);
-void robingb_read_next_audio_sample(int16_t *l, int16_t *r);
+void robingb_read_next_audio_sample(int8_t *l, int8_t *r);
 
 #endif
