@@ -22,7 +22,7 @@
 u16 SAMPLE_RATE = 0;
 
 static void get_channel_volume_envelope(
-	s8 channel, u8 *initial_volume, bool *direction_is_increase, s32 *step_length_in_cycles) {
+	u8 channel, u8 *initial_volume, bool *direction_is_increase, s32 *step_length_in_cycles) {
 	
 	int volume_envelope_address;
 	
@@ -43,7 +43,7 @@ static void get_channel_volume_envelope(
 }
 
 static void get_channel_freq_and_restart_and_envelope_stop(
-	int channel, s16 *freq, bool *should_restart, bool *should_stop_at_envelope_end) {
+	u8 channel, u16 *freq, bool *should_restart, bool *should_stop_at_envelope_end) {
 	
 	int lower_freq_bits_address;
 	int upper_freq_bits_and_restart_and_stop_address;
@@ -108,7 +108,7 @@ typedef struct {
 	/* Where we would normally use a float wraps around at 2*M_PI, I use an unsigned 16-bit int.
 	This is more efficient as it auto-wraps, and float calculations are slow without an FPU. */
 	u16 phase; 
-	s16 frequency;
+	u16 frequency;
 	u64 num_cycles_since_restart;
 } robingb_Channel;
 
@@ -208,19 +208,17 @@ void robingb_audio_init(u32 sample_rate) {
 void robingb_audio_update(u32 num_cycles) {
 	update_channel_1(num_cycles);
 	update_channel_2(num_cycles);
-	// update_channel_3(num_cycles);
-	// update_channel_4(num_cycles);
+	/* update_channel_3(num_cycles); */
+	/* update_channel_4(num_cycles); */
 }
 
-void robingb_read_next_audio_sample(s8 *l, s8 *r) {
+static void get_output_sample(s8 *l, s8 *r) {
 	channel_1.phase += (PHASE_FULL_PERIOD * channel_1.frequency) / SAMPLE_RATE;
-	// if (channel_1.phase >= PHASE_FULL_PERIOD) channel_1.phase -= PHASE_FULL_PERIOD; /* TODO: remove */
 	
 	s8 channel_1_sample = channel_1.volume;
 	if (channel_1.phase < (PHASE_FULL_PERIOD/2)) channel_1_sample *= -1;
 	
 	channel_2.phase += (PHASE_FULL_PERIOD * channel_2.frequency) / SAMPLE_RATE;
-	// if (channel_2.phase >= PHASE_FULL_PERIOD) channel_2.phase -= PHASE_FULL_PERIOD; /* TODO: remove */
 	
 	s8 channel_2_sample = channel_2.volume;
 	if (channel_2.phase < (PHASE_FULL_PERIOD/2)) channel_2_sample *= -1;
@@ -231,6 +229,13 @@ void robingb_read_next_audio_sample(s8 *l, s8 *r) {
 	
 	*l = master_sample;
 	*r = master_sample;
+}
+
+void robingb_get_audio_samples(s8 samples_out[], uint16_t samples_count) {
+	int i;
+	for (i = 0; i < samples_count; i++) {
+		get_output_sample(&samples_out[i*2], &samples_out[i*2+1]);
+	}
 }
 
 
