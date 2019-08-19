@@ -32,6 +32,13 @@ void robingb_init(
 	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
 	);
 void robingb_update(uint8_t screen_out[], uint8_t *ly_out);
-void robingb_read_next_audio_sample(int8_t *l, int8_t *r);
+
+/* Stereo samples are stored in 8-bit interleaved format (LRLRLRLR...). Note that if you want
+to get 256 samples, you'll need to give this function an array of 512 int8_t elements. This
+is double because of the two channels (left and right). */
+void robingb_get_audio_samples(int8_t samples_out[], uint16_t samples_count);
 
 #endif
+
+
+
