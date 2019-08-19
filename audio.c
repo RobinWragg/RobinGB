@@ -213,27 +213,37 @@ void robingb_audio_update(u32 num_cycles) {
 }
 
 void robingb_get_audio_samples(s8 samples_out[], uint16_t samples_count) {
-	
-	u16 channel_1_phase_increment = (PHASE_FULL_PERIOD * channel_1.frequency) / SAMPLE_RATE;
-	u16 channel_2_phase_increment = (PHASE_FULL_PERIOD * channel_2.frequency) / SAMPLE_RATE;
-	
-	int s;
-	for (s = 0; s < samples_count; s++) {
-		s8 channel_1_sample = channel_1.volume;
-		if (channel_1.phase < (PHASE_FULL_PERIOD/2)) channel_1_sample *= -1;
-		channel_1.phase += channel_1_phase_increment;
-		
-		s8 channel_2_sample = channel_2.volume;
-		if (channel_2.phase < (PHASE_FULL_PERIOD/2)) channel_2_sample *= -1;
-		channel_2.phase += channel_2_phase_increment;
-		
-		s8 master_sample = 0;
-		master_sample += channel_1_sample;
-		master_sample += channel_2_sample;
-		
-		samples_out[s*2] = master_sample;
-		samples_out[s*2+1] = master_sample;
-	}
+  
+  const u16 CHANNEL_1_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_1.frequency) / SAMPLE_RATE;
+  const u16 CHANNEL_2_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_2.frequency) / SAMPLE_RATE;
+  
+  s8 channel_1_samples[samples_count];
+  s8 channel_2_samples[samples_count];
+  
+  int s;
+  
+  for (s = 0; s < samples_count; s++) {
+    channel_1_samples[s] =
+    	(channel_1.phase < (PHASE_FULL_PERIOD/2)) ? channel_1.volume : -channel_1.volume;
+    	
+    channel_1.phase += CHANNEL_1_PHASE_INCREMENT;
+  }
+  
+  for (s = 0; s < samples_count; s++) {
+    channel_2_samples[s] =
+    	(channel_2.phase < (PHASE_FULL_PERIOD/2)) ? channel_2.volume : -channel_2.volume;
+    	
+    channel_2.phase += CHANNEL_2_PHASE_INCREMENT;
+  }
+  
+  for (s = 0; s < samples_count; s++) {
+    s8 master_sample = 0;
+    master_sample += channel_1_samples[s];
+    master_sample += channel_2_samples[s];
+    
+    samples_out[s*2] = master_sample;
+    samples_out[s*2+1] = master_sample;
+  }
 }
 
 
