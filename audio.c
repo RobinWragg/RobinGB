@@ -16,10 +16,12 @@
 #define CHAN3_WAVE_PATTERN_LENGTH (32)
 #define CPU_CLOCK_FREQ (4194304)
 #define STEPS_PER_ENVELOPE (16)
+#define PHASE_FULL_PERIOD (65536)
+#define MAX_VOLUME (15)
 
 u16 SAMPLE_RATE = 0;
 
-static void get_channel_volume_envelope(s8 channel, f32 *initial_volume, bool *direction_is_increase, s32 *step_length_in_cycles) {
+static void get_channel_volume_envelope(s8 channel, u8 *initial_volume, bool *direction_is_increase, s32 *step_length_in_cycles) {
 	int volume_envelope_address;
 	
 	if (channel == 1 ) {
@@ -30,8 +32,7 @@ static void get_channel_volume_envelope(s8 channel, f32 *initial_volume, bool *d
 	
 	u8 envelope_byte = robingb_memory_read(volume_envelope_address);
 	
-	u8 initial_volume_specifier = envelope_byte >> 4; /* can be 0 to 15 */
-	*initial_volume = initial_volume_specifier / 15.0f;
+	*initial_volume = envelope_byte >> 4; /* can be 0 to 15 */
 	
 	*direction_is_increase = envelope_byte & 0x08;
 	
@@ -75,7 +76,7 @@ static void get_chan3_wave_pattern(s8 pattern_out[]) {
 	u8 volume_byte = (robingb_memory_read(0xff1c) & 0x60) >> 5;
 	
 	if (volume_byte) {
-		f32 volume;
+		float volume;
 		switch (volume_byte) {
 			case 1: volume = 1; break;
 			case 2: volume = 0.5; break;
@@ -97,64 +98,135 @@ static void get_chan3_wave_pattern(s8 pattern_out[]) {
 	}
 }
 
-struct {
-	float phase;
-	int freq;
-} channel_2;
+typedef struct {
+	u16 volume;
+	
+	/* Where we would normally use a float wraps around at 2*M_PI, I use an unsigned 16-bit int.
+	This is more efficient as it auto-wraps, and float calculations are slow without an FPU. */
+	u16 phase; 
+	s16 frequency;
+	u64 num_cycles_since_restart;
+} robingb_Channel;
 
-static void update_channel_2(int num_cycles) {
+robingb_Channel channel_1;
+robingb_Channel channel_2;
+
+static void update_channel_1(int num_cycles) {
 	
-	// static f32 period_position = 0;
-	// static f32 current_volume = 1;
-	// static u32 num_samples_since_restart = 0;
-	
-	f32 initial_volume;
+	u8 initial_volume;
 	bool direction_is_increase;
 	s32 envelope_step_length_in_cycles;
-	get_channel_volume_envelope(2, &initial_volume, &direction_is_increase, &envelope_step_length_in_cycles);
-	
+	get_channel_volume_envelope(
+		1,
+		&initial_volume,
+		&direction_is_increase,
+		&envelope_step_length_in_cycles);
 	
 	bool should_restart;
 	bool should_stop_at_envelope_end;
-	get_channel_freq_and_restart_and_envelope_stop(2, &channel_2.freq, &should_restart, &should_stop_at_envelope_end);
+	get_channel_freq_and_restart_and_envelope_stop(
+		1,
+		&channel_1.frequency,
+		&should_restart,
+		&should_stop_at_envelope_end);
 	
-	// if (should_restart) {
-	// 	current_volume = initial_volume;
-	// 	num_samples_since_restart = 0;
-	// 	period_position = 0;
-	// }
+	if (should_restart) {
+		channel_1.num_cycles_since_restart = 0;
+		channel_1.phase = 0;
+	}
 	
-	// if (direction_is_increase) {
-	// 	current_volume = lerp(initial_volume, 1, num_samples_since_restart / (f32)envelope_length_in_samples);
-	// } else {
-	// 	current_volume = lerp(initial_volume, 0, num_samples_since_restart / (f32)envelope_length_in_samples);
-	// }
+	channel_1.volume = initial_volume;
 	
-	// num_samples_since_restart++;
+	/* Set the current volume according to the envelope */
+	if (envelope_step_length_in_cycles != 0) {
+		u32 current_step = channel_1.num_cycles_since_restart / envelope_step_length_in_cycles;
+		
+		if (direction_is_increase) channel_1.volume += current_step;
+		else channel_1.volume -= current_step;
+		
+		if (channel_1.volume > MAX_VOLUME) channel_1.volume = 0;
+	}
 	
-	// ring[ring_write_index].l += (period_position > 0.5 ? 127 : -128) * current_volume;
-	// ring[ring_write_index].r += (period_position > 0.5 ? 127 : -128) * current_volume;
+	channel_1.num_cycles_since_restart += num_cycles;
+}
+
+static void update_channel_2(int num_cycles) {
 	
-	// period_position += (1.0/ROBINGB_AUDIO_SAMPLE_RATE) * freq;
-	// while (period_position > 1.0) period_position -= 1.0;
+	u8 initial_volume;
+	bool direction_is_increase;
+	s32 envelope_step_length_in_cycles;
+	get_channel_volume_envelope(
+		2,
+		&initial_volume,
+		&direction_is_increase,
+		&envelope_step_length_in_cycles);
+	
+	bool should_restart;
+	bool should_stop_at_envelope_end;
+	get_channel_freq_and_restart_and_envelope_stop(
+		2,
+		&channel_2.frequency,
+		&should_restart,
+		&should_stop_at_envelope_end);
+	
+	if (should_restart) {
+		channel_2.num_cycles_since_restart = 0;
+		channel_2.phase = 0;
+	}
+	
+	channel_2.volume = initial_volume;
+	
+	/* Set the current volume according to the envelope */
+	if (envelope_step_length_in_cycles != 0) {
+		u32 current_step = channel_2.num_cycles_since_restart / envelope_step_length_in_cycles;
+		
+		if (direction_is_increase) channel_2.volume += current_step;
+		else channel_2.volume -= current_step;
+		
+		if (channel_2.volume > MAX_VOLUME) channel_2.volume = 0;
+	}
+	
+	channel_2.num_cycles_since_restart += num_cycles;
 }
 
 void robingb_audio_init(u32 sample_rate) {
 	SAMPLE_RATE = sample_rate;
+	
+	/* Test for unsigned wraparound */
+	u8 wrapper = 0;
+	wrapper += PHASE_FULL_PERIOD + 1;
+	
+	if (wrapper != 1) {
+		/* TODO: Report that the platform doesn't wraparound unsigned bytes. */
+	}
 }
 
 void robingb_audio_update(u32 num_cycles) {
-	// update_channel_1(num_cycles);
+	update_channel_1(num_cycles);
 	update_channel_2(num_cycles);
 	// update_channel_3(num_cycles);
 	// update_channel_4(num_cycles);
 }
 
 void robingb_read_next_audio_sample(s16 *l, s16 *r) {
-	channel_2.phase += (2*M_PI) * (channel_2.freq / (float)SAMPLE_RATE);
-	if (channel_2.phase > 2*M_PI) channel_2.phase -= 2*M_PI;
-	*l = sinf(channel_2.phase) * 32000;
-	*r = sinf(channel_2.phase) * 32000;
+	channel_1.phase += (PHASE_FULL_PERIOD * channel_1.frequency) / SAMPLE_RATE;
+	// if (channel_1.phase >= PHASE_FULL_PERIOD) channel_1.phase -= PHASE_FULL_PERIOD; /* TODO: remove */
+	
+	s8 channel_1_sample = channel_1.volume;
+	if (channel_1.phase < (PHASE_FULL_PERIOD/2)) channel_1_sample *= -1;
+	
+	channel_2.phase += (PHASE_FULL_PERIOD * channel_2.frequency) / SAMPLE_RATE;
+	// if (channel_2.phase >= PHASE_FULL_PERIOD) channel_2.phase -= PHASE_FULL_PERIOD; /* TODO: remove */
+	
+	s8 channel_2_sample = channel_2.volume;
+	if (channel_2.phase < (PHASE_FULL_PERIOD/2)) channel_2_sample *= -1;
+	
+	s8 master_sample = 0;
+	master_sample += channel_1_sample;
+	master_sample += channel_2_sample;
+	
+	*l = master_sample * 500;
+	*r = master_sample * 500;
 }
 
 

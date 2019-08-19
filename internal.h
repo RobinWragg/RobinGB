@@ -3,8 +3,6 @@
 
 #include "RobinGB.h"
 
-typedef float f32;
-typedef double f64;
 typedef int8_t s8;
 typedef uint8_t u8;
 typedef int16_t s16;
