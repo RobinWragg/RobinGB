@@ -14,7 +14,7 @@
 #define CHANNEL_3_WAVE_PATTERN_LENGTH (32)
 #define CPU_CLOCK_FREQ (4194304)
 #define STEPS_PER_ENVELOPE (16)
-#define PHASE_FULL_PERIOD (65536)
+#define PHASE_FULL_PERIOD (4294967296)
 #define MAX_VOLUME (15)
 
 u16 SAMPLE_RATE = 0;
@@ -75,7 +75,7 @@ struct {
 	
 	/* Where we would normally use a float wraps around at 2*M_PI, I use an unsigned 16-bit int.
 	This is more efficient as it auto-wraps, and float calculations are slow without an FPU. */
-	u16 phase; 
+	u32 phase; 
 	u16 frequency;
 	u64 num_cycles_since_restart;
 } channel_1;
@@ -121,7 +121,7 @@ static void update_channel_1(u32 num_cycles) {
 
 struct {
 	u16 volume;
-	u16 phase; 
+	u32 phase;
 	u16 frequency;
 	u64 num_cycles_since_restart;
 } channel_2;
@@ -166,13 +166,15 @@ static void update_channel_2(u32 num_cycles) {
 }
 
 struct {
-	u16 phase; 
 	u16 frequency;
+	u32 phase;
+	s8 wave_pattern[CHANNEL_3_WAVE_PATTERN_LENGTH];
 } channel_3;
 
 static void get_channel_3_wave_pattern(s8 pattern_out[]) {
 	bool channel_enabled = robingb_memory[0xff1a] & 0x80;
 	u8 volume_byte = (robingb_memory[0xff1c] & 0x60) >> 5;
+	
 		
 	if (channel_enabled && volume_byte) {
 		volume_byte -= 1;
@@ -189,6 +191,8 @@ static void get_channel_3_wave_pattern(s8 pattern_out[]) {
 
 static void update_channel_3(u32 num_cycles) {
 	
+	get_channel_3_wave_pattern(channel_3.wave_pattern);
+	
 	bool should_restart;
 	bool should_stop_at_envelope_end;
 	get_channel_freq_and_restart_and_envelope_stop(
@@ -202,7 +206,7 @@ void robingb_audio_init(u32 sample_rate) {
 	SAMPLE_RATE = sample_rate;
 	
 	/* Test for unsigned wraparound */
-	u16 wrapper = 0;
+	u32 wrapper = 0;
 	wrapper += PHASE_FULL_PERIOD + 1;
 	
 	if (wrapper != 1) {
@@ -219,45 +223,60 @@ void robingb_audio_update(u32 num_cycles) {
 
 void robingb_get_audio_samples(s8 samples_out[], uint16_t samples_count) {
 	
-	const u16 CHANNEL_1_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_1.frequency) / SAMPLE_RATE;
-	const u16 CHANNEL_2_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_2.frequency) / SAMPLE_RATE;
-	// const u16 CHANNEL_3_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_3.frequency) / SAMPLE_RATE;
+	static s8 *sample_buffer = NULL;
+	static int32_t largest_sample_count = -1;
 	
-	s8 channel_1_samples[samples_count];
-	s8 channel_2_samples[samples_count];
-	s8 channel_3_samples[samples_count];
+	static s8 *channel_1_samples;
+	static s8 *channel_2_samples;
+	static s8 *channel_3_samples;
+	static s8 *channel_4_samples;
+	
+	/* Allocate the buffer if it doesn't exist yet, and reallocate it if it's too small, depending
+	on the samples_count parameter. This buffer is shared by the samples of all 4 channels. */
+	if (samples_count > largest_sample_count) {
+		largest_sample_count = samples_count;
+		
+		if (sample_buffer) free(sample_buffer);
+		sample_buffer = (s8*)malloc(sizeof(s8) * samples_count * 4); /* 4 channels */
+		
+		assert(sample_buffer);
+		
+		channel_1_samples = &sample_buffer[0];
+		channel_2_samples = &sample_buffer[samples_count];
+		channel_3_samples = &sample_buffer[samples_count * 2];
+		channel_4_samples = &sample_buffer[samples_count * 3];
+	}
+	
+	const u32 CHANNEL_1_PHASE_INCREMENT = (PHASE_FULL_PERIOD / SAMPLE_RATE) * channel_1.frequency;
+	const u32 CHANNEL_2_PHASE_INCREMENT = (PHASE_FULL_PERIOD / SAMPLE_RATE) * channel_2.frequency;
+	const u32 CHANNEL_3_PHASE_INCREMENT = (PHASE_FULL_PERIOD / SAMPLE_RATE) * channel_3.frequency;
 	
 	int s;
 	
+	/* channel 1 */
 	for (s = 0; s < samples_count; s++) {
 		channel_1_samples[s] =
-			(channel_1.phase < (PHASE_FULL_PERIOD/2)) ? channel_1.volume : -channel_1.volume;
+			(channel_1.phase < PHASE_FULL_PERIOD/2) ? channel_1.volume : 0;
 			
 		channel_1.phase += CHANNEL_1_PHASE_INCREMENT;
 	}
 	
+	/* channel 2 */
 	for (s = 0; s < samples_count; s++) {
 		channel_2_samples[s] =
-			(channel_2.phase < (PHASE_FULL_PERIOD/2)) ? channel_2.volume : -channel_2.volume;
+			(channel_2.phase < PHASE_FULL_PERIOD/2) ? channel_2.volume : 0;
 			
 		channel_2.phase += CHANNEL_2_PHASE_INCREMENT;
 	}
 	
+	/* channel 3 */
 	for (s = 0; s < samples_count; s++) {
-		channel_3_samples[s] =
-			(channel_3.phase < (PHASE_FULL_PERIOD/2)) ? channel_3.volume : -channel_3.volume;
-			
+		channel_3_samples[s] = channel_3.wave_pattern[channel_3.phase >> 27];
 		channel_3.phase += CHANNEL_3_PHASE_INCREMENT;
 	}
 	
 	for (s = 0; s < samples_count; s++) {
-		s8 master_sample = 0;
-		master_sample += channel_1_samples[s];
-		master_sample += channel_2_samples[s];
-		// master_sample += channel_3_samples[s];
-		
-		samples_out[s*2] = master_sample;
-		samples_out[s*2+1] = master_sample;
+		samples_out[s] = channel_1_samples[s] + channel_2_samples[s] + channel_3_samples[s];
 	}
 }
 
