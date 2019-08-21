@@ -1,15 +1,7 @@
 #include "internal.h"
 
 #include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-
-/* DIV and AudioPU */
-/* - The APU uses the DIV to update sweep (channel 1), fade in/out and time out, the same way the timer uses it to update itself. */
-/* - In normal speed mode the APU updates when bit 5 of DIV goes from 1 to 0 (256 Hz). In double speed mode, bit 6. */
-/* - Writing to DIV every instruction, for example, will make the APU produce the same frequency with the same volume even if sweep and fade out are enabled. */
-/* - Writing to DIV doesn't affect the frequency itself. The waveform generation is driven by another timer. */
+#include <string.h>
 
 #define CHANNEL_3_WAVE_PATTERN_LENGTH (32)
 #define CPU_CLOCK_FREQ (4194304)
@@ -73,7 +65,7 @@ static void get_channel_freq_and_restart_and_envelope_stop(
 struct {
 	u16 volume;
 	
-	/* Where we would normally use a float wraps around at 2*M_PI, I use an unsigned 16-bit int.
+	/* Where we would normally use a float wraps around at 2*M_PI, I use an unsigned 32-bit int.
 	This is more efficient as it auto-wraps, and float calculations are slow without an FPU. */
 	u32 phase; 
 	u16 frequency;
@@ -223,60 +215,21 @@ void robingb_audio_update(u32 num_cycles) {
 
 void robingb_get_audio_samples(s8 samples_out[], uint16_t samples_count) {
 	
-	static s8 *sample_buffer = NULL;
-	static int32_t largest_sample_count = -1;
-	
-	static s8 *channel_1_samples;
-	static s8 *channel_2_samples;
-	static s8 *channel_3_samples;
-	static s8 *channel_4_samples;
-	
-	/* Allocate the buffer if it doesn't exist yet, and reallocate it if it's too small, depending
-	on the samples_count parameter. This buffer is shared by the samples of all 4 channels. */
-	if (samples_count > largest_sample_count) {
-		largest_sample_count = samples_count;
-		
-		if (sample_buffer) free(sample_buffer);
-		sample_buffer = (s8*)malloc(sizeof(s8) * samples_count * 4); /* 4 channels */
-		
-		assert(sample_buffer);
-		
-		channel_1_samples = &sample_buffer[0];
-		channel_2_samples = &sample_buffer[samples_count];
-		channel_3_samples = &sample_buffer[samples_count * 2];
-		channel_4_samples = &sample_buffer[samples_count * 3];
-	}
-	
 	const u32 CHANNEL_1_PHASE_INCREMENT = (PHASE_FULL_PERIOD / SAMPLE_RATE) * channel_1.frequency;
 	const u32 CHANNEL_2_PHASE_INCREMENT = (PHASE_FULL_PERIOD / SAMPLE_RATE) * channel_2.frequency;
 	const u32 CHANNEL_3_PHASE_INCREMENT = (PHASE_FULL_PERIOD / SAMPLE_RATE) * channel_3.frequency;
 	
 	int s;
 	
-	/* channel 1 */
 	for (s = 0; s < samples_count; s++) {
-		channel_1_samples[s] =
-			(channel_1.phase < PHASE_FULL_PERIOD/2) ? channel_1.volume : 0;
-			
+		samples_out[s] = (channel_1.phase < PHASE_FULL_PERIOD/2) ? 0 : channel_1.volume;
 		channel_1.phase += CHANNEL_1_PHASE_INCREMENT;
-	}
-	
-	/* channel 2 */
-	for (s = 0; s < samples_count; s++) {
-		channel_2_samples[s] =
-			(channel_2.phase < PHASE_FULL_PERIOD/2) ? channel_2.volume : 0;
-			
+		
+		if (channel_2.phase < PHASE_FULL_PERIOD/2) samples_out[s] += channel_2.volume;
 		channel_2.phase += CHANNEL_2_PHASE_INCREMENT;
-	}
-	
-	/* channel 3 */
-	for (s = 0; s < samples_count; s++) {
-		channel_3_samples[s] = channel_3.wave_pattern[channel_3.phase >> 27];
+		
+		samples_out[s] += channel_3.wave_pattern[channel_3.phase >> 27];
 		channel_3.phase += CHANNEL_3_PHASE_INCREMENT;
-	}
-	
-	for (s = 0; s < samples_count; s++) {
-		samples_out[s] = channel_1_samples[s] + channel_2_samples[s] + channel_3_samples[s];
 	}
 }
 
