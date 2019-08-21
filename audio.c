@@ -72,22 +72,6 @@ static void get_channel_freq_and_restart_and_envelope_stop(
 	*should_stop_at_envelope_end = restart_and_stop_byte & 0x40; /* TODO: untested */
 }
 
-static void get_channel_3_wave_pattern(s8 pattern_out[]) {
-	u8 volume_byte = (robingb_memory[0xff1c] & 0x60) >> 5;
-	
-	if (volume_byte) {
-		volume_byte -= 1;
-		
-		int i;
-		for (i = 0; i < CHANNEL_3_WAVE_PATTERN_LENGTH; i += 2) {
-			u8 value = robingb_memory[0xff30 + i/2];
-			
-			pattern_out[i] = (value & 0xf0) >> (4 + volume_byte);
-			pattern_out[i+1] = (value & 0x0f) >> volume_byte;
-		}
-	} else memset(pattern_out, 0, CHANNEL_3_WAVE_PATTERN_LENGTH);
-}
-
 struct {
 	u16 volume;
 	
@@ -184,18 +168,28 @@ static void update_channel_2(u32 num_cycles) {
 }
 
 struct {
-	bool enabled;
 	u16 phase; 
 	u16 frequency;
 } channel_3;
 
+static void get_channel_3_wave_pattern(s8 pattern_out[]) {
+	bool channel_enabled = robingb_memory[0xff1a] & 0x80;
+	u8 volume_byte = (robingb_memory[0xff1c] & 0x60) >> 5;
+		
+	if (channel_enabled && volume_byte) {
+		volume_byte -= 1;
+		
+		int i;
+		for (i = 0; i < CHANNEL_3_WAVE_PATTERN_LENGTH; i += 2) {
+			u8 value = robingb_memory[0xff30 + i/2];
+			
+			pattern_out[i] = (value & 0xf0) >> (4 + volume_byte);
+			pattern_out[i+1] = (value & 0x0f) >> volume_byte;
+		}
+	} else memset(pattern_out, 0, CHANNEL_3_WAVE_PATTERN_LENGTH);
+}
+
 static void update_channel_3(u32 num_cycles) {
-	
-	if ((robingb_memory[0xff1a] & 0x80) == 0) {
-		/* channel 3 is disabled */
-		channel_3.enabled = false;
-		return;
-	} else channel_3.enabled = true;
 	
 	bool should_restart;
 	bool should_stop_at_envelope_end;
