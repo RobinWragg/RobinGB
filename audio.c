@@ -13,7 +13,7 @@
 /* - Writing to DIV every instruction, for example, will make the APU produce the same frequency with the same volume even if sweep and fade out are enabled. */
 /* - Writing to DIV doesn't affect the frequency itself. The waveform generation is driven by another timer. */
 
-#define CHAN3_WAVE_PATTERN_LENGTH (32)
+#define CHANNEL_3_WAVE_PATTERN_LENGTH (32)
 #define CPU_CLOCK_FREQ (4194304)
 #define STEPS_PER_ENVELOPE (16)
 #define PHASE_FULL_PERIOD (65536)
@@ -72,37 +72,23 @@ static void get_channel_freq_and_restart_and_envelope_stop(
 	*should_stop_at_envelope_end = restart_and_stop_byte & 0x40; /* TODO: untested */
 }
 
-static bool chan3_is_enabled() {
-	return robingb_memory_read(0xff1a) & bit(7);
-}
-
-static void get_chan3_wave_pattern(s8 pattern_out[]) {
-	u8 volume_byte = (robingb_memory_read(0xff1c) & 0x60) >> 5;
+static void get_channel_3_wave_pattern(s8 pattern_out[]) {
+	u8 volume_byte = (robingb_memory[0xff1c] & 0x60) >> 5;
 	
 	if (volume_byte) {
-		float volume;
-		switch (volume_byte) {
-			case 1: volume = 1; break;
-			case 2: volume = 0.5; break;
-			case 3: volume = 0.25; break;
-			default: assert(false); break;
-		}
+		volume_byte -= 1;
 		
 		int i;
-		for (i = 0; i < CHAN3_WAVE_PATTERN_LENGTH; i += 2) {
-			u8 value = robingb_memory_read(0xff30 + i/2);
-			pattern_out[i] = (((value & 0xf0) >> 4) * 16 - 128) * volume;
-			pattern_out[i+1] = ((value & 0x0f) * 16 - 128) * volume;
+		for (i = 0; i < CHANNEL_3_WAVE_PATTERN_LENGTH; i += 2) {
+			u8 value = robingb_memory[0xff30 + i/2];
+			
+			pattern_out[i] = (value & 0xf0) >> (4 + volume_byte);
+			pattern_out[i+1] = (value & 0x0f) >> volume_byte;
 		}
-	} else {
-		int i;
-		for (i = 0; i < CHAN3_WAVE_PATTERN_LENGTH; i++) {
-			pattern_out[i] = 0;
-		}
-	}
+	} else memset(pattern_out, 0, CHANNEL_3_WAVE_PATTERN_LENGTH);
 }
 
-typedef struct {
+struct {
 	u16 volume;
 	
 	/* Where we would normally use a float wraps around at 2*M_PI, I use an unsigned 16-bit int.
@@ -110,10 +96,7 @@ typedef struct {
 	u16 phase; 
 	u16 frequency;
 	u64 num_cycles_since_restart;
-} robingb_Channel;
-
-robingb_Channel channel_1;
-robingb_Channel channel_2;
+} channel_1;
 
 static void update_channel_1(u32 num_cycles) {
 	
@@ -154,6 +137,13 @@ static void update_channel_1(u32 num_cycles) {
 	channel_1.num_cycles_since_restart += num_cycles;
 }
 
+struct {
+	u16 volume;
+	u16 phase; 
+	u16 frequency;
+	u64 num_cycles_since_restart;
+} channel_2;
+
 static void update_channel_2(u32 num_cycles) {
 	
 	u8 initial_volume;
@@ -193,6 +183,29 @@ static void update_channel_2(u32 num_cycles) {
 	channel_2.num_cycles_since_restart += num_cycles;
 }
 
+struct {
+	bool enabled;
+	u16 phase; 
+	u16 frequency;
+} channel_3;
+
+static void update_channel_3(u32 num_cycles) {
+	
+	if ((robingb_memory[0xff1a] & 0x80) == 0) {
+		/* channel 3 is disabled */
+		channel_3.enabled = false;
+		return;
+	} else channel_3.enabled = true;
+	
+	bool should_restart;
+	bool should_stop_at_envelope_end;
+	get_channel_freq_and_restart_and_envelope_stop(
+		3,
+		&channel_3.frequency,
+		&should_restart,
+		&should_stop_at_envelope_end);
+}
+
 void robingb_audio_init(u32 sample_rate) {
 	SAMPLE_RATE = sample_rate;
 	
@@ -206,9 +219,9 @@ void robingb_audio_init(u32 sample_rate) {
 }
 
 void robingb_audio_update(u32 num_cycles) {
-	update_channel_1(num_cycles);
-	update_channel_2(num_cycles);
-	/* update_channel_3(num_cycles); */
+	update_channel_1(num_cycles); 
+	update_channel_2(num_cycles); 
+	update_channel_3(num_cycles);
 	/* update_channel_4(num_cycles); */
 }
 
@@ -216,9 +229,11 @@ void robingb_get_audio_samples(s8 samples_out[], uint16_t samples_count) {
   
   const u16 CHANNEL_1_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_1.frequency) / SAMPLE_RATE;
   const u16 CHANNEL_2_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_2.frequency) / SAMPLE_RATE;
+  // const u16 CHANNEL_3_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_3.frequency) / SAMPLE_RATE;
   
   s8 channel_1_samples[samples_count];
   s8 channel_2_samples[samples_count];
+  s8 channel_3_samples[samples_count];
   
   int s;
   
@@ -236,10 +251,18 @@ void robingb_get_audio_samples(s8 samples_out[], uint16_t samples_count) {
     channel_2.phase += CHANNEL_2_PHASE_INCREMENT;
   }
   
+  // for (s = 0; s < samples_count; s++) {
+  //   channel_3_samples[s] =
+  //   	(channel_3.phase < (PHASE_FULL_PERIOD/2)) ? channel_3.volume : -channel_3.volume;
+    	
+  //   channel_3.phase += CHANNEL_3_PHASE_INCREMENT;
+  // }
+  
   for (s = 0; s < samples_count; s++) {
     s8 master_sample = 0;
     master_sample += channel_1_samples[s];
     master_sample += channel_2_samples[s];
+    // master_sample += channel_3_samples[s];
     
     samples_out[s*2] = master_sample;
     samples_out[s*2+1] = master_sample;
