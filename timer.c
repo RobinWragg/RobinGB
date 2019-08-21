@@ -13,14 +13,14 @@ static u8 *tma = &robingb_memory[TMA_ADDRESS];
 static u8 *tac = &robingb_memory[TAC_ADDRESS]; /* TODO: what do with the upper 5 bits of this register? */
 
 static u16 incrementer_every_cycle;
-static u8 *div = ((u8*)&incrementer_every_cycle) + 1;
+static u8 *div_byte = ((u8*)&incrementer_every_cycle) + 1;
 
 static u16 cycles_since_last_tima_increment = 0;
 
 void robingb_timer_init() {
 	incrementer_every_cycle = 0xabcc;
-	assert(*div == 0xab);
-	robingb_memory[DIV_ADDRESS] = *div;
+	assert(*div_byte == 0xab);
+	robingb_memory[DIV_ADDRESS] = *div_byte;
 	
 	*tima = 0x00;
 	*tma = 0x00;
@@ -35,7 +35,7 @@ void robingb_timer_update(u8 num_cycles) {
 	
 	/* update incrementer and therefore DIV. */
 	incrementer_every_cycle += num_cycles;
-	robingb_memory[DIV_ADDRESS] = *div;
+	robingb_memory[DIV_ADDRESS] = *div_byte;
 	
 	/* Update TIMA and potentially request an interrupt */
 	if ((*tac) & 0x04 /* check if timer is enabled */) {

@@ -14,9 +14,11 @@ static s16 robingb_romb_current_switchable_bank;
 /* After init_cart_state(), cached_banks contains all ROM banks other than banks 0 and 1.
 Banks 0 and 1 are stored at the start of robingb_memory.
 Bank 2 is at cached_banks[0], bank 3 at cached_banks[1] and so on. */
-static struct {
+typedef struct {
 	u8 data[BANK_SIZE];
-} *cached_banks = NULL;
+} Cached_Bank;
+
+Cached_Bank *cached_banks = NULL;
 static u16 cached_bank_count = 0;
 
 u8 robingb_romb_read_switchable_bank(u16 address) {
@@ -69,7 +71,7 @@ void robingb_romb_init_additional_banks() {
 		
 		printf("Allocating %iKB for the remaining %i ROM banks...\n", cached_bank_count*BANK_SIZE/1024, cached_bank_count);
 		
-		cached_banks = malloc(BANK_SIZE * cached_bank_count);
+		cached_banks = (Cached_Bank*)malloc(sizeof(u8) * BANK_SIZE * cached_bank_count);
 		
 		assert(cached_banks);
 		printf("Done\n");

@@ -44,15 +44,16 @@ typedef enum {
 /* ----------------------------------------------- */
 /* cart control code                               */
 /* ----------------------------------------------- */
+typedef enum {
+	BM_ROM,
+	BM_RAM
+} Banking_Mode;
 
 static struct {
 	Mbc_Type mbc_type;
 	char file_path[256];
 	bool has_ram;
-	enum {
-		BM_ROM,
-		BM_RAM
-	} banking_mode;
+	Banking_Mode banking_mode;
 } cart_state;
 
 static void ramb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type) {
@@ -192,11 +193,11 @@ static void init_cart_state(
 	strcpy(cart_state.file_path, file_path);
 	robingb_romb_init_first_banks(cart_state.file_path, read_file_function_ptr);
 	
-	Cart_Type cart_type = robingb_memory_read(0x0147);
+	Cart_Type cart_type = (Cart_Type)robingb_memory_read(0x0147);
 	
 	cart_state.mbc_type = calculate_mbc_type(cart_type);
 	
-	robingb_romb_init_additional_banks(cart_state.file_path);
+	robingb_romb_init_additional_banks();
 	
 	int ram_bank_count = calculate_ram_bank_count(cart_type);
 	cart_state.has_ram = ram_bank_count > 0;

@@ -1,8 +1,12 @@
 /* TODO: Remove assert()s */
-/* TODO: Remove mallocs and instead obtain pre-allocated memory from the user. */
+/* TODO: Remove mallocs and instead obtain pre-allocated memory from the user? */
 /* TODO: Add error logging. */
 /* TODO: Fail gracefully if malloc() returns NULL. */
 /* TODO: Remove printf(). */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef ROBINGB_H
 #define ROBINGB_H
@@ -36,7 +40,11 @@ void robingb_update(uint8_t screen_out[], uint8_t *ly_out);
 
 void robingb_get_audio_samples(int8_t samples_out[], uint16_t samples_count);
 
-#endif
+#endif /* end include guard */
+
+#ifdef __cplusplus
+}
+#endif /* close extern "C" */
 
 
 
