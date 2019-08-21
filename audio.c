@@ -5,8 +5,6 @@
 #include <stdio.h>
 #include <math.h>
 
-/* Allow the user to set the sample rate. */
-
 /* DIV and AudioPU */
 /* - The APU uses the DIV to update sweep (channel 1), fade in/out and time out, the same way the timer uses it to update itself. */
 /* - In normal speed mode the APU updates when bit 5 of DIV goes from 1 to 0 (256 Hz). In double speed mode, bit 6. */
@@ -204,63 +202,63 @@ void robingb_audio_init(u32 sample_rate) {
 	SAMPLE_RATE = sample_rate;
 	
 	/* Test for unsigned wraparound */
-	u8 wrapper = 0;
+	u16 wrapper = 0;
 	wrapper += PHASE_FULL_PERIOD + 1;
 	
 	if (wrapper != 1) {
-		/* TODO: Report that the platform doesn't wraparound unsigned bytes. */
+		/* TODO: Report that the platform doesn't wraparound unsigned ints. */
 	}
 }
 
 void robingb_audio_update(u32 num_cycles) {
-	update_channel_1(num_cycles); 
-	update_channel_2(num_cycles); 
+	update_channel_1(num_cycles);
+	update_channel_2(num_cycles);
 	update_channel_3(num_cycles);
 	/* update_channel_4(num_cycles); */
 }
 
 void robingb_get_audio_samples(s8 samples_out[], uint16_t samples_count) {
-  
-  const u16 CHANNEL_1_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_1.frequency) / SAMPLE_RATE;
-  const u16 CHANNEL_2_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_2.frequency) / SAMPLE_RATE;
-  // const u16 CHANNEL_3_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_3.frequency) / SAMPLE_RATE;
-  
-  s8 channel_1_samples[samples_count];
-  s8 channel_2_samples[samples_count];
-  s8 channel_3_samples[samples_count];
-  
-  int s;
-  
-  for (s = 0; s < samples_count; s++) {
-    channel_1_samples[s] =
-    	(channel_1.phase < (PHASE_FULL_PERIOD/2)) ? channel_1.volume : -channel_1.volume;
-    	
-    channel_1.phase += CHANNEL_1_PHASE_INCREMENT;
-  }
-  
-  for (s = 0; s < samples_count; s++) {
-    channel_2_samples[s] =
-    	(channel_2.phase < (PHASE_FULL_PERIOD/2)) ? channel_2.volume : -channel_2.volume;
-    	
-    channel_2.phase += CHANNEL_2_PHASE_INCREMENT;
-  }
-  
-  // for (s = 0; s < samples_count; s++) {
-  //   channel_3_samples[s] =
-  //   	(channel_3.phase < (PHASE_FULL_PERIOD/2)) ? channel_3.volume : -channel_3.volume;
-    	
-  //   channel_3.phase += CHANNEL_3_PHASE_INCREMENT;
-  // }
-  
-  for (s = 0; s < samples_count; s++) {
-    s8 master_sample = 0;
-    master_sample += channel_1_samples[s];
-    master_sample += channel_2_samples[s];
-    // master_sample += channel_3_samples[s];
-    
-    samples_out[s*2] = master_sample;
-    samples_out[s*2+1] = master_sample;
-  }
+	
+	const u16 CHANNEL_1_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_1.frequency) / SAMPLE_RATE;
+	const u16 CHANNEL_2_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_2.frequency) / SAMPLE_RATE;
+	// const u16 CHANNEL_3_PHASE_INCREMENT = (PHASE_FULL_PERIOD * channel_3.frequency) / SAMPLE_RATE;
+	
+	s8 channel_1_samples[samples_count];
+	s8 channel_2_samples[samples_count];
+	s8 channel_3_samples[samples_count];
+	
+	int s;
+	
+	for (s = 0; s < samples_count; s++) {
+		channel_1_samples[s] =
+			(channel_1.phase < (PHASE_FULL_PERIOD/2)) ? channel_1.volume : -channel_1.volume;
+			
+		channel_1.phase += CHANNEL_1_PHASE_INCREMENT;
+	}
+	
+	for (s = 0; s < samples_count; s++) {
+		channel_2_samples[s] =
+			(channel_2.phase < (PHASE_FULL_PERIOD/2)) ? channel_2.volume : -channel_2.volume;
+			
+		channel_2.phase += CHANNEL_2_PHASE_INCREMENT;
+	}
+	
+	for (s = 0; s < samples_count; s++) {
+		channel_3_samples[s] =
+			(channel_3.phase < (PHASE_FULL_PERIOD/2)) ? channel_3.volume : -channel_3.volume;
+			
+		channel_3.phase += CHANNEL_3_PHASE_INCREMENT;
+	}
+	
+	for (s = 0; s < samples_count; s++) {
+		s8 master_sample = 0;
+		master_sample += channel_1_samples[s];
+		master_sample += channel_2_samples[s];
+		// master_sample += channel_3_samples[s];
+		
+		samples_out[s*2] = master_sample;
+		samples_out[s*2+1] = master_sample;
+	}
 }
 
 
