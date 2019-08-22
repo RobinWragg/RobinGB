@@ -12,7 +12,7 @@
 u16 SAMPLE_RATE = 0;
 
 static void get_channel_volume_envelope(
-	u8 channel, u8 *initial_volume, bool *direction_is_increase, s32 *step_length_in_cycles) {
+	u8 channel, u8 *initial_volume, bool *is_increasing, s32 *step_length_in_cycles) {
 	
 	int volume_envelope_address;
 	
@@ -22,11 +22,11 @@ static void get_channel_volume_envelope(
 		volume_envelope_address = 0xff17;
 	} else assert(false);
 	
-	u8 envelope_byte = robingb_memory_read(volume_envelope_address);
+	u8 envelope_byte = robingb_memory[volume_envelope_address];
 	
 	*initial_volume = envelope_byte >> 4; /* can be 0 to 15 */
 	
-	*direction_is_increase = envelope_byte & 0x08;
+	*is_increasing = envelope_byte & 0x08;
 	
 	u8 step_size_specifier = envelope_byte & 0x07;
 	*step_length_in_cycles = step_size_specifier * (CPU_CLOCK_FREQ / 64);
@@ -49,14 +49,14 @@ static void get_channel_freq_and_restart_and_envelope_stop(
 		upper_freq_bits_and_restart_and_stop_address = 0xff1e;
 	} else assert(false);
 	
-	u16 freq_specifier = robingb_memory_read(lower_freq_bits_address); /* lower 8 bits of frequency */
-	u8 restart_and_stop_byte = robingb_memory_read(upper_freq_bits_and_restart_and_stop_address);
+	u16 freq_specifier = robingb_memory[lower_freq_bits_address]; /* lower 8 bits of frequency */
+	u8 restart_and_stop_byte = robingb_memory[upper_freq_bits_and_restart_and_stop_address];
 	robingb_memory_write(upper_freq_bits_and_restart_and_stop_address, restart_and_stop_byte & ~0x80); /* reset the restart flag */
 	
 	freq_specifier |= (restart_and_stop_byte & 0x07) << 8; /* upper 3 bits of frequency */
 	
-	if (channel == 3) *freq = 65536.0 / (2048 - freq_specifier);
-	else *freq = 131072.0 / (2048 - freq_specifier);
+	if (channel == 3) *freq = 65536 / (2048 - freq_specifier);
+	else *freq = 131072 / (2048 - freq_specifier);
 	
 	*should_restart = restart_and_stop_byte & 0x80;
 	*should_stop_at_envelope_end = restart_and_stop_byte & 0x40; /* TODO: untested */
@@ -72,15 +72,28 @@ struct {
 	u64 num_cycles_since_restart;
 } channel_1;
 
+static bool get_channel_1_sweep_info(u16 *time_in_cycles, bool *is_increasing, u8 *shift_number) {
+	u8 sweep_byte = robingb_memory[0xff10];
+	
+	u8 time_index = (sweep_byte >> 4) & 0x07;
+	
+	if (!time_index) return false; /* sweep is inactive */
+	
+	*time_in_cycles = time_index * 32768;
+	*is_increasing = (sweep_byte >> 3) & 0x01;
+	*shift_number = sweep_byte & 0x07;
+	return true;
+}
+
 static void update_channel_1(u32 num_cycles) {
 	
 	u8 initial_volume;
-	bool direction_is_increase;
+	bool volume_is_increasing;
 	s32 envelope_step_length_in_cycles;
 	get_channel_volume_envelope(
 		1,
 		&initial_volume,
-		&direction_is_increase,
+		&volume_is_increasing,
 		&envelope_step_length_in_cycles);
 	
 	bool should_restart;
@@ -90,6 +103,14 @@ static void update_channel_1(u32 num_cycles) {
 		&channel_1.frequency,
 		&should_restart,
 		&should_stop_at_envelope_end);
+	
+	u16 sweep_time_in_cycles;
+	bool sweep_is_increasing;
+	u8 sweep_shift_number;
+	if (get_channel_1_sweep_info(&sweep_time_in_cycles, &sweep_is_increasing, &sweep_shift_number)) {
+		/* sweep is active */
+		/* X(t) = X(t-1) +/- X(t-1)/2^n */
+	}
 	
 	if (should_restart) {
 		channel_1.num_cycles_since_restart = 0;
@@ -102,7 +123,7 @@ static void update_channel_1(u32 num_cycles) {
 	if (envelope_step_length_in_cycles != 0) {
 		u32 current_step = channel_1.num_cycles_since_restart / envelope_step_length_in_cycles;
 		
-		if (direction_is_increase) channel_1.volume += current_step;
+		if (volume_is_increasing) channel_1.volume += current_step;
 		else channel_1.volume -= current_step;
 		
 		if (channel_1.volume > MAX_VOLUME) channel_1.volume = 0;
@@ -121,12 +142,12 @@ struct {
 static void update_channel_2(u32 num_cycles) {
 	
 	u8 initial_volume;
-	bool direction_is_increase;
+	bool volume_is_increasing;
 	s32 envelope_step_length_in_cycles;
 	get_channel_volume_envelope(
 		2,
 		&initial_volume,
-		&direction_is_increase,
+		&volume_is_increasing,
 		&envelope_step_length_in_cycles);
 	
 	bool should_restart;
@@ -148,7 +169,7 @@ static void update_channel_2(u32 num_cycles) {
 	if (envelope_step_length_in_cycles != 0) {
 		u32 current_step = channel_2.num_cycles_since_restart / envelope_step_length_in_cycles;
 		
-		if (direction_is_increase) channel_2.volume += current_step;
+		if (volume_is_increasing) channel_2.volume += current_step;
 		else channel_2.volume -= current_step;
 		
 		if (channel_2.volume > MAX_VOLUME) channel_2.volume = 0;
