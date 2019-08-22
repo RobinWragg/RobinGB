@@ -3,6 +3,6 @@ A Game Boy emulator in active development. It's written in C89 to allow it to co
 
 With Super Mario Land as a benchmark, RobinGB currently runs at full speed with approximately 20% headroom on a 240MHz MCU such as the ESP32 (single-threaded) or an overclocked Teensy 3.6. Further optimisation is planned, but the current focus is on developing the audio implementation and adding support for more games.
 
-Currently, RobinGB can only run games that use no MBC chip, or the MBC1 chip without external RAM (the vast majority of early Game Boy games). Work is currently being done to support MBC1 games that contain RAM, including battery savestates. Support for MBC2 and MBC3 is planned.
+Currently, RobinGB can only run games that use no MBC chip, or the MBC1 chip without external RAM (the vast majority of early Game Boy games). Work is currently being done to support MBC1 games that contain RAM, including battery savestates. Support for MBC3 is planned, for a total of approximately 800 games. I'll begin work on MBC5 support if I receive requests for it.
 
 This code is entirely platform-agnostic, so to use this emulator, you'll need to implement your own function for file access. All the functions you need to call are in the small header, RobinGB.h.
