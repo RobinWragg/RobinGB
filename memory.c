@@ -197,6 +197,11 @@ static void init_cart_state(
 	
 	cart_state.mbc_type = calculate_mbc_type(cart_type);
 	
+	/* Supported MBC types are currently MBC1, MBC3, or none (ROM only). */
+	assert(cart_state.mbc_type == MBC_NONE
+		|| cart_state.mbc_type == MBC_1
+		|| cart_state.mbc_type == MBC_3);
+	
 	robingb_romb_init_additional_banks();
 	
 	int ram_bank_count = calculate_ram_bank_count(cart_type);
