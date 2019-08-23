@@ -90,19 +90,12 @@ static void handle_channel_1_sweep(u32 num_cycles) {
 	
 	/* sweeping is enabled */
 	
-	int num_steps = channel_1.num_cycles_since_restart / step_interval_in_cycles;
+	u8 num_steps = channel_1.num_cycles_since_restart / step_interval_in_cycles;
 	
-	if (is_increasing) {
-		int s;
-		for (s = 0; s < num_steps; s++) {
-			channel_1.frequency += channel_1.frequency / step_amount_divider;
-		}
-	} else {
-		int s;
-		for (s = 0; s < num_steps; s++) {
-			channel_1.frequency -= channel_1.frequency / step_amount_divider;
-		}
-	}
+	u16 frequency_delta = (channel_1.frequency / step_amount_divider) * num_steps;
+	
+	if (is_increasing) channel_1.frequency += frequency_delta;
+	else channel_1.frequency -= frequency_delta;
 }
 
 static void update_channel_1(u32 num_cycles) {
