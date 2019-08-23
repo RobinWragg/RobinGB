@@ -72,17 +72,37 @@ struct {
 	u64 num_cycles_since_restart;
 } channel_1;
 
-static bool get_channel_1_sweep_info(u16 *time_in_cycles, bool *is_increasing, u8 *shift_number) {
-	u8 sweep_byte = robingb_memory[0xff10];
+static void handle_channel_1_sweep(u32 num_cycles) {
 	
-	u8 time_index = (sweep_byte >> 4) & 0x07;
+	u32 step_interval_in_cycles;
+	bool is_increasing;
+	u8 step_amount_divider;
+	{
+		u8 sweep_byte = robingb_memory[0xff10];
+		u8 time_index = (sweep_byte >> 4) & 0x07;
+		
+		if (time_index == 0) return; /* sweeping is disabled */
+		
+		step_interval_in_cycles = time_index * (CPU_CLOCK_FREQ / 128);
+		is_increasing = !((sweep_byte >> 3) & 0x01);
+		step_amount_divider = 1 << (sweep_byte & 0x07);
+	}
 	
-	if (!time_index) return false; /* sweep is inactive */
+	/* sweeping is enabled */
 	
-	*time_in_cycles = time_index * 32768;
-	*is_increasing = (sweep_byte >> 3) & 0x01;
-	*shift_number = sweep_byte & 0x07;
-	return true;
+	int num_steps = channel_1.num_cycles_since_restart / step_interval_in_cycles;
+	
+	if (is_increasing) {
+		int s;
+		for (s = 0; s < num_steps; s++) {
+			channel_1.frequency += channel_1.frequency / step_amount_divider;
+		}
+	} else {
+		int s;
+		for (s = 0; s < num_steps; s++) {
+			channel_1.frequency -= channel_1.frequency / step_amount_divider;
+		}
+	}
 }
 
 static void update_channel_1(u32 num_cycles) {
@@ -104,22 +124,13 @@ static void update_channel_1(u32 num_cycles) {
 		&should_restart,
 		&should_stop_at_envelope_end);
 	
-	u16 sweep_time_in_cycles;
-	bool sweep_is_increasing;
-	u8 sweep_shift_number;
-	if (get_channel_1_sweep_info(&sweep_time_in_cycles, &sweep_is_increasing, &sweep_shift_number)) {
-		/* sweep is active */
-		/* X(t) = X(t-1) +/- X(t-1)/2^n */
-	}
+	if (should_restart) channel_1.num_cycles_since_restart = 0;
 	
-	if (should_restart) {
-		channel_1.num_cycles_since_restart = 0;
-		channel_1.phase = 0;
-	}
+	handle_channel_1_sweep(num_cycles);
 	
+	/* Modify the volume according to the envelope */
 	channel_1.volume = initial_volume;
 	
-	/* Set the current volume according to the envelope */
 	if (envelope_step_length_in_cycles != 0) {
 		u32 current_step = channel_1.num_cycles_since_restart / envelope_step_length_in_cycles;
 		
@@ -160,7 +171,6 @@ static void update_channel_2(u32 num_cycles) {
 	
 	if (should_restart) {
 		channel_2.num_cycles_since_restart = 0;
-		channel_2.phase = 0;
 	}
 	
 	channel_2.volume = initial_volume;
