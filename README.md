@@ -1,5 +1,5 @@
 # RobinGB
-A Game Boy emulator in active development. It's written in C89 to allow it to compile on many microcontroller-oriented cross-compilers. It's also C++ friendly. RobinGB is a very efficient emulator, enabling it to run on very small devices with low clock speeds and less than 256KB of RAM. I hope for it to find a place in hackerspace and DIY IoT projects.
+A simple, efficient, cross-platform Game Boy emulator. It's written in C89 to allow it to compile on many microcontroller-oriented cross-compilers. It's also C++ friendly. RobinGB is a very performant emulator, enabling it to run on very small devices with low clock speeds and less than 256KB of RAM. I hope for it to find a place in hackerspace and DIY IoT projects.
 
 With Super Mario Land as a benchmark, RobinGB currently runs at full speed with approximately 20% headroom on a 240MHz MCU such as the ESP32 (single-threaded) or an overclocked Teensy 3.6. Further optimisation is planned, but the current focus is on developing the audio implementation and adding support for more games.
 
