@@ -86,8 +86,7 @@ static void perform_cart_control(int address, u8 value) {
 		/* Do nothing if cart has no MBC and no RAM. NOTE: Multiple RAM banks may exist even if there is no MBC! */
 		if (cart_state.mbc_type == MBC_NONE && !cart_state.has_ram) return;
 		
-		/* TODO: MBC1: RAM bank number, or, upper bits of ROM bank number, depending on ROM/RAM mode */
-		assert(cart_state.mbc_type == MBC_1);
+		assert(cart_state.mbc_type == MBC_1); /* Code below assumes mbc1. */
 		
 		if (cart_state.banking_mode == BM_ROM) {
 			robingb_romb_perform_bank_control(address, value, cart_state.mbc_type);
@@ -99,8 +98,13 @@ static void perform_cart_control(int address, u8 value) {
 		/* MBC1: ROM/RAM banking mode select */
 		assert(cart_state.mbc_type == MBC_1);
 		
-		if (value & 0x01) cart_state.banking_mode = BM_RAM;
-		else cart_state.banking_mode = BM_ROM;
+		if (value & 0x01) {
+			cart_state.banking_mode = BM_RAM;
+			printf("Switched to RAM banking mode\n");
+		} else {
+			cart_state.banking_mode = BM_ROM;
+			printf("Switched to RAM banking mode\n");
+		}
 		
 	} else assert(false);
 }
@@ -206,6 +210,9 @@ static void init_cart_state(
 	
 	int ram_bank_count = calculate_ram_bank_count(cart_type);
 	cart_state.has_ram = ram_bank_count > 0;
+	
+	printf("TODO: Which initial banking mode?\n");
+	// cart_state.banking_mode =
 }
 
 /* ----------------------------------------------- */

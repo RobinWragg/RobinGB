@@ -7,13 +7,13 @@
 INSTRUCTION void instruction_RL(u8 *byte_to_rotate, u8 num_cycles) {
 	bool prev_carry = registers.f & FLAG_C;
 	
-	if ((*byte_to_rotate) & bit(7)) registers.f |= FLAG_C;
+	if ((*byte_to_rotate) & robingb_bit(7)) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
 	*byte_to_rotate <<= 1;
 	
-	if (prev_carry) *byte_to_rotate |= bit(0);
-	else *byte_to_rotate &= ~bit(0);
+	if (prev_carry) *byte_to_rotate |= robingb_bit(0);
+	else *byte_to_rotate &= ~robingb_bit(0);
 	
 	if (*byte_to_rotate == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
@@ -25,14 +25,14 @@ INSTRUCTION void instruction_RL(u8 *byte_to_rotate, u8 num_cycles) {
 }
 
 INSTRUCTION void instruction_RLC(u8 *byte_to_rotate, u8 num_cycles) {
-	if ((*byte_to_rotate) & bit(7)) {
+	if ((*byte_to_rotate) & robingb_bit(7)) {
 		registers.f |= FLAG_C;
 		*byte_to_rotate <<= 1;
-		*byte_to_rotate |= bit(0);
+		*byte_to_rotate |= robingb_bit(0);
 	} else {
 		registers.f &= ~FLAG_C;
 		*byte_to_rotate <<= 1;
-		*byte_to_rotate &= ~bit(0);
+		*byte_to_rotate &= ~robingb_bit(0);
 	}
 	
 	if (*byte_to_rotate == 0) registers.f |= FLAG_Z;
@@ -45,14 +45,14 @@ INSTRUCTION void instruction_RLC(u8 *byte_to_rotate, u8 num_cycles) {
 }
 
 INSTRUCTION void instruction_RRC(u8 *byte_to_rotate, u8 num_cycles) {
-	if ((*byte_to_rotate) & bit(0)) {
+	if ((*byte_to_rotate) & robingb_bit(0)) {
 		registers.f |= FLAG_C;
 		*byte_to_rotate >>= 1;
-		*byte_to_rotate |= bit(7);
+		*byte_to_rotate |= robingb_bit(7);
 	} else {
 		registers.f &= ~FLAG_C;
 		*byte_to_rotate >>= 1;
-		*byte_to_rotate &= ~bit(7);
+		*byte_to_rotate &= ~robingb_bit(7);
 	}
 	
 	if (*byte_to_rotate == 0) registers.f |= FLAG_Z;
@@ -67,12 +67,12 @@ INSTRUCTION void instruction_RRC(u8 *byte_to_rotate, u8 num_cycles) {
 INSTRUCTION void instruction_RR(u8 *byte_to_rotate, u8 num_cycles) {
 	bool prev_carry = registers.f & FLAG_C;
 	
-	if ((*byte_to_rotate) & bit(0)) registers.f |= FLAG_C;
+	if ((*byte_to_rotate) & robingb_bit(0)) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
 	*byte_to_rotate >>= 1;
 	
-	if (prev_carry) *byte_to_rotate |= bit(7);
+	if (prev_carry) *byte_to_rotate |= robingb_bit(7);
 	
 	if (*byte_to_rotate == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
@@ -84,11 +84,11 @@ INSTRUCTION void instruction_RR(u8 *byte_to_rotate, u8 num_cycles) {
 }
 
 INSTRUCTION void instruction_SLA(u8 *byte_to_shift) {
-	if ((*byte_to_shift) & bit(7)) registers.f |= FLAG_C;
+	if ((*byte_to_shift) & robingb_bit(7)) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
 	*byte_to_shift <<= 1;
-	*byte_to_shift &= ~bit(0); /* bit 0 should become 0. */
+	*byte_to_shift &= ~robingb_bit(0); /* bit 0 should become 0. */
 	
 	if ((*byte_to_shift) == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
@@ -100,11 +100,11 @@ INSTRUCTION void instruction_SLA(u8 *byte_to_shift) {
 }
 
 INSTRUCTION void instruction_SRA(u8 *byte_to_shift, u8 num_cycles) {
-	if ((*byte_to_shift) & bit(0)) registers.f |= FLAG_C;
+	if ((*byte_to_shift) & robingb_bit(0)) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
 	*byte_to_shift >>= 1;
-	*byte_to_shift |= ((*byte_to_shift) & bit(6)) << 1; /* bit 7 should stay the same. */
+	*byte_to_shift |= ((*byte_to_shift) & robingb_bit(6)) << 1; /* bit 7 should stay the same. */
 	
 	if ((*byte_to_shift) == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
@@ -130,11 +130,11 @@ INSTRUCTION void instruction_SWAP(u8 *byte_to_swap, u8 num_cycles) {
 }
 
 INSTRUCTION void instruction_SRL(u8 *byte_to_shift, u8 num_cycles) {
-	if ((*byte_to_shift) & bit(0)) registers.f |= FLAG_C;
+	if ((*byte_to_shift) & robingb_bit(0)) registers.f |= FLAG_C;
 	else registers.f &= ~FLAG_C;
 	
 	*byte_to_shift >>= 1; /* bit 7 becomes 0. */
-	assert(((*byte_to_shift) & bit(7)) == false);
+	assert(((*byte_to_shift) & robingb_bit(7)) == false);
 	
 	if ((*byte_to_shift) == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;

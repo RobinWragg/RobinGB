@@ -228,10 +228,10 @@ static void render_objects() {
 			if (object_height > 8) tile_data_index &= 0xfe;
 			
 			u8 object_flags = robingb_memory[object_address+3];
-			bool choose_palette_1 = object_flags & bit(4);
-			bool flip_x = object_flags & bit(5);
-			bool flip_y = object_flags & bit(6);
-			bool behind_background = object_flags & bit(7);
+			bool choose_palette_1 = object_flags & robingb_bit(4);
+			bool flip_x = object_flags & robingb_bit(5);
+			bool flip_y = object_flags & robingb_bit(6);
+			bool behind_background = object_flags & robingb_bit(7);
 			
 			if (choose_palette_1) set_palette(*object_palette_1);
 			else set_palette(*object_palette_0);

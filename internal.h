@@ -14,7 +14,7 @@ typedef uint64_t u64;
 
 #define DEBUG_set_opcode_name(x) /* robingb_log(x) */
 
-#define bit(n) (0x01 << n)
+#define robingb_bit(n) (0x01 << n)
 
 #define FLAG_Z (0x80) /* Zero Flag */
 #define FLAG_N (0x40) /* Add/Sub-Flag (BCD) */

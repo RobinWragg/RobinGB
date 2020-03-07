@@ -232,14 +232,14 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 		case 0x05: DEBUG_set_opcode_name("DEC B"); instruction_DEC_u8(&registers.b, 4); break;
 		case 0x06: DEBUG_set_opcode_name("LD B,x"); registers.b = robingb_memory_read(registers.pc+1); robingb_finish_instruction(2, 8); break;
 		case 0x07: { DEBUG_set_opcode_name("RLCA");
-			if (registers.a & bit(7)) {
+			if (registers.a & robingb_bit(7)) {
 				registers.f |= FLAG_C;
 				registers.a <<= 1;
-				registers.a |= bit(0);
+				registers.a |= robingb_bit(0);
 			} else {
 				registers.f &= ~FLAG_C;
 				registers.a <<= 1;
-				registers.a &= ~bit(0);
+				registers.a &= ~robingb_bit(0);
 			}
 			
 			registers.f &= ~FLAG_Z;
@@ -258,14 +258,14 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 		case 0x0f: { DEBUG_set_opcode_name("RRCA");
 			
 			/* different flag manipulation to RRC!!! */
-			if (registers.a & bit(0)) {
+			if (registers.a & robingb_bit(0)) {
 				registers.f |= FLAG_C;
 				registers.a >>= 1;
-				registers.a |= bit(7);
+				registers.a |= robingb_bit(7);
 			} else {
 				registers.f &= ~FLAG_C;
 				registers.a >>= 1;
-				registers.a &= ~bit(7);
+				registers.a &= ~robingb_bit(7);
 			}
 			
 			registers.f &= ~FLAG_Z;
@@ -286,12 +286,12 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 		case 0x17: { DEBUG_set_opcode_name("RLA");
 			bool prev_carry = registers.f & FLAG_C;
 			
-			if (registers.a & bit(7)) registers.f |= FLAG_C;
+			if (registers.a & robingb_bit(7)) registers.f |= FLAG_C;
 			else registers.f &= ~FLAG_C;
 			
 			registers.a = registers.a << 1;
 			
-			if (prev_carry) registers.a |= bit(0);
+			if (prev_carry) registers.a |= robingb_bit(0);
 			
 			registers.f &= ~FLAG_Z;
 			registers.f &= ~FLAG_N;
@@ -309,12 +309,12 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 		case 0x1f: { DEBUG_set_opcode_name("RRA");
 			bool prev_carry = registers.f & FLAG_C;
 			
-			if (registers.a & bit(0)) registers.f |= FLAG_C;
+			if (registers.a & robingb_bit(0)) registers.f |= FLAG_C;
 			else registers.f &= ~FLAG_C;
 			
 			registers.a = registers.a >> 1;
 			
-			if (prev_carry) registers.a |= bit(7);
+			if (prev_carry) registers.a |= robingb_bit(7);
 			
 			registers.f &= ~FLAG_Z;
 			registers.f &= ~FLAG_N;
