@@ -211,8 +211,7 @@ static void init_cart_state(
 	int ram_bank_count = calculate_ram_bank_count(cart_type);
 	cart_state.has_ram = ram_bank_count > 0;
 	
-	printf("TODO: Which initial banking mode?\n");
-	// cart_state.banking_mode =
+	cart_state.banking_mode = BM_ROM; /* Default banking mode */
 }
 
 /* ----------------------------------------------- */

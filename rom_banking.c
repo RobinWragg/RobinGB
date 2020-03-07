@@ -85,20 +85,33 @@ void robingb_romb_init_additional_banks() {
 }
 
 void robingb_romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type) {
-	assert(address >= 0x2000 && address < 0x4000);
-	
 	switch (mbc_type) {
 		case MBC_NONE:
 		/* no-op */
 		break;
 		case MBC_1: {
-			value &= 0x1f; /* Discard all but the lower 5 bits */
-			u8 new_bank = robingb_romb_current_switchable_bank & ~0x1f; /* wipe the lower 5 bits */
-			new_bank |= value; /* set the lower 5 bits to the new value */
-			
-			if (new_bank == 0x00 || new_bank == 0x20 || new_bank == 0x40 || new_bank == 0x60) new_bank++;
-			
-			robingb_romb_current_switchable_bank = new_bank;
+			if (address >= 0x2000 && address < 0x4000) {
+				/* Select lower 5 bits of ROM bank number */
+				
+				value &= 0x1f; /* Discard all but the lower 5 bits */
+				u8 new_bank = robingb_romb_current_switchable_bank & ~0x1f; /* wipe the lower 5 bits */
+				new_bank |= value; /* set the lower 5 bits to the new value */
+				
+				if (new_bank == 0x00 || new_bank == 0x20 || new_bank == 0x40 || new_bank == 0x60) new_bank++;
+				
+				robingb_romb_current_switchable_bank = new_bank;
+			} else if (address >= 0x4000 && address < 0x6000) {
+				/* Select bits 5+6 of ROM bank number */
+				
+				u8 bits_5_6_mask = robingb_bit(5) & robingb_bit(6);
+				
+				value <<= 5; /* Put bits 0+1 in slots 5+6 */
+				value &= bits_5_6_mask; /* Discard all but bits 5+6 */
+				
+				robingb_romb_current_switchable_bank &= ~bits_5_6_mask; /* wipe bits 5+6 */
+				
+				robingb_romb_current_switchable_bank |= value; /* set bits 5+6 to the new value */
+			} else assert(false);
 		} break;
 		case MBC_3: {
 			assert(false); /* Not implemented yet */
