@@ -6,9 +6,6 @@
 #define BANK_SIZE 16384 /* 16kB */
 #define BANK_COUNT_ADDRESS 0x0148
 
-static const char *file_path;
-static void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]);
-
 static s16 robingb_romb_current_switchable_bank;
 
 /* After init_cart_state(), cached_banks contains all ROM banks other than banks 0 and 1.
@@ -29,16 +26,11 @@ u8 robingb_romb_read_switchable_bank(u16 address) {
 	}
 }
 
-void robingb_romb_init_first_banks(
-	const char *file_path_param,
-	void (*read_file_function_ptr_param)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
-	) {
-	file_path = file_path_param;
-	read_file_function_ptr = read_file_function_ptr_param;
-	
+void robingb_romb_init_first_banks() {
 	/* Load ROM banks 0 and 1 */
 	printf("Loading the first 2 ROM banks...\n");
-	read_file_function_ptr(file_path, 0, BANK_SIZE*2, robingb_memory);
+	bool success = robingb_read_file(robingb_cart_path, 0, BANK_SIZE*2, robingb_memory);
+	assert(success);
 	robingb_romb_current_switchable_bank = 1;
 	printf("Done\n");
 }
@@ -79,7 +71,10 @@ void robingb_romb_init_additional_banks() {
 		printf("Loading the remaining %i ROM banks...\n", cached_bank_count);
 		
 		u32 file_offset = BANK_SIZE * 2; /* Offset of 2, as the first 2 banks are already loaded */
-		read_file_function_ptr(file_path, file_offset, BANK_SIZE*cached_bank_count, (u8*)cached_banks);
+		
+		bool success = robingb_read_file(robingb_cart_path, file_offset, BANK_SIZE*cached_bank_count, (u8*)cached_banks);
+		assert(success);
+		
 		printf("Done\n");
 	} else cached_bank_count = 0;
 }

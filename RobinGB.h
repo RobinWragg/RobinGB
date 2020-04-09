@@ -31,9 +31,9 @@ void robingb_release_button(RobinGB_Button button);
 void robingb_init(
 	uint32_t audio_sample_rate,
 	
-	/* TODO: The emulator will only call the user-given read-file function with the user-given cart file path, so just remove the paths from all of that. */
 	const char *cart_file_path,
-	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
+	bool (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]),
+	bool (*write_file_function_ptr)(const char *path, bool append, uint32_t size, uint8_t buffer[])
 	);
 
 void robingb_update(uint8_t screen_out[], uint8_t *ly_out);

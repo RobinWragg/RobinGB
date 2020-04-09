@@ -74,6 +74,10 @@ typedef enum {
 
 extern u8 *robingb_screen;
 
+extern bool (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]);
+extern bool (*robingb_write_file)(const char *path, bool append, uint32_t size, uint8_t buffer[]);
+extern char *robingb_cart_path;
+extern char *robingb_save_path;
 extern Registers registers;
 extern bool halted;
 
@@ -86,19 +90,13 @@ void robingb_execute_cb_opcode();
 void robingb_finish_instruction(s16 pc_increment, u8 num_cycles_param);
 
 extern u8 robingb_memory[];
-void robingb_memory_init(
-	const char *cart_file_path,
-	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
-	);
+void robingb_memory_init();
 u8 robingb_memory_read(u16 address);
 u16 robingb_memory_read_u16(u16 address);
 void robingb_memory_write(u16 address, u8 value);
 void robingb_memory_write_u16(u16 address, u16 value);
 
-void robingb_romb_init_first_banks(
-	const char *file_path,
-	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
-	);
+void robingb_romb_init_first_banks();
 void robingb_romb_init_additional_banks();
 void robingb_romb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type);
 u8 robingb_romb_read_switchable_bank(u16 address);

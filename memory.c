@@ -51,15 +51,36 @@ typedef enum {
 
 static struct {
 	Mbc_Type mbc_type;
-	char file_path[256];
 	bool has_ram, ram_is_enabled;
+	u8 ram_bank_count;
 	Banking_Mode banking_mode;
 } cart_state;
 
 static void ramb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type) {
 	printf("perform_ram_bank_control: %x %x\n", address, value);
+	assert(false); /* RAM bank switching not supported yet */
+}
+
+static void load_ram() {
+	printf("Checking for saved RAM\n");
+	assert(cart_state.ram_bank_count == 1); /* Only one bank is currently supported */
 	
-	/* Temporary no-op */
+	u8 *ram_address = &robingb_memory[0xa000];
+	int ram_size = 0xc000 - 0xa000;
+	bool success = robingb_read_file(robingb_save_path, 0, ram_size, ram_address);
+	
+	if (success) printf("Loaded saved RAM\n");
+	else printf("No saved RAM found\n");
+}
+
+static void save_ram() {
+	printf("Saving RAM\n");
+	assert(cart_state.ram_bank_count == 1); /* Only one bank is currently supported */
+	
+	u8 *ram_address = &robingb_memory[0xa000];
+	int ram_size = 0xc000 - 0xa000;
+	bool success = robingb_write_file(robingb_save_path, false, ram_size, ram_address);
+	assert(success);
 }
 
 static void perform_cart_control(int address, u8 value) {
@@ -76,10 +97,9 @@ static void perform_cart_control(int address, u8 value) {
 			if (should_enable_ram != cart_state.ram_is_enabled) {
 				if (should_enable_ram) {
 					cart_state.ram_is_enabled = true;
-					printf("RAM enabled\n");
 				} else {
 					cart_state.ram_is_enabled = false;
-					printf("RAM disabled TODO: Save\n");
+					save_ram();
 				}
 			}
 		}
@@ -174,18 +194,17 @@ static int calculate_ram_bank_count(Cart_Type cart_type) {
 		case CART_TYPE_MBC5_RUMBLE_RAM:
 		case CART_TYPE_MBC5_RUMBLE_RAM_BATTERY:
 		case CART_TYPE_HuC1_RAM_BATTERY:
-			printf("Cart has RAM\n");
-			return 9999; /* TODO: Calculate the correct value */
+			printf("Cart has RAM: ");
+			u8 ram_spec = robingb_memory_read(0x0149);
+			assert(ram_spec != 0x00);
 			
-			/*
-			Byte at address 0x0149:
-			00h - None
-			01h - 2 KBytes
-			02h - 8 Kbytes
-			03h - 32 KBytes (4 banks of 8KBytes each)
-			04h - 128 KBytes (16 banks of 8KBytes each)
-			05h - 64 KBytes (8 banks of 8KBytes each)
-			*/
+			switch (ram_spec) {
+				case 0x01: printf("2KB (1 bank)\n"); return 1;
+				case 0x02: printf("8KB (1 bank)\n"); return 1;
+				case 0x03: printf("4 8KB banks\n"); return 4;
+				case 0x04: printf("16 8KB banks\n"); return 16;
+				case 0x05: printf("8 8KB banks\n"); return 8;
+			};
 		break;
 		
 		default: {
@@ -194,15 +213,14 @@ static int calculate_ram_bank_count(Cart_Type cart_type) {
 			return 0;
 		} break;
 	}
+	
+	assert(false); /* Unexpected control flow */
+	return 0;
 }
 
-static void init_cart_state(
-	const char *file_path,
-	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
-	) {
+static void init_cart_state() {
 	
-	strcpy(cart_state.file_path, file_path);
-	robingb_romb_init_first_banks(cart_state.file_path, read_file_function_ptr);
+	robingb_romb_init_first_banks();
 	
 	Cart_Type cart_type = (Cart_Type)robingb_memory_read(0x0147);
 	
@@ -215,9 +233,10 @@ static void init_cart_state(
 	
 	robingb_romb_init_additional_banks();
 	
-	int ram_bank_count = calculate_ram_bank_count(cart_type);
-	cart_state.has_ram = ram_bank_count > 0;
+	cart_state.ram_bank_count = calculate_ram_bank_count(cart_type);
+	cart_state.has_ram = cart_state.ram_bank_count > 0;
 	cart_state.ram_is_enabled = false;
+	if (cart_state.has_ram) load_ram();
 	
 	cart_state.banking_mode = BM_ROM; /* Default banking mode */
 }
@@ -226,10 +245,7 @@ static void init_cart_state(
 /* General memory code                             */
 /* ----------------------------------------------- */
 
-void robingb_memory_init(
-	const char *cart_file_path,
-	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
-	) {
+void robingb_memory_init() {
 	robingb_memory_write(0xff10, 0x80);
 	robingb_memory_write(0xff11, 0xbf);
 	robingb_memory_write(0xff12, 0xf3);
@@ -264,7 +280,7 @@ void robingb_memory_init(
 	robingb_memory_write(IF_ADDRESS, 0xe1); /* TODO: Might be acceptable for this to be 0xe0 */
 	robingb_memory_write(IE_ADDRESS, 0x00);
 	
-	init_cart_state(cart_file_path, read_file_function_ptr);
+	init_cart_state();
 }
 
 u8 robingb_memory_read(u16 address) {

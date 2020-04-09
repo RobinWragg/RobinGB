@@ -6,6 +6,10 @@
 
 Registers registers;
 bool halted = false;
+bool (*robingb_read_file)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]);
+bool (*robingb_write_file)(const char *path, bool append, uint32_t size, uint8_t buffer[]);
+char *robingb_cart_path = NULL;
+char *robingb_save_path = NULL;
 
 void robingb_stack_push(u16 value) {
 	u8 *bytes = (u8*)&value;
@@ -44,12 +48,40 @@ void init_registers() {
 void robingb_init(
 	uint32_t audio_sample_rate,
 	const char *cart_file_path,
-	void (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[])
+	bool (*read_file_function_ptr)(const char *path, uint32_t offset, uint32_t size, uint8_t buffer[]),
+	bool (*write_file_function_ptr)(const char *path, bool append, uint32_t size, uint8_t buffer[])
 	) {
 	
 	assert(read_file_function_ptr);
+	robingb_read_file = read_file_function_ptr;
 	
-	robingb_memory_init(cart_file_path, read_file_function_ptr);
+	assert(write_file_function_ptr);
+	robingb_write_file = write_file_function_ptr;
+	
+	/* Copy the cart path */
+	if (robingb_cart_path) free(robingb_cart_path);
+	robingb_cart_path = (char*)malloc(strlen(cart_file_path) + 1);
+	strcpy(robingb_cart_path, cart_file_path);
+	
+	/* robingb_save_path shall be robingb_cart_path appended with '.save' */
+	/* +1 for null terminator */
+	if (robingb_save_path) free(robingb_save_path);
+	robingb_save_path = (char*)malloc(strlen(robingb_cart_path) + strlen(".save") + 1);
+	strcpy(robingb_save_path, robingb_cart_path);
+	int str_end = strlen(robingb_save_path);
+	robingb_save_path[str_end++] = '.';
+	robingb_save_path[str_end++] = 's';
+	robingb_save_path[str_end++] = 'a';
+	robingb_save_path[str_end++] = 'v';
+	robingb_save_path[str_end++] = 'e';
+	robingb_save_path[str_end] = '\0';
+	
+	printf("%s\n", robingb_save_path);
+	printf("%s\n", robingb_save_path);
+	printf("%s\n", robingb_save_path);
+	printf("%s\n", robingb_save_path);
+	
+	robingb_memory_init();
 	robingb_audio_init(audio_sample_rate);
 	
 	/* barebones cart error check */
