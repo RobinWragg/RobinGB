@@ -81,7 +81,6 @@ static void read_save_file() {
 void robingb_update_save_file() {
 	if (!cart_state.save_file_is_outdated) return;
 	
-	printf("Saving RAM\n");
 	assert(cart_state.ram_bank_count == 1); /* Only one bank is currently supported */
 	
 	u8 *ram_address = &robingb_memory[0xa000];

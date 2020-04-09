@@ -89,8 +89,9 @@ samples_out[] must be an array of samples_count elements. Stereo audio isn't
 supported for efficiency reasons. */
 void robingb_get_audio_samples(int8_t samples_out[], uint16_t samples_count);
 
-/* Call this before quitting, otherwise your saves will be lost. The save file
-will be automatically loaded when you boot the game again with robingb_init(). */
+/* Call this before quitting, or more frequently if you prefer, otherwise your
+saves will be lost. The save file will be automatically loaded when you boot
+the game again with robingb_init(). */
 void robingb_update_save_file();
 
 
