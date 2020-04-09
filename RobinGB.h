@@ -94,10 +94,11 @@ saves will be lost. The save file will be automatically loaded when you boot
 the game again with robingb_init(). */
 void robingb_update_save_file();
 
-
-
-
-
+/* By default, RobinGB will conveniently render white as 0xFF, black as 0x00 etc.
+Set this boolean to true to render using the same data format as the original
+hardware. The screen will appear extremely dark and inverted, so you will need
+to do some additional processing. */
+extern bool robingb_native_pixel_format;
 
 /* Finally, here is the much more complicated, per-line alternative to
 robingb_update_screen(), useful if your architecture can't afford to wait for

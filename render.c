@@ -21,6 +21,8 @@
 #define TILE_WIDTH 8
 #define TILE_HEIGHT 8
 
+bool robingb_native_pixel_format = false;
+
 static u8 *lcdc = &robingb_memory[LCD_CONTROL_ADDRESS];
 static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
 static u8 *bg_palette = &robingb_memory[0xff47];
@@ -316,10 +318,17 @@ void robingb_render_screen_line() {
 		u16 screen_line_start = (*ly)*SCREEN_WIDTH;
 		u16 screen_line_end = screen_line_start + SCREEN_WIDTH;
 		
-		for (pixel_index = screen_line_start; pixel_index < screen_line_end; pixel_index++) {
-			/* The "& 0x03" below is to discard the SHADE_0_FLAG bit,
+		if (robingb_native_pixel_format) {
+			/* The '& 0x03' below is to discard the SHADE_0_FLAG bit,
 			which has already served its purpose in render_objects(). */
-			robingb_screen[pixel_index] = ((robingb_screen[pixel_index] & 0x03) - 3) * -85;
+			
+			for (pixel_index = screen_line_start; pixel_index < screen_line_end; pixel_index++) {
+				robingb_screen[pixel_index] &= 0x03;
+			}
+		} else {
+			for (pixel_index = screen_line_start; pixel_index < screen_line_end; pixel_index++) {
+				robingb_screen[pixel_index] = ((robingb_screen[pixel_index] & 0x03) - 3) * -85;
+			}
 		}
 	}
 }
