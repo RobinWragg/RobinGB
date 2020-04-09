@@ -76,11 +76,6 @@ void robingb_init(
 	robingb_save_path[str_end++] = 'e';
 	robingb_save_path[str_end] = '\0';
 	
-	printf("%s\n", robingb_save_path);
-	printf("%s\n", robingb_save_path);
-	printf("%s\n", robingb_save_path);
-	printf("%s\n", robingb_save_path);
-	
 	robingb_memory_init();
 	robingb_audio_init(audio_sample_rate);
 	
@@ -104,7 +99,7 @@ void robingb_init(
 
 u8 *lcd_ly = &robingb_memory[LCD_LY_ADDRESS];
 
-void robingb_update(u8 screen_out[], u8 *ly_out) {
+bool robingb_update_screen_line(u8 screen_out[], u8 *updated_screen_line) {
 	u8 previous_lcd_ly = *lcd_ly;
 	
 	robingb_screen = screen_out;
@@ -125,7 +120,22 @@ void robingb_update(u8 screen_out[], u8 *ly_out) {
 	
 	robingb_audio_update(num_cycles_this_h_blank);
 	
-	*ly_out = *lcd_ly;
+	if (previous_lcd_ly < 144) {
+		*updated_screen_line = previous_lcd_ly;
+		return true;
+	} else return false;
+}
+
+void robingb_update_screen(uint8_t screen_out[]) {
+	u8 updated_screen_line;
+	
+	/* Call the function until the vblank phase is exited */
+	while (robingb_update_screen_line(screen_out, &updated_screen_line) == false) {}
+	
+	/* Call the function until the vblank phase is entered again */
+	while (robingb_update_screen_line(screen_out, &updated_screen_line) == true) {}
+	
+	/* The screen has now been fully updated */
 }
 
 
