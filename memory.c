@@ -52,7 +52,7 @@ typedef enum {
 static struct {
 	Mbc_Type mbc_type;
 	char file_path[256];
-	bool has_ram;
+	bool has_ram, ram_is_enabled;
 	Banking_Mode banking_mode;
 } cart_state;
 
@@ -67,13 +67,20 @@ static void perform_cart_control(int address, u8 value) {
 	
 	if (address >= 0x0000 && address < 0x2000) {
 		/* MBC1: enable/disable external RAM (at 0xa000 to 0xbfff) */
+		assert(cart_state.mbc_type == MBC_1);
 		
 		/* Ignore the request if the cart has no RAM */
 		if (cart_state.has_ram) {
-			if ((value & 0x0f) == 0x0a) {
-				printf("TODO: Enable RAM\n");
-			} else {
-				printf("TODO: Disable RAM\n");
+			bool should_enable_ram = (value & 0x0f) == 0x0a;
+			
+			if (should_enable_ram != cart_state.ram_is_enabled) {
+				if (should_enable_ram) {
+					cart_state.ram_is_enabled = true;
+					printf("RAM enabled\n");
+				} else {
+					cart_state.ram_is_enabled = false;
+					printf("RAM disabled TODO: Save\n");
+				}
 			}
 		}
 		
@@ -210,6 +217,7 @@ static void init_cart_state(
 	
 	int ram_bank_count = calculate_ram_bank_count(cart_type);
 	cart_state.has_ram = ram_bank_count > 0;
+	cart_state.ram_is_enabled = false;
 	
 	cart_state.banking_mode = BM_ROM; /* Default banking mode */
 }
