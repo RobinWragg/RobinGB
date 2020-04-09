@@ -51,17 +51,22 @@ typedef enum {
 
 static struct {
 	Mbc_Type mbc_type;
-	bool has_ram, ram_is_enabled;
+	bool has_ram, ram_is_enabled, save_file_is_outdated;
 	u8 ram_bank_count;
 	Banking_Mode banking_mode;
 } cart_state;
 
-static void ramb_perform_bank_control(int address, u8 value, Mbc_Type mbc_type) {
+static void ramb_perform_bank_control(int address, u8 value) {
 	printf("perform_ram_bank_control: %x %x\n", address, value);
-	assert(false); /* RAM bank switching not supported yet */
+	if (cart_state.mbc_type == MBC_1) {
+		assert(address >= 0x4000 && address < 0x6000);
+		assert(value == 0); /* RAM bank switching not supported yet */
+	} else {
+		assert(false); /* Not handled for non-MBC1 carts yet */
+	}
 }
 
-static void load_ram() {
+static void read_save_file() {
 	printf("Checking for saved RAM\n");
 	assert(cart_state.ram_bank_count == 1); /* Only one bank is currently supported */
 	
@@ -73,7 +78,9 @@ static void load_ram() {
 	else printf("No saved RAM found\n");
 }
 
-static void save_ram() {
+void robingb_update_save_file() {
+	if (!cart_state.save_file_is_outdated) return;
+	
 	printf("Saving RAM\n");
 	assert(cart_state.ram_bank_count == 1); /* Only one bank is currently supported */
 	
@@ -81,6 +88,7 @@ static void save_ram() {
 	int ram_size = 0xc000 - 0xa000;
 	bool success = robingb_write_file(robingb_save_path, false, ram_size, ram_address);
 	assert(success);
+	cart_state.save_file_is_outdated = false;
 }
 
 static void perform_cart_control(int address, u8 value) {
@@ -92,15 +100,11 @@ static void perform_cart_control(int address, u8 value) {
 		
 		/* Ignore the request if the cart has no RAM */
 		if (cart_state.has_ram) {
-			bool should_enable_ram = (value & 0x0f) == 0x0a;
-			
-			if (should_enable_ram != cart_state.ram_is_enabled) {
-				if (should_enable_ram) {
-					cart_state.ram_is_enabled = true;
-				} else {
-					cart_state.ram_is_enabled = false;
-					save_ram();
-				}
+			if ((value & 0x0f) == 0x0a) {
+				/* Command to enable RAM */
+			} else {
+				/* Command to disable RAM */
+				cart_state.save_file_is_outdated = true;
 			}
 		}
 		
@@ -118,7 +122,7 @@ static void perform_cart_control(int address, u8 value) {
 		if (cart_state.banking_mode == BM_ROM) {
 			robingb_romb_perform_bank_control(address, value, cart_state.mbc_type);
 		} else {
-			ramb_perform_bank_control(address, value, cart_state.mbc_type);
+			ramb_perform_bank_control(address, value);
 		}
 		
 	} else if (address >= 0x6000 && address < 0x8000) {
@@ -236,7 +240,7 @@ static void init_cart_state() {
 	cart_state.ram_bank_count = calculate_ram_bank_count(cart_type);
 	cart_state.has_ram = cart_state.ram_bank_count > 0;
 	cart_state.ram_is_enabled = false;
-	if (cart_state.has_ram) load_ram();
+	if (cart_state.has_ram) read_save_file();
 	
 	cart_state.banking_mode = BM_ROM; /* Default banking mode */
 }
@@ -317,6 +321,12 @@ void robingb_memory_write(u16 address, u8 value) {
 		} else if (address >= 0xe000 && address < 0xfe00) {
 			int echo_address = address-0xe000+0xc000;
 			robingb_memory[echo_address] = value;
+		}
+		
+		/* TODO: Handle the below for MBC3. */
+		if (cart_state.mbc_type == MBC_1 && address >= 0xa000 && address < 0xc000) {
+			/* RAM was written to. */
+			cart_state.save_file_is_outdated = true;
 		}
 	}
 }
