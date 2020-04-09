@@ -100,11 +100,10 @@ hardware. The screen will appear extremely dark and inverted, so you will need
 to do some additional processing. */
 extern bool robingb_native_pixel_format;
 
-/* Finally, here is the much more complicated, per-line alternative to
-robingb_update_screen(), useful if your architecture can't afford to wait for
-an entire frame to be rendered. */
+/* Finally, here is the more complicated, per-line alternative to
+robingb_update_screen(). */
 bool robingb_update_screen_line(uint8_t screen[], uint8_t *updated_screen_line);
-/* HOW TO USE THIS FUNCTION:
+/* FULL EXPLANATION:
 screen[] must be an array of ROBINGB_SCREEN_WIDTH*ROBINGB_SCREEN_HEIGHT elements.
 This function runs the game and potentially updates one horizontal line of the
 screen. If the function returns true, one line of the screen has been updated
