@@ -126,6 +126,19 @@ bool robingb_update_screen_line(u8 screen_out[], u8 *updated_screen_line) {
 	} else return false;
 }
 
+void robingb_save_state() {
+	memcpy(dest, robingb_memory, GAME_BOY_MEMORY_ADDRESS_SPACE_SIZE);
+	// registers
+	// halted
+	// timer stuff
+	// bank caches
+	// etc
+	
+	// TIP: search for all static variables inside functions and file-level variables.
+}
+
+void robingb_load_state();
+
 void robingb_update_screen(uint8_t screen_out[]) {
 	u8 updated_screen_line;
 	

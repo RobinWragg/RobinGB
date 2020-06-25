@@ -12,6 +12,8 @@ typedef uint32_t u32;
 typedef int64_t s64;
 typedef uint64_t u64;
 
+#define GAME_BOY_MEMORY_ADDRESS_SPACE_SIZE (1024*64)
+
 #define DEBUG_set_opcode_name(x) /* robingb_log(x) */
 
 #define robingb_bit(n) (0x01 << n)

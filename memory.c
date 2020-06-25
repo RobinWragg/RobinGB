@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define GAME_BOY_MEMORY_ADDRESS_SPACE_SIZE (1024*64)
-
 u8 robingb_memory[GAME_BOY_MEMORY_ADDRESS_SPACE_SIZE];
 
 typedef enum {
