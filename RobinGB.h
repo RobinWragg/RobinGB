@@ -124,9 +124,9 @@ for (uint16_t i = updated_screen_line * ROBINGB_SCREEN_WIDTH;
 	uint8_t pixel_data = screen[i];
 }
 
-NOTE: After a complete screen update, robingb_update() will return false
-multiple times during the vertical-blanking phase. You must enter this phase
-60 times per second for correct emulation speed.
+NOTE: After a complete screen update, robingb_update_screen_line() will return
+false multiple times during the vertical-blanking phase. You must enter this
+phase 60 times per second for correct emulation speed.
 */
 
 #endif /* end include guard */
