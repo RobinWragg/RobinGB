@@ -33,7 +33,6 @@ implement read_file() and write_file() (continue reading for an example) and
 pass their pointers in here. This allows RobinGB to load and save games. */
 void robingb_init(
     uint32_t audio_sample_rate,
-    
     const char *cart_file_path,
     bool (*read_file)(const char *path, uint32_t byte_offset, uint32_t data_size, uint8_t data_out[]),
     bool (*write_file)(const char *path, bool append, uint32_t data_size, uint8_t data_in[])
@@ -75,11 +74,6 @@ typedef enum {
 /* Call these functions to tell RobinGB about player input. */
 void robingb_press_button(RobinGB_Button button);
 void robingb_release_button(RobinGB_Button button);
-
-/* These save and load the entire emulator state. They internally call the
-write_file() and read_file() functions that were passed to robingb_init(). */
-void robingb_save_state();
-void robingb_load_state();
 
 /* Run the emulation and update the screen with this function. screen[] must be
 an array of ROBINGB_SCREEN_WIDTH*ROBINGB_SCREEN_HEIGHT bytes, one byte per
