@@ -1,10 +1,10 @@
 /*
-______      _     _       _____ ______ 
+______      _     _       _____ ______
 | ___ \    | |   (_)     |  __ \| ___ \
 | |_/ /___ | |__  _ _ __ | |  \/| |_/ /
 |    // _ \| '_ \| | '_ \| | __ | ___ \
 | |\ \ (_) | |_) | | | | | |_\ \| |_/ /
-\_| \_\___/|_.__/|_|_| |_|\____/\____/ 
+\_| \_\___/|_.__/|_|_| |_|\____/\____/
 
 Welcome! Scroll down for complete usage information.
 
@@ -12,6 +12,7 @@ TODO: Remove assert()s
 TODO: Add error logging.
 TODO: Fail gracefully if malloc() returns NULL.
 TODO: Remove printf().
+TODO: Implement simplified init function that doesn't require file access function pointers.
 */
 
 #ifdef __cplusplus
@@ -23,7 +24,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
-	
+    
 #define ROBINGB_SCREEN_WIDTH 160
 #define ROBINGB_SCREEN_HEIGHT 144
 
@@ -31,44 +32,44 @@ extern "C" {
 implement read_file() and write_file() (continue reading for an example) and
 pass their pointers in here. This allows RobinGB to load and save games. */
 void robingb_init(
-	uint32_t audio_sample_rate,
-	
-	const char *cart_file_path,
-	bool (*read_file)(const char *path, uint32_t byte_offset, uint32_t data_size, uint8_t data_out[]),
-	bool (*write_file)(const char *path, bool append, uint32_t data_size, uint8_t data_in[])
-	);
+    uint32_t audio_sample_rate,
+    
+    const char *cart_file_path,
+    bool (*read_file)(const char *path, uint32_t byte_offset, uint32_t data_size, uint8_t data_out[]),
+    bool (*write_file)(const char *path, bool append, uint32_t data_size, uint8_t data_in[])
+    );
 
 /* Example implementations of read_file() and write_file():
 
 bool read_file(const char *path, uint32_t byte_offset, uint32_t data_size, uint8_t data_out[]) {
-	FILE *f = fopen(path, "rb");
-	if (!f) return false;
-	fseek(f, byte_offset, SEEK_SET);
-	uint32_t bytes_read = fread(data_out, sizeof(uint8_t), data_size, f);
-	if (bytes_read != data_size) return false;
-	fclose(f);
-	return true;
+    FILE *f = fopen(path, "rb");
+    if (!f) return false;
+    fseek(f, byte_offset, SEEK_SET);
+    uint32_t bytes_read = fread(data_out, sizeof(uint8_t), data_size, f);
+    if (bytes_read != data_size) return false;
+    fclose(f);
+    return true;
 }
 
 bool write_file(const char *path, bool append, uint32_t data_size, uint8_t data_in[]) {
-	FILE *f = fopen(path, append ? "ab" : "wb");
-	if (!f) return false;
-	uint32_t bytes_written = fwrite(data_in, sizeof(uint8_t), data_size, f);
-	if (bytes_written != data_size) return false;
-	fclose(f);
-	return true;
+    FILE *f = fopen(path, append ? "ab" : "wb");
+    if (!f) return false;
+    uint32_t bytes_written = fwrite(data_in, sizeof(uint8_t), data_size, f);
+    if (bytes_written != data_size) return false;
+    fclose(f);
+    return true;
 }
 */
 
 typedef enum {
-	ROBINGB_UP,
-	ROBINGB_LEFT,
-	ROBINGB_RIGHT,
-	ROBINGB_DOWN,
-	ROBINGB_A,
-	ROBINGB_B,
-	ROBINGB_START,
-	ROBINGB_SELECT
+    ROBINGB_UP,
+    ROBINGB_LEFT,
+    ROBINGB_RIGHT,
+    ROBINGB_DOWN,
+    ROBINGB_A,
+    ROBINGB_B,
+    ROBINGB_START,
+    ROBINGB_SELECT
 } RobinGB_Button;
 
 /* Call these functions to tell RobinGB about player input. */
@@ -117,11 +118,11 @@ update lines in order from 0 to 143, but this is not guaranteed. You can then
 read the new line from the screen like so:
 
 for (uint16_t i = updated_screen_line * ROBINGB_SCREEN_WIDTH;
-	i < updated_screen_line * ROBINGB_SCREEN_WIDTH + ROBINGB_SCREEN_WIDTH;
-	i++) {
-	uint8_t pixel_position_x = i;
-	uint8_t pixel_position_y = updated_screen_line;
-	uint8_t pixel_data = screen[i];
+    i < updated_screen_line * ROBINGB_SCREEN_WIDTH + ROBINGB_SCREEN_WIDTH;
+    i++) {
+    uint8_t pixel_position_x = i;
+    uint8_t pixel_position_y = updated_screen_line;
+    uint8_t pixel_data = screen[i];
 }
 
 NOTE: After a complete screen update, robingb_update_screen_line() will return

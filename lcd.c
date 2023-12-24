@@ -11,10 +11,10 @@ TODO:
 This interrupt can be configured with register STAT.
 The STAT IRQ is trigged by an internal signal.
 This signal is set to 1 if:
-	( (LY = LYC) AND (STAT.ENABLE_LYC_COMPARE = 1) ) OR
-	( (ScreenMode = 0) AND (STAT.ENABLE_HBL = 1) ) OR
-	( (ScreenMode = 2) AND (STAT.ENABLE_OAM = 1) ) OR
-	( (ScreenMode = 1) AND (STAT.ENABLE_VBL || STAT.ENABLE_OAM) ) -> Not only VBL!!??
+    ( (LY = LYC) AND (STAT.ENABLE_LYC_COMPARE = 1) ) OR
+    ( (ScreenMode = 0) AND (STAT.ENABLE_HBL = 1) ) OR
+    ( (ScreenMode = 2) AND (STAT.ENABLE_OAM = 1) ) OR
+    ( (ScreenMode = 1) AND (STAT.ENABLE_VBL || STAT.ENABLE_OAM) ) -> Not only VBL!!??
 -If LCD is off, the signal is 0.
 -It seems that this interrupt needs less time to execute in DMG than in CGB? -DMG bug?"
 */
@@ -38,71 +38,71 @@ static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
 static u8 *lyc = &robingb_memory[LCD_LYC_ADDRESS];
 
 void robingb_lcd_update(int num_cycles_delta) {
-	if (((*control) & LCDC_ENABLED_BIT) == 0) {
-		/* Bit 7 of the LCD control register is 0, so the LCD is switched off. */
-		/* LY, the mode, and the LYC=LY flag should all be 0. */
-		*ly = 0x00;
-		*status &= 0xf8;
-		return; 
-	}
-	
-	static s32 elapsed_cycles = 0;
-	elapsed_cycles += num_cycles_delta;
-	
-	/* set LY */
-	if (elapsed_cycles >= NUM_CYCLES_PER_LY_INCREMENT) {
-		elapsed_cycles -= NUM_CYCLES_PER_LY_INCREMENT;
-		
-		if (++(*ly) >= LY_MAXIMUM_VALUE) *ly = 0;
-	}
-	
-	/* handle LYC */
-	if (*ly == *lyc) {
-		*status |= 0x04;
-		if ((*status) & 0x40) robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
-	} else {
-		*status &= ~0x04;
-	}
-	
-	/* set mode */
-	const u8 prev_mode = (*status) & 0x03; /* get lower 2 bits only */
-	*status &= 0xfc; /* wipe the old mode */
-	
-	if (*ly < LY_VBLANK_ENTRY_VALUE) {
-		/*
-		Approx mode graph:
-		Mode 2  2_____2_____2_____2_____2_____2___________________2____
-		Mode 3  _33____33____33____33____33____33__________________3___
-		Mode 0  ___000___000___000___000___000___000________________000
-		Mode 1  ____________________________________11111111111111_____
-		*/
-		
-		if (elapsed_cycles >= MODE_2_CYCLE_DURATION + MODE_3_CYCLE_DURATION) {
-			*status |= 0x00; /* H-blank */
-			
-			if (prev_mode != 0x00 && ((*status) & 0x08)) {
-				robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
-			}
-		} else if (elapsed_cycles >= MODE_2_CYCLE_DURATION) {
-			*status |= 0x03; /* The LCD is reading from both OAM and VRAM */
-			
-			if (prev_mode != 0x03) robingb_render_screen_line();
-		} else {
-			*status |= 0x02; /* The LCD is reading from OAM */
-			
-			if (prev_mode != 0x02 && ((*status) & 0x20)) {
-				robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
-			}
-		}
-		
-	} else {
-		*status |= 0x01; /* V-blank */
-		
-		if (prev_mode != 0x01) {
-			robingb_request_interrupt(INTERRUPT_FLAG_VBLANK);
-			if ((*status) & 0x10) robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
-		}
-	}
+    if (((*control) & LCDC_ENABLED_BIT) == 0) {
+        /* Bit 7 of the LCD control register is 0, so the LCD is switched off. */
+        /* LY, the mode, and the LYC=LY flag should all be 0. */
+        *ly = 0x00;
+        *status &= 0xf8;
+        return; 
+    }
+    
+    static s32 elapsed_cycles = 0;
+    elapsed_cycles += num_cycles_delta;
+    
+    /* set LY */
+    if (elapsed_cycles >= NUM_CYCLES_PER_LY_INCREMENT) {
+        elapsed_cycles -= NUM_CYCLES_PER_LY_INCREMENT;
+        
+        if (++(*ly) >= LY_MAXIMUM_VALUE) *ly = 0;
+    }
+    
+    /* handle LYC */
+    if (*ly == *lyc) {
+        *status |= 0x04;
+        if ((*status) & 0x40) robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+    } else {
+        *status &= ~0x04;
+    }
+    
+    /* set mode */
+    const u8 prev_mode = (*status) & 0x03; /* get lower 2 bits only */
+    *status &= 0xfc; /* wipe the old mode */
+    
+    if (*ly < LY_VBLANK_ENTRY_VALUE) {
+        /*
+        Approx mode graph:
+        Mode 2  2_____2_____2_____2_____2_____2___________________2____
+        Mode 3  _33____33____33____33____33____33__________________3___
+        Mode 0  ___000___000___000___000___000___000________________000
+        Mode 1  ____________________________________11111111111111_____
+        */
+        
+        if (elapsed_cycles >= MODE_2_CYCLE_DURATION + MODE_3_CYCLE_DURATION) {
+            *status |= 0x00; /* H-blank */
+            
+            if (prev_mode != 0x00 && ((*status) & 0x08)) {
+                robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+            }
+        } else if (elapsed_cycles >= MODE_2_CYCLE_DURATION) {
+            *status |= 0x03; /* The LCD is reading from both OAM and VRAM */
+            
+            if (prev_mode != 0x03) robingb_render_screen_line();
+        } else {
+            *status |= 0x02; /* The LCD is reading from OAM */
+            
+            if (prev_mode != 0x02 && ((*status) & 0x20)) {
+                robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+            }
+        }
+        
+    } else {
+        *status |= 0x01; /* V-blank */
+        
+        if (prev_mode != 0x01) {
+            robingb_request_interrupt(INTERRUPT_FLAG_VBLANK);
+            if ((*status) & 0x10) robingb_request_interrupt(INTERRUPT_FLAG_LCD_STAT);
+        }
+    }
 }
 
 

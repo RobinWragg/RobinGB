@@ -38,40 +38,40 @@ typedef uint64_t u64;
 #define INTERRUPT_FLAG_JOYPAD (0x10)
 
 typedef struct {
-	struct {
-		union {
-			struct { u8 f; u8 a; };
-			u16 af;
-		};
-	};
-	struct {
-		union {
-			struct { u8 c; u8 b; };
-			u16 bc;
-		};
-	};
-	struct {
-		union {
-			struct { u8 e; u8 d; };
-			u16 de;
-		};
-	};
-	struct {
-		union {
-			struct { u8 l; u8 h; };
-			u16 hl;
-		};
-	};
-	u16 sp;
-	u16 pc;
-	bool ime;
+    struct {
+        union {
+            struct { u8 f; u8 a; };
+            u16 af;
+        };
+    };
+    struct {
+        union {
+            struct { u8 c; u8 b; };
+            u16 bc;
+        };
+    };
+    struct {
+        union {
+            struct { u8 e; u8 d; };
+            u16 de;
+        };
+    };
+    struct {
+        union {
+            struct { u8 l; u8 h; };
+            u16 hl;
+        };
+    };
+    u16 sp;
+    u16 pc;
+    bool ime;
 } Registers;
 
 typedef enum {
-	MBC_NONE,
-	MBC_1,
-	MBC_2,
-	MBC_3
+    MBC_NONE,
+    MBC_1,
+    MBC_2,
+    MBC_3
 } Mbc_Type;
 
 extern u8 *robingb_screen;
