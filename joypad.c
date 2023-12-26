@@ -11,8 +11,8 @@
 #define LEFT_OR_B 0x02
 #define RIGHT_OR_A 0x01
 
-static u8 action_buttons = 0xff;
-static u8 direction_buttons = 0xff;
+static uint8_t action_buttons = 0xff;
+static uint8_t direction_buttons = 0xff;
 
 void robingb_press_button(RobinGB_Button button) {
     switch (button) {
@@ -42,7 +42,7 @@ void robingb_release_button(RobinGB_Button button) {
     }
 }
 
-u8 robingb_respond_to_joypad_register(u8 register_value) {
+uint8_t robingb_respond_to_joypad_register(uint8_t register_value) {
     register_value |= 0xc0; /* bits 6 and 7 are always 1. */
     register_value |= 0x0f; /* unpressed buttons are 1. */
     

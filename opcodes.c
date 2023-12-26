@@ -5,34 +5,34 @@
 
 #define INSTRUCTION
 
-u8 *num_cycles_for_finish;
+uint8_t *num_cycles_for_finish;
 
-void robingb_finish_instruction(s16 pc_increment, u8 num_cycles_param) {
+void robingb_finish_instruction(int16_t pc_increment, uint8_t num_cycles_param) {
 	registers.pc += pc_increment;
 	*num_cycles_for_finish = num_cycles_param;
 }
 
-static bool negate_produces_u8_half_carry(s16 a, s16 b, bool include_carry) {
-	u8 optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
+static bool negate_produces_u8_half_carry(int16_t a, int16_t b, bool include_carry) {
+	uint8_t optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
 	
 	if ((a & 0x0f) - (b & 0x0f) - optional_carry < 0) return true;
 	else return false;
 }
 
-static bool addition_produces_u8_half_carry(s16 a, s16 b, bool include_carry) {
-	u8 optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
+static bool addition_produces_u8_half_carry(int16_t a, int16_t b, bool include_carry) {
+	uint8_t optional_carry = (include_carry && registers.f & FLAG_C) ? 1 : 0;
 	return ((a & 0x0f) + (b & 0x0f) + optional_carry > 0x0f);
 }
 
-static bool negate_produces_u8_full_carry(s16 a, s16 b) {
+static bool negate_produces_u8_full_carry(int16_t a, int16_t b) {
 	return (a - b < 0);
 }
 
-static bool addition_produces_u8_full_carry(s16 a, s16 b) {
+static bool addition_produces_u8_full_carry(int16_t a, int16_t b) {
 	return (a + b > 0xff);
 }
 
-INSTRUCTION static void instruction_XOR(u8 to_xor, u8 num_cycles) {
+INSTRUCTION static void instruction_XOR(uint8_t to_xor, uint8_t num_cycles) {
 	registers.a ^= to_xor;
 	
 	if (registers.a == 0) registers.f |= FLAG_Z;
@@ -44,13 +44,13 @@ INSTRUCTION static void instruction_XOR(u8 to_xor, u8 num_cycles) {
 	robingb_finish_instruction(1, num_cycles);
 }
 
-INSTRUCTION static void instruction_RST(u8 address_lower_byte) {
+INSTRUCTION static void instruction_RST(uint8_t address_lower_byte) {
 	robingb_stack_push(registers.pc+1);
 	registers.pc = address_lower_byte;
 	robingb_finish_instruction(0, 16);
 }
 
-INSTRUCTION static void instruction_CP(u8 comparator, u16 pc_increment, u8 num_cycles) {
+INSTRUCTION static void instruction_CP(uint8_t comparator, uint16_t pc_increment, uint8_t num_cycles) {
 	if (negate_produces_u8_half_carry(registers.a, comparator, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -59,14 +59,14 @@ INSTRUCTION static void instruction_CP(u8 comparator, u16 pc_increment, u8 num_c
 	
 	registers.f |= FLAG_N; /* set the add/sub flag high, indicating subtraction */
 	
-	u8 sub_result = registers.a - comparator;
+	uint8_t sub_result = registers.a - comparator;
 	
 	if (sub_result == 0) registers.f |= FLAG_Z;
 	else registers.f &= ~FLAG_Z;
 	robingb_finish_instruction(pc_increment, num_cycles);
 }
 
-INSTRUCTION static void instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles) {
+INSTRUCTION static void instruction_DEC_u8(uint8_t *value_to_decrement, uint8_t num_cycles) {
 	if (negate_produces_u8_half_carry(*value_to_decrement, 1, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -78,7 +78,7 @@ INSTRUCTION static void instruction_DEC_u8(u8 *value_to_decrement, u8 num_cycles
 	robingb_finish_instruction(1, num_cycles);
 }
 
-INSTRUCTION static void instruction_INC_u8(u8 *value_to_increment, u8 num_cycles) {
+INSTRUCTION static void instruction_INC_u8(uint8_t *value_to_increment, uint8_t num_cycles) {
 	if (addition_produces_u8_half_carry(*value_to_increment, 1, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -90,7 +90,7 @@ INSTRUCTION static void instruction_INC_u8(u8 *value_to_increment, u8 num_cycles
 	robingb_finish_instruction(1, num_cycles);
 }
 
-INSTRUCTION static void instruction_ADC(u8 to_add, u16 pc_increment, int num_cycles) {
+INSTRUCTION static void instruction_ADC(uint8_t to_add, uint16_t pc_increment, int num_cycles) {
 	int carry = registers.f & FLAG_C ? 1 : 0;
 	
 	if (addition_produces_u8_half_carry(registers.a, to_add, true)) registers.f |= FLAG_H;
@@ -118,7 +118,7 @@ INSTRUCTION static void instruction_CALL_cond_xx(bool condition) {
 	} else robingb_finish_instruction(3, 12);
 }
 
-INSTRUCTION static void instruction_SBC(u8 to_subtract, u16 pc_increment, int num_cycles) {
+INSTRUCTION static void instruction_SBC(uint8_t to_subtract, uint16_t pc_increment, int num_cycles) {
 	int carry = registers.f & FLAG_C ? 1 : 0;
 	
 	if (negate_produces_u8_half_carry(registers.a, to_subtract, true)) registers.f |= FLAG_H;
@@ -137,7 +137,7 @@ INSTRUCTION static void instruction_SBC(u8 to_subtract, u16 pc_increment, int nu
 	robingb_finish_instruction(pc_increment, num_cycles);
 }
 
-INSTRUCTION static void instruction_AND(u8 right_hand_value, u16 pc_increment, int num_cycles) {
+INSTRUCTION static void instruction_AND(uint8_t right_hand_value, uint16_t pc_increment, int num_cycles) {
 	registers.a &= right_hand_value;
 	
 	if (registers.a == 0) registers.f |= FLAG_Z;
@@ -150,7 +150,7 @@ INSTRUCTION static void instruction_AND(u8 right_hand_value, u16 pc_increment, i
 	robingb_finish_instruction(pc_increment, num_cycles);
 }
 
-INSTRUCTION static void instruction_OR(u8 right_hand_value, u16 pc_increment, int num_cycles) {
+INSTRUCTION static void instruction_OR(uint8_t right_hand_value, uint16_t pc_increment, int num_cycles) {
 	registers.a |= right_hand_value;
 	
 	if (registers.a == 0) registers.f |= FLAG_Z;
@@ -162,7 +162,7 @@ INSTRUCTION static void instruction_OR(u8 right_hand_value, u16 pc_increment, in
 	robingb_finish_instruction(pc_increment, num_cycles);
 }
 
-INSTRUCTION static void instruction_ADD_A_u8(u8 to_add, u16 pc_increment, u8 num_cycles) {
+INSTRUCTION static void instruction_ADD_A_u8(uint8_t to_add, uint16_t pc_increment, uint8_t num_cycles) {
 	if (addition_produces_u8_half_carry(registers.a, to_add, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -179,7 +179,7 @@ INSTRUCTION static void instruction_ADD_A_u8(u8 to_add, u16 pc_increment, u8 num
 	robingb_finish_instruction(pc_increment, num_cycles);
 }
 
-INSTRUCTION static void instruction_ADD_HL_u16(u16 to_add) {
+INSTRUCTION static void instruction_ADD_HL_u16(uint16_t to_add) {
 	
 	/* check for 16-bit full carry */
 	if (registers.hl + to_add > 0xffff) registers.f |= FLAG_C;
@@ -196,7 +196,7 @@ INSTRUCTION static void instruction_ADD_HL_u16(u16 to_add) {
 	robingb_finish_instruction(1, 8);
 }
 
-INSTRUCTION static void instruction_SUB_u8(u8 subber, u16 pc_increment, int num_cycles) {
+INSTRUCTION static void instruction_SUB_u8(uint8_t subber, uint16_t pc_increment, int num_cycles) {
 	if (negate_produces_u8_half_carry(registers.a, subber, false)) registers.f |= FLAG_H;
 	else registers.f &= ~FLAG_H;
 	
@@ -213,7 +213,7 @@ INSTRUCTION static void instruction_SUB_u8(u8 subber, u16 pc_increment, int num_
 	robingb_finish_instruction(pc_increment, num_cycles);
 }
 
-void robingb_execute_next_opcode(u8 *num_cycles_out) {
+void robingb_execute_next_opcode(uint8_t *num_cycles_out) {
 	
 	if (halted) {
 		*num_cycles_out = 4;
@@ -221,7 +221,7 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 	}
 	
 	num_cycles_for_finish = num_cycles_out;
-	u8 opcode = robingb_memory_read(registers.pc);
+	uint8_t opcode = robingb_memory_read(registers.pc);
 	
 	switch (opcode) {
 		case 0x00: DEBUG_set_opcode_name("NOP"); robingb_finish_instruction(1, 4); break;
@@ -299,7 +299,7 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 			
 			robingb_finish_instruction(1, 4);
 		} break;
-		case 0x18: DEBUG_set_opcode_name("JR %i(d)"); robingb_finish_instruction(2 + (s8)robingb_memory_read(registers.pc+1), 12); break;
+		case 0x18: DEBUG_set_opcode_name("JR %i(d)"); robingb_finish_instruction(2 + (int8_t)robingb_memory_read(registers.pc+1), 12); break;
 		case 0x19: DEBUG_set_opcode_name("ADD HL,DE"); instruction_ADD_HL_u16(registers.de); break;
 		case 0x1a: DEBUG_set_opcode_name("LD A,(DE)"); registers.a = robingb_memory_read(registers.de); robingb_finish_instruction(1, 8); break;
 		case 0x1b: DEBUG_set_opcode_name("DEC DE"); registers.de--; robingb_finish_instruction(1, 8); break;
@@ -324,7 +324,7 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 		} break;
 		case 0x20: { DEBUG_set_opcode_name("JR NZ,s");
 			if (registers.f & FLAG_Z) robingb_finish_instruction(2, 8);
-			else robingb_finish_instruction(2 + (s8)robingb_memory_read(registers.pc+1), 12);
+			else robingb_finish_instruction(2 + (int8_t)robingb_memory_read(registers.pc+1), 12);
 		} break;
 		case 0x21: DEBUG_set_opcode_name("LD HL,xx"); registers.hl = robingb_memory_read_u16(registers.pc+1); robingb_finish_instruction(3, 12); break;
 		case 0x22: DEBUG_set_opcode_name("LD (HL+),A"); robingb_memory_write(registers.hl++, registers.a); robingb_finish_instruction(1, 8); break;
@@ -336,7 +336,7 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 			robingb_finish_instruction(2, 8);
 		} break;
 		case 0x27: { DEBUG_set_opcode_name("DAA");
-			u16 register_a_new = registers.a;
+			uint16_t register_a_new = registers.a;
 			
 			if ((registers.f & FLAG_N) == 0) {
 				if ((registers.f & FLAG_H) || (register_a_new & 0x0f) > 0x09) register_a_new += 0x06;
@@ -359,7 +359,7 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 			robingb_finish_instruction(1, 4);
 		} break;
 		case 0x28: { DEBUG_set_opcode_name("JR Z,s");
-			if (registers.f & FLAG_Z) robingb_finish_instruction(2 + (s8)robingb_memory_read(registers.pc+1), 12);
+			if (registers.f & FLAG_Z) robingb_finish_instruction(2 + (int8_t)robingb_memory_read(registers.pc+1), 12);
 			else robingb_finish_instruction(2, 8);
 		} break;
 		case 0x29: DEBUG_set_opcode_name("ADD HL,HL"); instruction_ADD_HL_u16(registers.hl); break;
@@ -375,19 +375,19 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 			robingb_finish_instruction(1, 4);
 		} break;
 		case 0x30: { DEBUG_set_opcode_name("JR NC,s");
-			if ((registers.f & FLAG_C) == 0) robingb_finish_instruction(2 + (s8)robingb_memory_read(registers.pc+1), 12);
+			if ((registers.f & FLAG_C) == 0) robingb_finish_instruction(2 + (int8_t)robingb_memory_read(registers.pc+1), 12);
 			else robingb_finish_instruction(2, 8);
 		} break;
 		case 0x31: DEBUG_set_opcode_name("LD SP,xx"); registers.sp = robingb_memory_read_u16(registers.pc+1); robingb_finish_instruction(3, 12); break;
 		case 0x32: DEBUG_set_opcode_name("LD (HL-),A"); robingb_memory_write(registers.hl--, registers.a); robingb_finish_instruction(1, 8); break;
 		case 0x33: DEBUG_set_opcode_name("INC SP"); registers.sp++; robingb_finish_instruction(1, 8); break;
 		case 0x34: { DEBUG_set_opcode_name("INC (HL)");
-			u8 hl_value = robingb_memory_read(registers.hl);
+			uint8_t hl_value = robingb_memory_read(registers.hl);
 			instruction_INC_u8(&hl_value, 12);
 			robingb_memory_write(registers.hl, hl_value);
 		} break;
 		case 0x35: { DEBUG_set_opcode_name("DEC (HL)");
-			u8 hl_value = robingb_memory_read(registers.hl);
+			uint8_t hl_value = robingb_memory_read(registers.hl);
 			instruction_DEC_u8(&hl_value, 12);
 			robingb_memory_write(registers.hl, hl_value);
 		} break;
@@ -399,7 +399,7 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 			robingb_finish_instruction(1, 4);
 		} break;
 		case 0x38: { DEBUG_set_opcode_name("JR C,s");
-			if (registers.f & FLAG_C) robingb_finish_instruction(2 + (s8)robingb_memory_read(registers.pc+1), 12);
+			if (registers.f & FLAG_C) robingb_finish_instruction(2 + (int8_t)robingb_memory_read(registers.pc+1), 12);
 			else robingb_finish_instruction(2, 8);
 		} break;
 		case 0x39: DEBUG_set_opcode_name("ADD HL,SP"); instruction_ADD_HL_u16(registers.sp); break;
@@ -671,10 +671,10 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 		case 0xe6: DEBUG_set_opcode_name("AND x"); instruction_AND(robingb_memory_read(registers.pc+1), 2, 8); break;
 		case 0xe7: DEBUG_set_opcode_name("RST 20H"); instruction_RST(0x20); break;
 		case 0xe8: { DEBUG_set_opcode_name("ADD SP,s");
-			s8 signed_byte = robingb_memory_read(registers.pc+1);
+			int8_t signed_byte = robingb_memory_read(registers.pc+1);
 			
 			/* TODO: Investigate what happens with this double XOR. */
-			u16 xor_result = registers.sp ^ signed_byte ^ (registers.sp + signed_byte);
+			uint16_t xor_result = registers.sp ^ signed_byte ^ (registers.sp + signed_byte);
 			
 			registers.f = 0;
 			if (xor_result & 0x10) registers.f |= FLAG_H;
@@ -696,7 +696,7 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 		case 0xec: DEBUG_set_opcode_name("(invalid)"); break;
 		case 0xed: DEBUG_set_opcode_name("(invalid)"); break;
 		case 0xee: { DEBUG_set_opcode_name("XOR x");
-			u8 byte_0 = robingb_memory_read(registers.pc+1);
+			uint8_t byte_0 = robingb_memory_read(registers.pc+1);
 			registers.a ^= byte_0;
 			
 			if (registers.a == 0) registers.f |= FLAG_Z;
@@ -732,10 +732,10 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 		case 0xf6: DEBUG_set_opcode_name("OR x"); instruction_OR(robingb_memory_read(registers.pc+1), 2, 8); break;
 		case 0xf7: DEBUG_set_opcode_name("RST 30H"); instruction_RST(0x30); break;
 		case 0xf8: { DEBUG_set_opcode_name("LDHL SP,s");
-			s8 signed_byte = robingb_memory_read(registers.pc+1);
+			int8_t signed_byte = robingb_memory_read(registers.pc+1);
 			
 			/* TODO: Investigate what happens with this double XOR. */
-			u16 xor_result = registers.sp ^ signed_byte ^ (registers.sp + signed_byte);
+			uint16_t xor_result = registers.sp ^ signed_byte ^ (registers.sp + signed_byte);
 			
 			registers.f = 0;
 			if (xor_result & 0x10) registers.f |= FLAG_H;
@@ -750,7 +750,7 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 			robingb_finish_instruction(1, 8);
 		} break;
 		case 0xfa: { DEBUG_set_opcode_name("LD A,(xx)");
-			u16 address = robingb_memory_read_u16(registers.pc+1);
+			uint16_t address = robingb_memory_read_u16(registers.pc+1);
 			registers.a = robingb_memory_read(address);
 			robingb_finish_instruction(3, 16);
 		} break;
@@ -761,7 +761,7 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 		case 0xfc: DEBUG_set_opcode_name("(invalid)"); break;
 		case 0xfd: DEBUG_set_opcode_name("(invalid)"); break;
 		case 0xfe: { DEBUG_set_opcode_name("CP x");
-			u8 byte_0 = robingb_memory_read(registers.pc+1);
+			uint8_t byte_0 = robingb_memory_read(registers.pc+1);
 			
 			if (negate_produces_u8_half_carry(registers.a, byte_0, false)) registers.f |= FLAG_H;
 			else registers.f &= ~FLAG_H;
@@ -771,7 +771,7 @@ void robingb_execute_next_opcode(u8 *num_cycles_out) {
 			
 			registers.f |= FLAG_N; /* set the add/sub flag high, indicating subtraction */
 			
-			u8 sub_result = registers.a - byte_0;
+			uint8_t sub_result = registers.a - byte_0;
 			if (sub_result == 0) registers.f |= FLAG_Z;
 			else registers.f &= ~FLAG_Z;
 			robingb_finish_instruction(2, 8);

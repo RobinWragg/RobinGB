@@ -11,23 +11,23 @@ bool (*robingb_write_file)(const char *path, bool append, uint32_t size, uint8_t
 char *robingb_cart_path = NULL;
 char *robingb_save_path = NULL;
 
-void robingb_stack_push(u16 value) {
-    u8 *bytes = (u8*)&value;
+void robingb_stack_push(uint16_t value) {
+    uint8_t *bytes = (uint8_t*)&value;
     registers.sp -= 2;
     robingb_memory_write(registers.sp, bytes[0]);
     robingb_memory_write(registers.sp+1, bytes[1]);
 }
 
-u16 robingb_stack_pop() {
-    u16 value = robingb_memory_read_u16(registers.sp);
+uint16_t robingb_stack_pop() {
+    uint16_t value = robingb_memory_read_u16(registers.sp);
     registers.sp += 2;
     return value;
 }
 
-u16 make_u16(u8 least_sig, u8 most_sig) {
+uint16_t make_u16(uint8_t least_sig, uint8_t most_sig) {
     union {
-        u8 bytes[2];
-        u16 out;
+        uint8_t bytes[2];
+        uint16_t out;
     } u16_union;
     
     u16_union.bytes[0] = least_sig;
@@ -89,7 +89,7 @@ void robingb_init(
         }
         
         sum += 25;
-        u8 *bytes = (u8*)&sum;
+        uint8_t *bytes = (uint8_t*)&sum;
         assert(bytes[0] == 0);
     }
     
@@ -97,18 +97,18 @@ void robingb_init(
     robingb_timer_init();
 }
 
-u8 *lcd_ly = &robingb_memory[LCD_LY_ADDRESS];
+uint8_t *lcd_ly = &robingb_memory[LCD_LY_ADDRESS];
 
-bool robingb_update_screen_line(u8 screen_out[], u8 *updated_screen_line) {
-    u8 previous_lcd_ly = *lcd_ly;
+bool robingb_update_screen_line(uint8_t screen_out[], uint8_t *updated_screen_line) {
+    uint8_t previous_lcd_ly = *lcd_ly;
     
     robingb_screen = screen_out;
     assert(robingb_screen);
     
-    u32 num_cycles_this_h_blank = 0;
+    uint32_t num_cycles_this_h_blank = 0;
     
     while (*lcd_ly == previous_lcd_ly) {
-        u8 num_cycles_this_opcode;
+        uint8_t num_cycles_this_opcode;
         robingb_execute_next_opcode(&num_cycles_this_opcode);
         
         robingb_handle_interrupts();
@@ -127,7 +127,7 @@ bool robingb_update_screen_line(u8 screen_out[], u8 *updated_screen_line) {
 }
 
 void robingb_update_screen(uint8_t screen_out[]) {
-    u8 updated_screen_line;
+    uint8_t updated_screen_line;
     
     /* Call the function until the vblank phase is exited */
     while (robingb_update_screen_line(screen_out, &updated_screen_line) == false) {}

@@ -32,10 +32,10 @@ This signal is set to 1 if:
 #define MODE_2_CYCLE_DURATION 80
 #define MODE_3_CYCLE_DURATION 172
 
-static u8 *control = &robingb_memory[LCD_CONTROL_ADDRESS];
-static u8 *status = &robingb_memory[LCD_STATUS_ADDRESS];
-static u8 *ly = &robingb_memory[LCD_LY_ADDRESS];
-static u8 *lyc = &robingb_memory[LCD_LYC_ADDRESS];
+static uint8_t *control = &robingb_memory[LCD_CONTROL_ADDRESS];
+static uint8_t *status = &robingb_memory[LCD_STATUS_ADDRESS];
+static uint8_t *ly = &robingb_memory[LCD_LY_ADDRESS];
+static uint8_t *lyc = &robingb_memory[LCD_LYC_ADDRESS];
 
 void robingb_lcd_update(int num_cycles_delta) {
     if (((*control) & LCDC_ENABLED_BIT) == 0) {
@@ -46,7 +46,7 @@ void robingb_lcd_update(int num_cycles_delta) {
         return; 
     }
     
-    static s32 elapsed_cycles = 0;
+    static int32_t elapsed_cycles = 0;
     elapsed_cycles += num_cycles_delta;
     
     /* set LY */
@@ -65,7 +65,7 @@ void robingb_lcd_update(int num_cycles_delta) {
     }
     
     /* set mode */
-    const u8 prev_mode = (*status) & 0x03; /* get lower 2 bits only */
+    const uint8_t prev_mode = (*status) & 0x03; /* get lower 2 bits only */
     *status &= 0xfc; /* wipe the old mode */
     
     if (*ly < LY_VBLANK_ENTRY_VALUE) {

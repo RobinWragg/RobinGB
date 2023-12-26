@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-u8 robingb_memory[GAME_BOY_MEMORY_ADDRESS_SPACE_SIZE];
+uint8_t robingb_memory[GAME_BOY_MEMORY_ADDRESS_SPACE_SIZE];
 
 typedef enum {
     CART_TYPE_ROM_ONLY = 0x00,
@@ -50,11 +50,11 @@ typedef enum {
 static struct {
     Mbc_Type mbc_type;
     bool has_ram, ram_is_enabled, save_file_is_outdated;
-    u8 ram_bank_count;
+    uint8_t ram_bank_count;
     Banking_Mode banking_mode;
 } cart_state;
 
-static void ramb_perform_bank_control(int address, u8 value) {
+static void ramb_perform_bank_control(int address, uint8_t value) {
     printf("perform_ram_bank_control: %x %x\n", address, value);
     if (cart_state.mbc_type == MBC_1) {
         assert(address >= 0x4000 && address < 0x6000);
@@ -68,7 +68,7 @@ static void read_save_file() {
     printf("Checking for saved RAM\n");
     assert(cart_state.ram_bank_count == 1); /* Only one bank is currently supported */
     
-    u8 *ram_address = &robingb_memory[0xa000];
+    uint8_t *ram_address = &robingb_memory[0xa000];
     int ram_size = 0xc000 - 0xa000;
     bool success = robingb_read_file(robingb_save_path, 0, ram_size, ram_address);
     
@@ -81,14 +81,14 @@ void robingb_update_save_file() {
     
     assert(cart_state.ram_bank_count == 1); /* Only one bank is currently supported */
     
-    u8 *ram_address = &robingb_memory[0xa000];
+    uint8_t *ram_address = &robingb_memory[0xa000];
     int ram_size = 0xc000 - 0xa000;
     bool success = robingb_write_file(robingb_save_path, false, ram_size, ram_address);
     assert(success);
     cart_state.save_file_is_outdated = false;
 }
 
-static void perform_cart_control(int address, u8 value) {
+static void perform_cart_control(int address, uint8_t value) {
     /* printf("perform_cart_control: %x %x\n", address, value); */
     
     if (address >= 0x0000 && address < 0x2000) {
@@ -196,7 +196,7 @@ static int calculate_ram_bank_count(Cart_Type cart_type) {
         case CART_TYPE_MBC5_RUMBLE_RAM_BATTERY:
         case CART_TYPE_HuC1_RAM_BATTERY:
             printf("Cart has RAM: ");
-            u8 ram_spec = robingb_memory_read(0x0149);
+            uint8_t ram_spec = robingb_memory_read(0x0149);
             assert(ram_spec != 0x00);
             
             switch (ram_spec) {
@@ -278,13 +278,13 @@ void robingb_memory_init() {
     robingb_memory_write(0xff49, 0xff);
     robingb_memory_write(0xff4a, 0x00);
     robingb_memory_write(0xff4b, 0x00);
-    robingb_memory_write(IF_ADDRESS, 0xe1); /* TODO: Might be acceptable for this to be 0xe0 */
-    robingb_memory_write(IE_ADDRESS, 0x00);
+    robingb_memory_write(INTERRUPT_FLAG_ADDRESS, 0xe1); /* TODO: Might be acceptable for this to be 0xe0 */
+    robingb_memory_write(INTERRUPT_ENABLE_ADDRESS, 0x00);
     
     init_cart_state();
 }
 
-u8 robingb_memory_read(u16 address) {
+uint8_t robingb_memory_read(uint16_t address) {
     if (address >= 0x4000 && address < 0x8000) {
         return robingb_romb_read_switchable_bank(address);
     } else {
@@ -292,15 +292,15 @@ u8 robingb_memory_read(u16 address) {
     }
 }
 
-u16 robingb_memory_read_u16(u16 address) {
-    u16 out;
-    u8 *bytes = (u8*)&out;
+uint16_t robingb_memory_read_u16(uint16_t address) {
+    uint16_t out;
+    uint8_t *bytes = (uint8_t*)&out;
     bytes[0] = robingb_memory_read(address);
     bytes[1] = robingb_memory_read(address+1);
     return out;
 }
 
-void robingb_memory_write(u16 address, u8 value) {
+void robingb_memory_write(uint16_t address, uint8_t value) {
     if (address < 0x8000) {
         perform_cart_control(address, value);
     } else if (address == 0xff00) {
@@ -328,8 +328,8 @@ void robingb_memory_write(u16 address, u8 value) {
     }
 }
 
-void robingb_memory_write_u16(u16 address, u16 value) {
-    u8 *values = (u8*)&value;
+void robingb_memory_write_u16(uint16_t address, uint16_t value) {
+    uint8_t *values = (uint8_t*)&value;
     robingb_memory_write(address, values[0]);
     robingb_memory_write(address+1, values[1]);
 }

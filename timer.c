@@ -8,14 +8,14 @@
 
 #define MINIMUM_CYCLES_PER_TIMA_INCREMENT 16
 
-static u8 *tima = &robingb_memory[TIMA_ADDRESS];
-static u8 *tma = &robingb_memory[TMA_ADDRESS];
-static u8 *tac = &robingb_memory[TAC_ADDRESS]; /* TODO: what do with the upper 5 bits of this register? */
+static uint8_t *tima = &robingb_memory[TIMA_ADDRESS];
+static uint8_t *tma = &robingb_memory[TMA_ADDRESS];
+static uint8_t *tac = &robingb_memory[TAC_ADDRESS]; /* TODO: what do with the upper 5 bits of this register? */
 
-static u16 incrementer_every_cycle;
-static u8 *div_byte = ((u8*)&incrementer_every_cycle) + 1;
+static uint16_t incrementer_every_cycle;
+static uint8_t *div_byte = ((uint8_t*)&incrementer_every_cycle) + 1;
 
-static u16 cycles_since_last_tima_increment = 0;
+static uint16_t cycles_since_last_tima_increment = 0;
 
 void robingb_timer_init() {
 	incrementer_every_cycle = 0xabcc;
@@ -27,11 +27,11 @@ void robingb_timer_init() {
 	*tac = 0x00;
 }
 
-u8 robingb_respond_to_timer_div_register() {
+uint8_t robingb_respond_to_timer_div_register() {
 	return 0x00;
 }
 
-void robingb_timer_update(u8 num_cycles) {
+void robingb_timer_update(uint8_t num_cycles) {
 	
 	/* update incrementer and therefore DIV. */
 	incrementer_every_cycle += num_cycles;
@@ -44,7 +44,7 @@ void robingb_timer_update(u8 num_cycles) {
 		
 		if (cycles_since_last_tima_increment >= MINIMUM_CYCLES_PER_TIMA_INCREMENT) {
 			/* calculate actual cycles per TIMA increment */
-			u16 cycles_per_tima_increment;
+			uint16_t cycles_per_tima_increment;
 			switch ((*tac) & 0x03) {
 				case 0x00: cycles_per_tima_increment = 1024; break;
 				case 0x01: cycles_per_tima_increment = 16; break;
@@ -54,7 +54,7 @@ void robingb_timer_update(u8 num_cycles) {
 			}
 			
 			if (cycles_since_last_tima_increment >= cycles_per_tima_increment) {
-				u8 prev_tima = (*tima)++;
+				uint8_t prev_tima = (*tima)++;
 				
 				/* check for overflow */
 				if (prev_tima > *tima) {
