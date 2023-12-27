@@ -6,13 +6,9 @@ ______      _     _       _____ ______
 | |\ \ (_) | |_) | | | | | |_\ \| |_/ /
 \_| \_\___/|_.__/|_|_| |_|\____/\____/
 
-Welcome! Scroll down for complete usage information.
+Welcome! Basic usage:
 
-TODO: Remove assert()s
-TODO: Add error logging.
-TODO: Fail gracefully if malloc() returns NULL.
-TODO: Remove printf().
-TODO: Implement simplified init function that doesn't require file access function pointers.
+TODO
 */
 
 #ifdef __cplusplus
@@ -130,5 +126,11 @@ phase 60 times per second for correct emulation speed.
 }
 #endif /* close extern "C" */
 
-
-
+/*
+TODO
+Remove assert()s
+Add error logging.
+Fail gracefully if malloc() returns NULL.
+Remove printf().
+Implement simplified init function that doesn't require file access function pointers.
+*/
