@@ -9,7 +9,7 @@ Currently, RobinGB can only run games that use no MBC chip, or the MBC1 chip wit
 
 1. Do `#include "RobinGB.h"` and add the .c files to your build system.
 2. Call `robingb_init(...)` to set the path to your .gb file.
-3. Call `robingb_update_screen(...)` 60 times a second to run the emulation and get a pointer to the pixel data for each frame.
+3. Call `robingb_update_screen(...)` 60 times per second to run the emulation and get the pixel data for each frame.
 4. Call `robingb_press_button(...)` and `robingb_release_button(...)` to convey the player's input to the emulator.
 
 Full details, including audio, saving/loading, and alternative functions for rendering are all explained in RobinGB.h.
