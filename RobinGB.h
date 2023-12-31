@@ -7,8 +7,12 @@ ______      _     _       _____ ______
 \_| \_\___/|_.__/|_|_| |_|\____/\____/
 
 Welcome! Basic usage:
+1. Do #include "RobinGB.h" and add the .c files to your build system.
+2. Call robingb_init(...) to set the path to your .gb file.
+3. Call robingb_update_screen(...) 60 times a second to run the emulation and get a pointer to the pixel data for each frame.
+4. Call robingb_press_button(...) and robingb_release_button(...) to convey the player's input to the emulator.
 
-TODO
+Full details, including audio, saving/loading, and alternative functions for rendering are all explained below.
 */
 
 #ifdef __cplusplus
@@ -96,8 +100,7 @@ hardware. The screen will appear extremely dark and inverted, so you will need
 to do some additional processing. */
 extern bool robingb_native_pixel_format;
 
-/* Finally, here is the more complicated, per-line alternative to
-robingb_update_screen(). */
+/* Finally, here is the more complicated, per-line alternative to robingb_update_screen(). */
 bool robingb_update_screen_line(uint8_t screen[], uint8_t *updated_screen_line);
 /* FULL EXPLANATION:
 screen[] must be an array of ROBINGB_SCREEN_WIDTH*ROBINGB_SCREEN_HEIGHT elements.

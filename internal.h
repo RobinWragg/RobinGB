@@ -1,6 +1,8 @@
 #ifndef ROBINGB_INTERNAL_H
 #define ROBINGB_INTERNAL_H
 
+/* Declarations for identifiers used across compilation units. */
+
 #include "RobinGB.h"
 
 #define GAME_BOY_MEMORY_ADDRESS_SPACE_SIZE (1024*64)
